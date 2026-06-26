@@ -1,0 +1,24 @@
+# Dependencias
+node_modules/
+**/node_modules/
+
+# Variables de entorno (secretos, nunca se suben)
+.env
+.env.local
+**/.env
+**/.env.local
+
+# Base de datos local (SQLite) - cada entorno tiene la suya
+data/
+**/data/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Config local de herramientas de desarrollo (Claude Code), no es parte del proyecto
+.claude/

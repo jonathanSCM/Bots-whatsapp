@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backoffice · ProShop Demos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="bg-glow"></div>
+
+<header class="topbar">
+  <img src="assets/logo.png" alt="ProShop" class="logo">
+  <span class="topbar-title">Backoffice · ProShop Demos</span>
+</header>
+
+<main class="container">
+
+  <section class="stats" id="stats"></section>
+
+  <section id="panel-leads" class="panel">
+    <div class="panel-head">
+      <h2>Conversaciones de demo</h2>
+      <input type="text" id="filtro-leads" placeholder="Buscar por nombre o WhatsApp...">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Bot</th><th>Nombre</th><th>WhatsApp</th><th>Detalle</th>
+            <th>Estado</th><th>Fuente</th><th>Actualizado</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-leads"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<div class="modal hidden" id="modal-lead">
+  <div class="modal-box">
+    <button class="modal-close" id="modal-close">✕</button>
+    <h3 id="modal-nombre"></h3>
+    <div class="modal-meta" id="modal-meta"></div>
+    <h4>Conversacion</h4>
+    <div class="modal-historial" id="modal-historial"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
