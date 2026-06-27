@@ -177,7 +177,7 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
     if (!propiedad.fotos?.length) return `Por ahora no tengo fotos cargadas de la propiedad ${propiedad.id}, pero puedo darte mas detalles.`;
 
     await enviarImagenes(numero, propiedad.fotos);
-    await enviarMensaje(numero, `${propiedad.id} - ${propiedad.tipo} en ${propiedad.operacion}, ${propiedad.zona}`);
+    await enviarMensaje(numero, `${propiedad.tipo} en ${propiedad.operacion}, ${propiedad.zona}`);
     return "Te envie las fotos de la propiedad. ¿Que te parecio?";
   }
 

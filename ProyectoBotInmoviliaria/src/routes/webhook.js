@@ -132,8 +132,9 @@ async function procesarMensaje(numero, texto) {
     }
   }
 
+  const mensajesDeFuncionesUnicos = [...new Set(mensajesDeFunciones)];
   const textoFinal =
-    [respuestaIA.content, ...mensajesDeFunciones].filter(Boolean).join("\n\n") ||
+    [respuestaIA.content, ...mensajesDeFuncionesUnicos].filter(Boolean).join("\n\n") ||
     "Gracias por tu mensaje, lo estamos procesando.";
   appendHistorial(numero, "assistant", textoFinal);
   console.log(`<<< [${bot.id}] BOT:`, textoFinal);
