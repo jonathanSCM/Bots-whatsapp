@@ -73,10 +73,16 @@ async function leerHojaConCache(nombreHoja, rango, columnas, datosLocalesFallbac
     cachePorHoja[nombreHoja] = { datos, timestamp: ahora };
     return datos;
   } catch (err) {
-    // Si la pestaña no existe o hay un problema de permisos, no tumbamos el
-    // bot: usamos los datos locales de respaldo y seguimos funcionando.
-    console.error(`No se pudo leer la hoja "${nombreHoja}" de Sheets, usando datos locales de respaldo:`, err.message);
-    return datosLocalesFallback.filter(filtro);
+    // IMPORTANTE: si GOOGLE_SHEET_ID esta configurado pero la lectura falla
+    // (credenciales, permisos, pestaña inexistente), NO mostramos datos
+    // locales de ejemplo como si fueran reales -> el bot inventaria
+    // propiedades/platos falsos sin darse cuenta. Mejor devolver vacio: el
+    // bot dira honestamente que no tiene catalogo disponible en este momento.
+    console.error(
+      `ERROR: no se pudo leer la hoja "${nombreHoja}" de Google Sheets (revisa GOOGLE_SHEET_ID / GOOGLE_SERVICE_ACCOUNT_EMAIL / GOOGLE_PRIVATE_KEY). El bot NO usara datos inventados, devuelve catalogo vacio:`,
+      err.message
+    );
+    return [];
   }
 }
 
