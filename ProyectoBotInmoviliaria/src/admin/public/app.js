@@ -135,7 +135,23 @@ document.getElementById("form-propiedad").addEventListener("submit", async (e) =
 });
 
 // ---------- Citas ----------
+let citasCache = [];
+
+function linkWhatsapp(numero) {
+  const limpio = (numero || "").replace(/\D/g, "");
+  return `https://wa.me/${limpio}`;
+}
+
+function iconoWhatsapp() {
+  return `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17.6 6.32A8.86 8.86 0 0 0 12.05 4a8.94 8.94 0 0 0-7.74 13.41L3 21l3.7-1.27a8.93 8.93 0 0 0 5.35 1.79h0a8.94 8.94 0 0 0 8.94-8.94 8.86 8.86 0 0 0-2.39-6.26ZM12.05 20a7.41 7.41 0 0 1-4.5-1.54l-.32-.21-2.6.89.87-2.53-.22-.34a7.4 7.4 0 0 1-1.16-3.99 7.44 7.44 0 1 1 7.93 7.72Zm4.08-5.58c-.22-.11-1.31-.65-1.52-.72-.2-.07-.35-.11-.5.11-.15.22-.57.72-.7.86-.13.15-.26.16-.48.05-.22-.11-.93-.34-1.78-1.1-.66-.59-1.1-1.32-1.23-1.54-.13-.22-.01-.34.11-.45.11-.11.25-.28.37-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.07-.11-.6-1.45-.82-1.99-.22-.52-.45-.45-.62-.46-.16-.01-.35-.01-.54-.01-.18 0-.48.07-.73.34-.25.27-.97.95-.97 2.32 0 1.37 1 2.69 1.14 2.88.14.18 1.91 2.92 4.63 3.98 2.31.9 2.78.72 3.28.68.5-.05 1.6-.65 1.83-1.29.22-.63.22-1.17.15-1.29-.06-.12-.21-.18-.43-.29Z"/></svg>`;
+}
+
+function iconoOjo() {
+  return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+}
+
 function renderCitas(lista, propiedades) {
+  citasCache = lista;
   document.getElementById("tabla-citas").innerHTML = lista
     .map((c) => {
       const propiedad = propiedades.find((p) => p.id === c.propiedadId);
@@ -144,13 +160,16 @@ function renderCitas(lista, propiedades) {
         <td>${c.fecha}</td>
         <td>${c.hora}</td>
         <td>${c.nombre || "-"}</td>
-        <td>${c.whatsapp}</td>
         <td>${propiedad ? `${propiedad.id} - ${propiedad.tipo}` : c.propiedadId || "-"}</td>
         <td><span class="badge badge-${c.estado}">${c.estado}</span></td>
         <td>
           <select class="estado-select" data-id="${c.id}">
             ${["confirmada", "cancelada", "completada"].map((e) => `<option value="${e}" ${e === c.estado ? "selected" : ""}>${e}</option>`).join("")}
           </select>
+        </td>
+        <td class="acciones-celda">
+          <button type="button" class="btn-icono btn-detalle-cita" data-id="${c.id}" title="Ver detalle">${iconoOjo()}</button>
+          <a class="btn-icono btn-whatsapp" href="${linkWhatsapp(c.whatsapp)}" target="_blank" rel="noopener" title="Hablar por WhatsApp">${iconoWhatsapp()}</a>
         </td>
       </tr>`;
     })
@@ -166,7 +185,33 @@ function renderCitas(lista, propiedades) {
       cargarTodo();
     });
   });
+
+  document.querySelectorAll(".btn-detalle-cita").forEach((btn) => {
+    btn.addEventListener("click", () => abrirModalCita(btn.dataset.id, propiedades));
+  });
 }
+
+function abrirModalCita(id, propiedades) {
+  const c = citasCache.find((x) => x.id === id);
+  if (!c) return;
+  const propiedad = (propiedades || propiedadesCache).find((p) => p.id === c.propiedadId);
+
+  document.getElementById("modal-cita-nombre").textContent = c.nombre || c.whatsapp;
+  document.getElementById("modal-cita-meta").innerHTML = `
+    <div><b>WhatsApp:</b> ${c.whatsapp}</div>
+    <div><b>Fecha:</b> ${c.fecha} ${c.hora}</div>
+    <div><b>Propiedad:</b> ${propiedad ? `${propiedad.id} - ${propiedad.tipo} en ${propiedad.zona}` : c.propiedadId || "-"}</div>
+    <div><b>Estado:</b> <span class="badge badge-${c.estado}">${c.estado}</span></div>
+    <div><b>Recordatorio enviado:</b> ${c.recordatorioEnviado ? "Si" : "No"}</div>
+    <div><b>Creada:</b> ${fmtFecha(c.fechaCreacion)}</div>
+  `;
+  document.getElementById("modal-cita-whatsapp").href = linkWhatsapp(c.whatsapp);
+  document.getElementById("modal-cita").classList.remove("hidden");
+}
+
+document.getElementById("modal-cita-close").addEventListener("click", () => {
+  document.getElementById("modal-cita").classList.add("hidden");
+});
 
 // ---------- Leads ----------
 function detalleLead(l) {
@@ -178,18 +223,24 @@ function renderLeads(lista) {
     .map(
       (l) => `
     <tr data-id="${l.idLead}">
-      <td>${l.nombre || "-"}</td>
-      <td>${l.whatsapp}</td>
+      <td>${l.nombre || "-"}<br><span class="subtexto">${l.whatsapp}</span></td>
       <td>${detalleLead(l)}</td>
       <td><span class="badge badge-${l.estadoLead}">${l.estadoLead.replace(/_/g, " ")}</span></td>
       <td>${l.fuente || "-"}</td>
       <td>${fmtFecha(l.fechaActualizacion)}</td>
+      <td class="acciones-celda">
+        <button type="button" class="btn-icono btn-detalle-lead" data-id="${l.idLead}" title="Ver detalle">${iconoOjo()}</button>
+        <a class="btn-icono btn-whatsapp" href="${linkWhatsapp(l.whatsapp)}" target="_blank" rel="noopener" title="Hablar por WhatsApp" onclick="event.stopPropagation()">${iconoWhatsapp()}</a>
+      </td>
     </tr>`
     )
     .join("");
 
-  document.querySelectorAll("#tabla-leads tr").forEach((tr) => {
-    tr.addEventListener("click", () => abrirModalLead(tr.dataset.id));
+  document.querySelectorAll(".btn-detalle-lead").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      abrirModalLead(btn.dataset.id);
+    });
   });
 }
 
@@ -205,6 +256,7 @@ async function abrirModalLead(id) {
     <div><b>Fuente:</b> ${lead.fuente || "-"}</div>
   `;
   document.getElementById("modal-historial").innerHTML = lead.historial.map((h) => `<div class="msg ${h.rol}">${h.mensaje}</div>`).join("");
+  document.getElementById("modal-lead-whatsapp").href = linkWhatsapp(lead.whatsapp);
   document.getElementById("modal-lead").classList.remove("hidden");
 }
 

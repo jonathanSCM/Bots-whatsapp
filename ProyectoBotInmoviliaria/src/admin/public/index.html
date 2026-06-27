@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Backoffice · Inmobyte</title>
+<title>Backoffice · Habitad</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -14,7 +14,7 @@
 
 <header class="topbar">
   <img src="assets/logo.png" alt="ProShop" class="logo">
-  <span class="topbar-title">Backoffice · Inmobyte</span>
+  <span class="topbar-title">Backoffice · Habitad</span>
 </header>
 
 <main class="container">
@@ -43,7 +43,7 @@
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>WhatsApp</th><th>Propiedad</th><th>Estado</th><th></th></tr>
+          <tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Propiedad</th><th>Estado</th><th>Cambiar estado</th><th></th></tr>
         </thead>
         <tbody id="tabla-citas"></tbody>
       </table>
@@ -59,7 +59,7 @@
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Nombre</th><th>WhatsApp</th><th>Detalle</th><th>Estado</th><th>Fuente</th><th>Actualizado</th></tr>
+          <tr><th>Nombre</th><th>Detalle</th><th>Estado</th><th>Fuente</th><th>Actualizado</th><th></th></tr>
         </thead>
         <tbody id="tabla-leads"></tbody>
       </table>
@@ -79,10 +79,25 @@
 <div class="modal hidden" id="modal-lead">
   <div class="modal-box">
     <button class="modal-close" id="modal-close">✕</button>
-    <h3 id="modal-nombre"></h3>
+    <div class="modal-head-row">
+      <h3 id="modal-nombre"></h3>
+      <a id="modal-lead-whatsapp" class="btn-whatsapp-grande" href="#" target="_blank" rel="noopener">Hablar por WhatsApp</a>
+    </div>
     <div class="modal-meta" id="modal-meta"></div>
     <h4>Conversacion</h4>
     <div class="modal-historial" id="modal-historial"></div>
+  </div>
+</div>
+
+<!-- Modal cita -->
+<div class="modal hidden" id="modal-cita">
+  <div class="modal-box">
+    <button class="modal-close" id="modal-cita-close">✕</button>
+    <div class="modal-head-row">
+      <h3 id="modal-cita-nombre"></h3>
+      <a id="modal-cita-whatsapp" class="btn-whatsapp-grande" href="#" target="_blank" rel="noopener">Hablar por WhatsApp</a>
+    </div>
+    <div class="modal-meta" id="modal-cita-meta"></div>
   </div>
 </div>
 

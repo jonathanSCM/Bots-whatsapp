@@ -1,5 +1,5 @@
 {
-  "nombreNegocio": "Inmobyte",
+  "nombreNegocio": "Habitad",
   "zonas": ["Zona Norte", "Zona Sur", "Centro"],
   "tiposPropiedad": ["casa", "departamento", "terreno", "local", "oficina"],
   "requisitosAlquiler": "DNI, recibo de sueldo o constancia de ingresos, garantia propietaria o seguro de caucion",

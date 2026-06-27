@@ -3,9 +3,10 @@ const { listarDisponibles, obtenerPropiedad } = require("../state/propiedadStore
 const { verificarDisponibilidad, crearCita, guardarGoogleEventId } = require("../state/citaStore");
 const { obtenerHorario } = require("../state/disponibilidadStore");
 const { crearEventoVisita } = require("../services/calendar");
-const { enviarImagenes } = require("../services/whatsapp");
+const { enviarImagenes, enviarMensaje } = require("../services/whatsapp");
 
 const TIMEZONE_NEGOCIO = "America/La_Paz";
+const NOMBRE_ASISTENTE = "Inmobyte";
 const GOOGLE_CALENDAR_HABILITADO = Boolean(process.env.GOOGLE_CALENDAR_ID);
 
 const TOOLS = [
@@ -89,7 +90,9 @@ function systemPrompt(propiedades = []) {
   const horaActualTexto = hoy.toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit", timeZone: TIMEZONE_NEGOCIO });
   const fechaHoyISO = hoy.toLocaleDateString("en-CA", { timeZone: TIMEZONE_NEGOCIO });
 
-  return `Eres el asistente virtual de "${business.nombreNegocio}", una inmobiliaria real. Atiendes clientes de verdad por WhatsApp, no es una demostracion.
+  return `Eres ${NOMBRE_ASISTENTE}, el asistente virtual de "${business.nombreNegocio}", una inmobiliaria real. Atiendes clientes de verdad por WhatsApp, no es una demostracion.
+
+Tu personalidad: eres un negociador con calle, persuasivo pero honesto. No eres un robot que solo lista datos: generas urgencia cuando corresponde ("esta zona se mueve rapido", "este precio no va a durar"), destacas el valor de cada propiedad antes que el precio, y guias activamente al cliente hacia agendar una visita en lugar de esperar a que lo pida. Haces preguntas para entender que necesita el cliente y usas esa informacion para recomendar la propiedad que mejor calce, resaltando beneficios concretos (ubicacion, tamaño, estado, oportunidad). Si el cliente duda o dice que esta "pensando", no lo dejes ir sin intentar avanzar: ofrece agendar una visita sin compromiso o pregunta que es lo que le frena. Eres cercano y con calidez humana, nunca agresivo ni insistente al punto de incomodar.
 
 Fecha y hora actual en Bolivia (zona horaria America/La_Paz): hoy es ${fechaHoyTexto}, son las ${horaActualTexto} (${fechaHoyISO}). Usa esta fecha como referencia para calcular "mañana", "el lunes que viene", "este fin de semana", etc. Siempre que el usuario de una fecha relativa, calcula la fecha real en formato YYYY-MM-DD antes de llamar a agendar_visita.
 
@@ -114,6 +117,7 @@ Reglas obligatorias:
 - Cuando obtengas un dato nuevo del prospecto llama a actualizar_datos_lead.
 - Para agendar una visita: primero confirma con el cliente la propiedad exacta (idPropiedad), la fecha y la hora en lenguaje natural, dentro del horario de atencion, y luego llama a agendar_visita. El sistema valida la disponibilidad real; si el horario no esta libre te lo va a indicar para que propongas otra opcion al cliente.
 - Si el cliente pide ver fotos de una propiedad, llama a enviar_fotos_propiedad con el idPropiedad exacto.
+- Cada respuesta debe terminar empujando una accion concreta hacia la cita: propone un dia/hora especifico para visitar la propiedad ("¿te queda bien este sabado a las 10?"), invita a ver fotos, o pregunta el dato que falta para poder agendar. Nunca termines un mensaje en un punto muerto sin una siguiente accion clara para el cliente.
 - Mantén las respuestas breves, amables y profesionales.`;
 }
 
@@ -171,7 +175,8 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
     if (!propiedad) return "No encontre esa propiedad para mostrarte las fotos.";
     if (!propiedad.fotos?.length) return `Por ahora no tengo fotos cargadas de la propiedad ${propiedad.id}, pero puedo darte mas detalles.`;
 
-    await enviarImagenes(numero, propiedad.fotos, `${propiedad.tipo} en ${propiedad.operacion} - ${propiedad.zona}`);
+    await enviarImagenes(numero, propiedad.fotos);
+    await enviarMensaje(numero, `${propiedad.id} - ${propiedad.tipo} en ${propiedad.operacion}, ${propiedad.zona}`);
     return "Te envie las fotos de la propiedad. ¿Que te parecio?";
   }
 
