@@ -38,4 +38,19 @@ async function enviarImagen(numeroDestino, urlImagen, caption) {
   }
 }
 
-module.exports = { enviarMensaje, enviarImagen };
+function esperar(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Manda varias imagenes en secuencia con una pequeña pausa entre cada una.
+// Sin esta pausa, WhatsApp Cloud API acepta todas las llamadas (devuelve un
+// id de mensaje exitoso para cada una) pero en la practica solo entrega la
+// ultima si se mandan demasiado rapido una tras otra.
+async function enviarImagenes(numeroDestino, urlsImagenes, caption) {
+  for (const url of urlsImagenes) {
+    await enviarImagen(numeroDestino, url, caption);
+    await esperar(1200);
+  }
+}
+
+module.exports = { enviarMensaje, enviarImagen, enviarImagenes };

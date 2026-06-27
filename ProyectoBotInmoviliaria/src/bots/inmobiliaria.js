@@ -3,7 +3,7 @@ const { listarDisponibles, obtenerPropiedad } = require("../state/propiedadStore
 const { verificarDisponibilidad, crearCita, guardarGoogleEventId } = require("../state/citaStore");
 const { obtenerHorario } = require("../state/disponibilidadStore");
 const { crearEventoVisita } = require("../services/calendar");
-const { enviarImagen } = require("../services/whatsapp");
+const { enviarImagenes } = require("../services/whatsapp");
 
 const TIMEZONE_NEGOCIO = "America/La_Paz";
 const GOOGLE_CALENDAR_HABILITADO = Boolean(process.env.GOOGLE_CALENDAR_ID);
@@ -171,9 +171,7 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
     if (!propiedad) return "No encontre esa propiedad para mostrarte las fotos.";
     if (!propiedad.fotos?.length) return `Por ahora no tengo fotos cargadas de la propiedad ${propiedad.id}, pero puedo darte mas detalles.`;
 
-    for (const link of propiedad.fotos) {
-      await enviarImagen(numero, link, `${propiedad.tipo} en ${propiedad.operacion} - ${propiedad.zona}`);
-    }
+    await enviarImagenes(numero, propiedad.fotos, `${propiedad.tipo} en ${propiedad.operacion} - ${propiedad.zona}`);
     return "Te envie las fotos de la propiedad. ¿Que te parecio?";
   }
 
