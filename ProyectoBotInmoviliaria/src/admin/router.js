@@ -2,6 +2,7 @@ const express = require("express");
 const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
+const sharp = require("sharp");
 const router = express.Router();
 
 const { basicAuth } = require("./auth");
@@ -39,6 +40,21 @@ function urlPublicaDeArchivo(req, filename) {
   return `${req.protocol}://${req.get("host")}/admin/uploads/${filename}`;
 }
 
+// WhatsApp Cloud API solo entrega mensajes de imagen en jpeg o png (webp
+// es aceptado por la API pero nunca se entrega, salvo como sticker). Para
+// no depender del formato que suba el admin, toda foto se convierte a jpeg.
+async function convertirFotosAJpg(files) {
+  const nombres = [];
+  for (const file of files || []) {
+    const nombreJpg = `${path.parse(file.filename).name}.jpg`;
+    const rutaJpg = path.join(UPLOADS_DIR, nombreJpg);
+    await sharp(file.path).rotate().jpeg({ quality: 85 }).toFile(rutaJpg);
+    if (file.path !== rutaJpg) fs.unlinkSync(file.path);
+    nombres.push(nombreJpg);
+  }
+  return nombres;
+}
+
 // ---------- Leads ----------
 router.get("/api/leads", (_req, res) => res.json(listarLeads()));
 
@@ -63,17 +79,19 @@ router.get("/api/propiedades/:id", (req, res) => {
   res.json(propiedad);
 });
 
-router.post("/api/propiedades", upload.array("fotos", 8), (req, res) => {
-  const fotos = (req.files || []).map((f) => urlPublicaDeArchivo(req, f.filename));
+router.post("/api/propiedades", upload.array("fotos", 8), async (req, res) => {
+  const nombres = await convertirFotosAJpg(req.files);
+  const fotos = nombres.map((n) => urlPublicaDeArchivo(req, n));
   const propiedad = crearPropiedad({ ...req.body, fotos });
   res.json(propiedad);
 });
 
-router.put("/api/propiedades/:id", upload.array("fotos", 8), (req, res) => {
+router.put("/api/propiedades/:id", upload.array("fotos", 8), async (req, res) => {
   const propiedad = obtenerPropiedad(req.params.id);
   if (!propiedad) return res.status(404).json({ error: "Propiedad no encontrada" });
 
-  const fotosNuevas = (req.files || []).map((f) => urlPublicaDeArchivo(req, f.filename));
+  const nombres = await convertirFotosAJpg(req.files);
+  const fotosNuevas = nombres.map((n) => urlPublicaDeArchivo(req, n));
   const fotosExistentes = req.body.fotosExistentes ? JSON.parse(req.body.fotosExistentes) : propiedad.fotos;
   const fotos = [...fotosExistentes, ...fotosNuevas];
 
