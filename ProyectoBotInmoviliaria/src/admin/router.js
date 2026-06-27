@@ -27,8 +27,12 @@ const upload = multer({
   limits: { fileSize: 8 * 1024 * 1024 },
 });
 
-router.use(basicAuth);
+// Las fotos deben ser publicas (sin login) para que WhatsApp/Meta pueda
+// descargarlas y enviarlas en el chat. Por eso se registran ANTES del
+// basicAuth, que protege el resto del backoffice.
 router.use("/uploads", express.static(UPLOADS_DIR));
+
+router.use(basicAuth);
 router.use(express.static(path.join(__dirname, "public")));
 
 function urlPublicaDeArchivo(req, filename) {
