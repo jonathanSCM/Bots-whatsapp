@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const webhookRouter = require("./src/routes/webhook");
 const adminRouter = require("./src/admin/router");
+const { iniciarJobRecordatorios } = require("./src/jobs/recordatorios");
 
 const app = express();
 app.use(express.json());
@@ -12,3 +13,5 @@ app.use("/admin", adminRouter);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+
+iniciarJobRecordatorios();

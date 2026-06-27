@@ -1,5 +1,4 @@
 const { google } = require("googleapis");
-const propiedadesLocales = require("../config/propiedades.json");
 const menuLocal = require("../config/menu.json");
 
 const SHEET_ID = process.env.GOOGLE_SHEET_ID;
@@ -86,21 +85,6 @@ async function leerHojaConCache(nombreHoja, rango, columnas, datosLocalesFallbac
   }
 }
 
-const COLUMNAS_PROPIEDADES = [
-  "idPropiedad", "tipo", "operacion", "zona", "precio",
-  "dormitorios", "descripcion", "estado", "linkFotos",
-];
-
-async function obtenerPropiedadesDisponibles() {
-  return leerHojaConCache(
-    "Propiedades",
-    "A2:I",
-    COLUMNAS_PROPIEDADES,
-    propiedadesLocales,
-    (p) => p.idPropiedad && p.estado?.toLowerCase() === "disponible"
-  );
-}
-
 const COLUMNAS_MENU = ["idPlato", "categoria", "nombre", "precio", "descripcion", "disponible"];
 
 async function obtenerMenuDisponible() {
@@ -113,4 +97,4 @@ async function obtenerMenuDisponible() {
   );
 }
 
-module.exports = { registrarLeadNegocio, obtenerPropiedadesDisponibles, obtenerMenuDisponible };
+module.exports = { registrarLeadNegocio, obtenerMenuDisponible };

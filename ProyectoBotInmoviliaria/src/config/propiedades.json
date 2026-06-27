@@ -1,5 +1,0 @@
-[
-  { "idPropiedad": "P001", "tipo": "departamento", "operacion": "alquiler", "zona": "Zona Norte", "precio": "USD 450/mes", "dormitorios": "2", "descripcion": "Edificio con seguridad 24hs, cochera y balcon.", "estado": "disponible", "linkFotos": "" },
-  { "idPropiedad": "P002", "tipo": "casa", "operacion": "venta", "zona": "Zona Sur", "precio": "USD 95.000", "dormitorios": "3", "descripcion": "Casa con patio, parrillero y garaje doble.", "estado": "disponible", "linkFotos": "" },
-  { "idPropiedad": "P003", "tipo": "local", "operacion": "alquiler", "zona": "Centro", "precio": "USD 600/mes", "dormitorios": "N/A", "descripcion": "Local comercial en avenida principal, 60m2.", "estado": "disponible", "linkFotos": "" }
-]

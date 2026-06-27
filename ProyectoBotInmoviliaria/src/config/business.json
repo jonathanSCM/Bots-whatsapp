@@ -1,6 +1,5 @@
 {
-  "nombreNegocio": "Inmobiliaria Demo",
-  "horarios": "Lunes a viernes de 9:00 a 18:00, sabados de 9:00 a 13:00",
+  "nombreNegocio": "Inmobyte",
   "zonas": ["Zona Norte", "Zona Sur", "Centro"],
   "tiposPropiedad": ["casa", "departamento", "terreno", "local", "oficina"],
   "requisitosAlquiler": "DNI, recibo de sueldo o constancia de ingresos, garantia propietaria o seguro de caucion",

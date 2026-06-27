@@ -117,6 +117,7 @@ async function procesarMensaje(numero, texto) {
 
   const helpers = {
     numero,
+    getOrCreateLead,
     updateLead,
     ESTADOS_LEAD,
     notificarInteresNegocio: (interes) => notificarInteresNegocio(numero, bot.id, interes),

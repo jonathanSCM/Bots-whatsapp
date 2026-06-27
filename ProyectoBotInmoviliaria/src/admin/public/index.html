@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Backoffice · ProShop Demos</title>
+<title>Backoffice · Inmobyte</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -14,33 +14,68 @@
 
 <header class="topbar">
   <img src="assets/logo.png" alt="ProShop" class="logo">
-  <span class="topbar-title">Backoffice · ProShop Demos</span>
+  <span class="topbar-title">Backoffice · Inmobyte</span>
 </header>
 
 <main class="container">
 
   <section class="stats" id="stats"></section>
 
-  <section id="panel-leads" class="panel">
+  <nav class="tabs">
+    <button class="tab active" data-tab="propiedades">Propiedades</button>
+    <button class="tab" data-tab="citas">Citas</button>
+    <button class="tab" data-tab="leads">Leads</button>
+    <button class="tab" data-tab="disponibilidad">Disponibilidad</button>
+  </nav>
+
+  <!-- PROPIEDADES -->
+  <section id="panel-propiedades" class="panel">
     <div class="panel-head">
-      <h2>Conversaciones de demo</h2>
+      <h2>Propiedades</h2>
+      <button class="btn-primary" id="btn-nueva-propiedad">+ Nueva propiedad</button>
+    </div>
+    <div class="cards-grid" id="grid-propiedades"></div>
+  </section>
+
+  <!-- CITAS -->
+  <section id="panel-citas" class="panel hidden">
+    <div class="panel-head"><h2>Citas agendadas</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>WhatsApp</th><th>Propiedad</th><th>Estado</th><th></th></tr>
+        </thead>
+        <tbody id="tabla-citas"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- LEADS -->
+  <section id="panel-leads" class="panel hidden">
+    <div class="panel-head">
+      <h2>Leads</h2>
       <input type="text" id="filtro-leads" placeholder="Buscar por nombre o WhatsApp...">
     </div>
     <div class="table-wrap">
       <table>
         <thead>
-          <tr>
-            <th>Bot</th><th>Nombre</th><th>WhatsApp</th><th>Detalle</th>
-            <th>Estado</th><th>Fuente</th><th>Actualizado</th>
-          </tr>
+          <tr><th>Nombre</th><th>WhatsApp</th><th>Detalle</th><th>Estado</th><th>Fuente</th><th>Actualizado</th></tr>
         </thead>
         <tbody id="tabla-leads"></tbody>
       </table>
     </div>
   </section>
 
+  <!-- DISPONIBILIDAD -->
+  <section id="panel-disponibilidad" class="panel hidden">
+    <div class="panel-head"><h2>Horario de atención</h2></div>
+    <div class="disponibilidad-box" id="form-disponibilidad"></div>
+    <button class="btn-primary" id="btn-guardar-disponibilidad">Guardar horario</button>
+  </section>
+
 </main>
 
+<!-- Modal lead -->
 <div class="modal hidden" id="modal-lead">
   <div class="modal-box">
     <button class="modal-close" id="modal-close">✕</button>
@@ -48,6 +83,38 @@
     <div class="modal-meta" id="modal-meta"></div>
     <h4>Conversacion</h4>
     <div class="modal-historial" id="modal-historial"></div>
+  </div>
+</div>
+
+<!-- Modal propiedad (crear/editar) -->
+<div class="modal hidden" id="modal-propiedad">
+  <div class="modal-box">
+    <button class="modal-close" id="modal-propiedad-close">✕</button>
+    <h3 id="modal-propiedad-titulo">Nueva propiedad</h3>
+    <form id="form-propiedad" class="form-propiedad">
+      <input type="hidden" id="prop-id">
+      <label>Tipo <input type="text" id="prop-tipo" placeholder="departamento, casa, terreno..." required></label>
+      <label>Operación
+        <select id="prop-operacion" required>
+          <option value="venta">Venta</option>
+          <option value="alquiler">Alquiler</option>
+        </select>
+      </label>
+      <label>Zona <input type="text" id="prop-zona" required></label>
+      <label>Precio <input type="text" id="prop-precio" required></label>
+      <label>Dormitorios <input type="text" id="prop-dormitorios"></label>
+      <label>Descripción <textarea id="prop-descripcion" rows="3"></textarea></label>
+      <label>Estado
+        <select id="prop-estado">
+          <option value="disponible">Disponible</option>
+          <option value="reservada">Reservada</option>
+          <option value="vendida">Vendida/Alquilada</option>
+        </select>
+      </label>
+      <label>Fotos <input type="file" id="prop-fotos" accept="image/*" multiple></label>
+      <div id="prop-fotos-existentes" class="fotos-existentes"></div>
+      <button type="submit" class="btn-primary">Guardar propiedad</button>
+    </form>
   </div>
 </div>
 
