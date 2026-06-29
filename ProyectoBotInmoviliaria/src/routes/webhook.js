@@ -113,7 +113,7 @@ async function procesarMensaje(numero, texto) {
   }));
 
   const contexto = await bot.obtenerContexto();
-  const respuestaIA = await generarRespuesta(historialParaIA, bot.systemPrompt(contexto), bot.tools);
+  const respuestaIA = await generarRespuesta(historialParaIA, bot.systemPrompt(contexto, lead), bot.tools);
 
   const helpers = {
     numero,
