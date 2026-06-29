@@ -4,10 +4,25 @@ const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID;
 const TIMEZONE = "America/La_Paz";
 const OFFSET_LA_PAZ = "-04:00"; // Bolivia no tiene horario de verano, offset fijo.
 
+// Algunas plataformas (Coolify incluida) pueden alterar los "\n" literales
+// de una variable de entorno al guardarla, lo que corrompe la clave PEM y
+// causa errores de decodificacion (DECODER routines::unsupported) que no
+// tienen nada que ver con la clave en si. Para evitar ese problema por
+// completo, se prefiere GOOGLE_PRIVATE_KEY_BASE64 (la clave PEM completa
+// codificada en base64, un solo bloque sin backslashes ni saltos de linea
+// que ninguna plataforma pueda corromper). Si no esta seteada, se usa
+// GOOGLE_PRIVATE_KEY con el reemplazo de \n de siempre.
+function obtenerClavePrivada() {
+  if (process.env.GOOGLE_PRIVATE_KEY_BASE64) {
+    return Buffer.from(process.env.GOOGLE_PRIVATE_KEY_BASE64, "base64").toString("utf8");
+  }
+  return (process.env.GOOGLE_PRIVATE_KEY || "").replace(/\\n/g, "\n");
+}
+
 function getAuth() {
   return new google.auth.JWT({
     email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    key: (process.env.GOOGLE_PRIVATE_KEY || "").replace(/\\n/g, "\n"),
+    key: obtenerClavePrivada(),
     scopes: ["https://www.googleapis.com/auth/calendar"],
   });
 }
