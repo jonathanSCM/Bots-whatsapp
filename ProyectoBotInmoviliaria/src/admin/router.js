@@ -33,8 +33,13 @@ const upload = multer({
 // sessionAuth, que protege el resto del backoffice.
 router.use("/uploads", express.static(UPLOADS_DIR));
 
-// Login publico (sin sesion) y su pagina HTML.
+// Login publico (sin sesion) y los assets que necesita para verse bien:
+// si fueran servidos junto al resto del panel (despues de sessionAuth),
+// el navegador no podria cargarlos antes de loguearse.
 router.get("/login", (req, res) => res.sendFile(path.join(__dirname, "public", "login.html")));
+router.get("/login.js", (req, res) => res.sendFile(path.join(__dirname, "public", "login.js")));
+router.get("/style.css", (req, res) => res.sendFile(path.join(__dirname, "public", "style.css")));
+router.use("/assets", express.static(path.join(__dirname, "public", "assets")));
 
 router.post("/login", (req, res) => {
   const { usuario, clave } = req.body || {};
