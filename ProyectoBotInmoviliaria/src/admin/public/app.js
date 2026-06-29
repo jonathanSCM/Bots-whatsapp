@@ -192,7 +192,7 @@ function renderCitas(lista, propiedades) {
 }
 
 function abrirModalCita(id, propiedades) {
-  const c = citasCache.find((x) => x.id === id);
+  const c = citasCache.find((x) => String(x.id) === String(id));
   if (!c) return;
   const propiedad = (propiedades || propiedadesCache).find((p) => p.id === c.propiedadId);
 
