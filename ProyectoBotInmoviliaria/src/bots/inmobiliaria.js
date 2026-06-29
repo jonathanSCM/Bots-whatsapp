@@ -103,9 +103,17 @@ function filtrosCompletos(lead = {}) {
   return Boolean(lead.zonaInteres && lead.tipoOperacion && lead.tipoPropiedad);
 }
 
+function siguienteDatoFaltante(lead = {}) {
+  if (!lead.zonaInteres) return "zona";
+  if (!lead.tipoOperacion) return "operacion (venta o alquiler)";
+  if (!lead.tipoPropiedad) return "tipo de propiedad";
+  return null;
+}
+
 function seccionPropiedades(propiedades, lead = {}) {
   if (!filtrosCompletos(lead)) {
-    return "Todavia faltan datos del flujo (zona, operacion y/o tipo de propiedad) antes de poder buscar. NO menciones ni inventes ninguna propiedad ahora, sigue el flujo pidiendo el siguiente dato que falte.";
+    const falta = siguienteDatoFaltante(lead);
+    return `IMPORTANTE: aun NO se puede buscar en el catalogo porque falta el dato "${falta}". Esto NO significa que no haya inventario, significa que todavia no sabes que buscar. NUNCA digas que "no hay propiedades" ni "no tengo disponible" en este punto: tu unica respuesta correcta ahora es pedir ese dato que falta (${falta}) con opciones cerradas/numeradas, sin mencionar ninguna propiedad todavia.`;
   }
   const resultados = buscarPropiedadesFiltradas(propiedades, lead);
   if (!resultados.length) {
@@ -163,6 +171,7 @@ Datos que ya tienes de este cliente (NO los vuelvas a preguntar, continua el flu
 ${datosConocidosDelLead(lead)}
 
 REGLAS DE CONVERSACION:
+- Si el cliente solo saluda ("hola", "buenas", etc.) o escribe su primer mensaje sin pedir nada especifico, NO respondas con un saludo generico tipo "¿en que puedo ayudarte?". Saluda brevemente y de inmediato arranca el flujo pidiendo el primer dato que falte (normalmente la zona) con opciones cerradas/numeradas.
 - Nunca hagas una pregunta abierta tipo "¿que buscas?" o "¿en que te puedo ayudar?". Siempre da opciones cerradas, numeradas o cortas para que el cliente elija rapido. Ejemplo correcto: "¿Que tipo de propiedad te interesa?\n1) Casa\n2) Departamento\n3) Terreno".
 - Cada respuesta avanza UN solo paso del flujo: una pregunta, una decision, un avance. Nunca varias preguntas distintas en el mismo mensaje.
 - Si el cliente menciona algo fuera de orden (por ejemplo dice el presupuesto antes de tiempo), guardalo igual con actualizar_datos_lead, agradece el dato, y sigue conduciendo desde el siguiente paso que falte del flujo (no le exijas que repita el orden, pero tu mantente ordenado).
