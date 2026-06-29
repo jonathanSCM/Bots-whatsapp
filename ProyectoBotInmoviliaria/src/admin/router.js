@@ -5,7 +5,7 @@ const multer = require("multer");
 const sharp = require("sharp");
 const router = express.Router();
 
-const { basicAuth } = require("./auth");
+const { sessionAuth, crearCookieSesion, cookieLogout, validarCredenciales } = require("./auth");
 const { listarLeads, obtenerLeadPorId, updateLead, ESTADOS_LEAD } = require("../state/leadStore");
 const {
   listarPropiedades,
@@ -30,10 +30,27 @@ const upload = multer({
 
 // Las fotos deben ser publicas (sin login) para que WhatsApp/Meta pueda
 // descargarlas y enviarlas en el chat. Por eso se registran ANTES del
-// basicAuth, que protege el resto del backoffice.
+// sessionAuth, que protege el resto del backoffice.
 router.use("/uploads", express.static(UPLOADS_DIR));
 
-router.use(basicAuth);
+// Login publico (sin sesion) y su pagina HTML.
+router.get("/login", (req, res) => res.sendFile(path.join(__dirname, "public", "login.html")));
+
+router.post("/login", (req, res) => {
+  const { usuario, clave } = req.body || {};
+  if (!validarCredenciales(usuario, clave)) {
+    return res.status(401).json({ error: "Usuario o clave incorrectos" });
+  }
+  res.set("Set-Cookie", crearCookieSesion());
+  res.json({ ok: true });
+});
+
+router.post("/logout", (_req, res) => {
+  res.set("Set-Cookie", cookieLogout());
+  res.json({ ok: true });
+});
+
+router.use(sessionAuth);
 router.use(express.static(path.join(__dirname, "public")));
 
 function urlPublicaDeArchivo(req, filename) {

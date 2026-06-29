@@ -309,5 +309,10 @@ document.getElementById("btn-guardar-disponibilidad").addEventListener("click", 
   alert("Horario guardado");
 });
 
+document.getElementById("btn-logout").addEventListener("click", async () => {
+  await fetch("logout", { method: "POST" });
+  window.location.href = "login";
+});
+
 cargarTodo();
 setInterval(cargarTodo, 15000);

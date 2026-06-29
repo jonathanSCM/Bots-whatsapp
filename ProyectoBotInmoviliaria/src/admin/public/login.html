@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iniciar sesion · Habitad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="login-body">
+
+<div class="bg-glow"></div>
+
+<main class="login-wrap">
+  <div class="login-card">
+    <img src="assets/logo.png" alt="Habitad" class="login-logo">
+    <h1>Backoffice</h1>
+    <p class="login-sub">Ingresa tus credenciales para administrar Habitad</p>
+
+    <form id="form-login" class="login-form">
+      <label>
+        Usuario
+        <input type="text" id="login-usuario" autocomplete="username" required autofocus>
+      </label>
+      <label>
+        Contraseña
+        <input type="password" id="login-clave" autocomplete="current-password" required>
+      </label>
+      <div class="login-error hidden" id="login-error"></div>
+      <button type="submit" class="btn-primary login-btn">Ingresar</button>
+    </form>
+  </div>
+</main>
+
+<script src="login.js"></script>
+</body>
+</html>
