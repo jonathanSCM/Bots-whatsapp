@@ -62,6 +62,13 @@ function obtenerCita(id) {
   return db.prepare("SELECT * FROM citas WHERE id = ?").get(id);
 }
 
+// Para reprogramar: la cita confirmada mas reciente de ese cliente.
+function obtenerCitaActivaPorLead(idLead) {
+  return db
+    .prepare("SELECT * FROM citas WHERE idLead = ? AND estado = 'confirmada' ORDER BY fecha DESC, hora DESC LIMIT 1")
+    .get(idLead);
+}
+
 function listarCitas() {
   return db.prepare("SELECT * FROM citas ORDER BY fecha DESC, hora DESC").all();
 }
@@ -95,6 +102,7 @@ module.exports = {
   verificarDisponibilidad,
   crearCita,
   obtenerCita,
+  obtenerCitaActivaPorLead,
   listarCitas,
   actualizarEstadoCita,
   guardarGoogleEventId,

@@ -1,8 +1,8 @@
 const business = require("../config/business.json");
 const { listarDisponibles, obtenerPropiedad } = require("../state/propiedadStore");
-const { verificarDisponibilidad, crearCita, guardarGoogleEventId } = require("../state/citaStore");
+const { verificarDisponibilidad, crearCita, guardarGoogleEventId, obtenerCitaActivaPorLead, actualizarEstadoCita } = require("../state/citaStore");
 const { obtenerHorario } = require("../state/disponibilidadStore");
-const { crearEventoVisita } = require("../services/calendar");
+const { crearEventoVisita, cancelarEventoVisita } = require("../services/calendar");
 const { enviarImagenes, enviarMensaje } = require("../services/whatsapp");
 
 const TIMEZONE_NEGOCIO = "America/La_Paz";
@@ -43,6 +43,21 @@ const TOOLS = [
           hora: { type: "string", description: "Formato HH:MM 24hs" },
         },
         required: ["idPropiedad", "fecha", "hora"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "reprogramar_visita",
+      description: "Cambia la fecha/hora de una visita que el cliente YA TENIA agendada, cancelando la anterior y creando la nueva. Usar cuando el cliente pide mover, cambiar, reprogramar o adelantar/atrasar una cita existente. El sistema valida que el nuevo horario este disponible antes de mover la cita.",
+      parameters: {
+        type: "object",
+        properties: {
+          fecha: { type: "string", description: "Nueva fecha en formato YYYY-MM-DD" },
+          hora: { type: "string", description: "Nueva hora en formato HH:MM 24hs" },
+        },
+        required: ["fecha", "hora"],
       },
     },
   },
@@ -182,7 +197,7 @@ Datos que ya tienes de este cliente (NO los vuelvas a preguntar, continua el flu
 ${datosConocidosDelLead(lead)}
 
 REGLAS DE CONVERSACION:
-- Si el cliente solo saluda ("hola", "buenas", etc.) o escribe su primer mensaje sin pedir nada especifico, NO respondas con un saludo generico tipo "¿en que puedo ayudarte?". Saluda brevemente y de inmediato arranca el flujo pidiendo el primer dato que falte (normalmente la zona) con opciones cerradas/numeradas.
+- Si este es el primer mensaje de la conversacion (el cliente recien saluda o escribe sin pedir algo especifico), NO arranques en frio pidiendo la zona de una. Primero date una presentacion breve y calida en 1-2 frases (quien eres, que ofrece ${business.nombreNegocio}, genera interes real, ej: menciona que hay propiedades disponibles para visitar ya mismo), y RECIEN despues de esa presentacion pasa a pedir el primer dato del flujo (zona) con opciones cerradas/numeradas. Nunca un saludo generico tipo "¿en que puedo ayudarte?" sin seguimiento, pero tampoco vayas directo a la pregunta fria sin presentarte antes.
 - Nunca hagas una pregunta abierta tipo "¿que buscas?" o "¿en que te puedo ayudar?". Siempre da opciones cerradas, numeradas o cortas para que el cliente elija rapido. Ejemplo correcto: "¿Que tipo de propiedad te interesa?\n1) Casa\n2) Departamento\n3) Terreno".
 - Cada respuesta avanza UN solo paso del flujo: una pregunta, una decision, un avance. Nunca varias preguntas distintas en el mismo mensaje.
 - Si el cliente menciona algo fuera de orden (por ejemplo dice el presupuesto antes de tiempo), guardalo igual con actualizar_datos_lead, agradece el dato, y sigue conduciendo desde el siguiente paso que falte del flujo (no le exijas que repita el orden, pero tu mantente ordenado).
@@ -209,9 +224,10 @@ REGLAS SOBRE EL INVENTARIO:
 - El bloque de propiedades de arriba ya viene filtrado por codigo segun zona, operacion y tipo del cliente (maximo 3). Es la UNICA fuente real, no existen otras. No inventes propiedades, precios, zonas, fotos o disponibilidad que no esten ahi.
 - Si con los filtros del cliente no hay ninguna propiedad que calce, NUNCA digas simplemente "no hay propiedades" o "no tengo nada". En vez de eso, reencuadra: ofrece ajustar un filtro (otra zona cercana, otro tipo, otro rango de presupuesto) y pregunta cual prefiere ajustar. Ejemplo: "Por ahora no tengo algo exacto con eso, pero podemos ajustar un poco la busqueda. ¿Te abririas a ver opciones en una zona cercana, o prefieres que te avise cuando entre algo asi?".
 - No cierres ventas directamente, tu rol es calificar al prospecto y agendar visitas reales o derivar a un asesor.
-- Usa derivar_a_asesor SOLO si: el cliente lo pide explicitamente, esta molesto o insiste, o la consulta esta totalmente fuera de tu alcance. Es la excepcion, no la regla.
+- Usa derivar_a_asesor SOLO si: el cliente lo pide explicitamente, esta molesto o insiste, o la consulta esta totalmente fuera de tu alcance (por ejemplo, tramites legales complejos). Es la excepcion, no la regla. IMPORTANTE: pedir mover, cambiar o reprogramar una visita ya agendada NUNCA es motivo para derivar a un asesor, eso se resuelve tu mismo con reprogramar_visita.
 - Cuando obtengas un dato nuevo del prospecto (zona, operacion, tipo, dormitorios, presupuesto, nombre, nivel de interes) llama a actualizar_datos_lead de inmediato.
-- Para agendar una visita: solo despues de que el cliente mostro interes claro en una propiedad puntual. Confirma la propiedad exacta (idPropiedad), la fecha y la hora en lenguaje natural, dentro del horario de atencion, y luego llama a agendar_visita. El sistema valida la disponibilidad real; si el horario no esta libre te lo va a indicar para que propongas otra opcion al cliente. No ofrezcas la visita antes de que haya interes real en una propiedad concreta.
+- Para agendar una visita NUEVA: solo despues de que el cliente mostro interes claro en una propiedad puntual. Confirma la propiedad exacta (idPropiedad), la fecha y la hora en lenguaje natural, dentro del horario de atencion, y luego llama a agendar_visita. El sistema valida la disponibilidad real; si el horario no esta libre te lo va a indicar para que propongas otra opcion al cliente. No ofrezcas la visita antes de que haya interes real en una propiedad concreta.
+- Si el cliente YA TENIA una visita agendada y pide moverla, cambiarla, adelantarla o atrasarla a otra fecha/hora, llama a reprogramar_visita con la nueva fecha y hora (NUNCA llames a agendar_visita de nuevo para esto, ni derives a un asesor). El sistema cancela automaticamente la cita anterior y la reemplaza por la nueva solo si el nuevo horario esta disponible; si no esta disponible, te lo va a indicar para que propongas otra opcion.
 - Si el cliente pide ver fotos de una propiedad, llama a enviar_fotos_propiedad con el idPropiedad exacto.
 - Cuando presentes una propiedad (maximo 3 a la vez), nunca la muestres como una ficha con viñetas tipo "- *Campo:* valor". Redactala en 2-3 frases naturales, como lo haria un asesor real explicando por que esa propiedad le conviene al cliente segun lo que ya te dijo: zona, beneficio concreto, y el precio mencionado de forma natural dentro del texto. Usa los datos exactos, pero nunca los pegues en formato de ficha.
 - Mantén las respuestas breves (maximo un par de parrafos cortos).`;
@@ -264,6 +280,51 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
     }
 
     return `Listo, tu visita a la propiedad ${propiedad.id} quedo agendada para el ${args.fecha} a las ${args.hora}. Te vamos a recordar por este mismo chat unas horas antes.`;
+  }
+
+  if (toolCall.function.name === "reprogramar_visita") {
+    const citaActiva = obtenerCitaActivaPorLead(numero);
+    if (!citaActiva) {
+      return "No encontre ninguna visita activa a tu nombre para reprogramar. ¿Quieres agendar una nueva?";
+    }
+
+    const { disponible, motivo } = verificarDisponibilidad(args.fecha, args.hora);
+    if (!disponible) {
+      return `Ese horario no esta disponible (${motivo}). Tu cita anterior sigue como estaba. ¿Quieres proponer otra fecha u hora?`;
+    }
+
+    actualizarEstadoCita(citaActiva.id, "cancelada");
+    if (GOOGLE_CALENDAR_HABILITADO && citaActiva.googleEventId) {
+      try {
+        await cancelarEventoVisita(citaActiva.googleEventId);
+      } catch (err) {
+        console.error("No se pudo cancelar el evento viejo en Google Calendar:", err.message);
+      }
+    }
+
+    const propiedad = obtenerPropiedad(citaActiva.propiedadId);
+    const lead = getOrCreateLead(numero);
+    const nuevaCita = crearCita({
+      idLead: numero,
+      nombre: lead.nombre,
+      whatsapp: numero,
+      propiedadId: citaActiva.propiedadId,
+      fecha: args.fecha,
+      hora: args.hora,
+    });
+
+    updateLead(numero, { fechaVisita: args.fecha, horaVisita: args.hora, estadoLead: ESTADOS_LEAD.VISITA_AGENDADA });
+
+    if (GOOGLE_CALENDAR_HABILITADO) {
+      try {
+        const evento = await crearEventoVisita({ nombre: lead.nombre, whatsapp: numero, propiedad, fecha: args.fecha, hora: args.hora });
+        if (evento?.id) guardarGoogleEventId(nuevaCita.id, evento.id);
+      } catch (err) {
+        console.error("No se pudo crear el evento en Google Calendar (la cita ya quedo guardada en el sistema):", err.message);
+      }
+    }
+
+    return `Listo, movi tu visita a la propiedad ${citaActiva.propiedadId} para el ${args.fecha} a las ${args.hora}. La fecha anterior quedo liberada.`;
   }
 
   if (toolCall.function.name === "enviar_fotos_propiedad") {
