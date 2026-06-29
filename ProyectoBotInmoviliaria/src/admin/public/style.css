@@ -138,6 +138,10 @@ select.estado-select option{background:var(--violet-700);color:var(--ink);}
 .login-form label{display:flex;flex-direction:column;gap:6px;font-size:.82rem;color:var(--ink-dim);font-weight:700;}
 .login-form input{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:11px 12px;color:var(--ink);font-family:inherit;font-size:.9rem;transition:border-color .15s,box-shadow .15s;}
 .login-form input:focus{outline:none;border-color:var(--mint);box-shadow:0 0 0 3px rgba(34,227,166,.18);}
+.login-clave-wrap{position:relative;display:flex;}
+.login-clave-wrap input{flex:1;padding-right:40px;}
+.btn-ver-clave{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--ink-dim);cursor:pointer;padding:6px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:color .15s;}
+.btn-ver-clave:hover{color:var(--mint);}
 .login-btn{width:100%;padding:12px;font-size:.9rem;margin-top:4px;}
 .login-error{background:rgba(255,90,90,.12);border:1px solid rgba(255,90,90,.3);color:#ff9a9a;border-radius:8px;padding:9px 12px;font-size:.8rem;}
 .login-error.hidden{display:none;}
