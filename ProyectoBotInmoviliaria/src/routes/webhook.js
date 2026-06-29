@@ -132,9 +132,24 @@ async function procesarMensaje(numero, texto) {
     }
   }
 
+  // Si en esta misma vuelta el modelo actualizo datos del lead (ej. corrigio
+  // la zona o la operacion), el texto que ya genero (respuestaIA.content) fue
+  // redactado mirando el catalogo ANTES de ese cambio, asi que puede sonar
+  // como "no hay nada" aunque el dato nuevo si tenga coincidencias reales.
+  // Se vuelve a generar el texto final (sin tools, solo para redactar) con el
+  // catalogo ya recalculado segun el lead actualizado.
+  const huboActualizacionLead = respuestaIA.tool_calls?.some((tc) => tc.function.name === "actualizar_datos_lead");
+  let contenidoFinal = respuestaIA.content;
+  if (huboActualizacionLead) {
+    const leadActualizado = getOrCreateLead(numero);
+    const promptActualizado = bot.systemPrompt(contexto, leadActualizado);
+    const segundaPasada = await generarRespuesta(historialParaIA, promptActualizado, []);
+    contenidoFinal = segundaPasada.content || contenidoFinal;
+  }
+
   const mensajesDeFuncionesUnicos = [...new Set(mensajesDeFunciones)];
   const textoFinal =
-    [respuestaIA.content, ...mensajesDeFuncionesUnicos].filter(Boolean).join("\n\n") ||
+    [contenidoFinal, ...mensajesDeFuncionesUnicos].filter(Boolean).join("\n\n") ||
     "Gracias por tu mensaje, lo estamos procesando.";
   appendHistorial(numero, "assistant", textoFinal);
   console.log(`<<< [${bot.id}] BOT:`, textoFinal);
