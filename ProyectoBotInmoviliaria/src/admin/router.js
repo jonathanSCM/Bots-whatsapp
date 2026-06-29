@@ -86,6 +86,17 @@ router.get("/api/leads/:id", (req, res) => {
   res.json(lead);
 });
 
+router.put("/api/leads/:id", (req, res) => {
+  const camposPermitidos = ["nombre", "tipoOperacion", "tipoPropiedad", "zonaInteres", "presupuesto", "dormitorios", "observaciones", "nivelInteres"];
+  const datos = {};
+  for (const campo of camposPermitidos) {
+    if (campo in req.body) datos[campo] = req.body[campo] === "" ? null : req.body[campo];
+  }
+  const lead = obtenerLeadPorId(req.params.id);
+  if (!lead) return res.status(404).json({ error: "Lead no encontrado" });
+  res.json(updateLead(req.params.id, datos));
+});
+
 router.post("/api/leads/:id/estado", (req, res) => {
   const { estado } = req.body;
   if (!Object.values(ESTADOS_LEAD).includes(estado)) return res.status(400).json({ error: "Estado invalido" });
