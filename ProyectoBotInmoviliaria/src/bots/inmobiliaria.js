@@ -69,10 +69,49 @@ const TOOLS = [
 ];
 
 function formatearPropiedades(propiedades) {
-  if (!propiedades.length) return "No hay propiedades cargadas actualmente en el sistema.";
   return propiedades
     .map((p) => `- [${p.id}] ${p.tipo} en ${p.operacion} - Zona: ${p.zona} - Precio: ${p.precio} - Dormitorios: ${p.dormitorios || "N/A"} - ${p.descripcion}`)
     .join("\n");
+}
+
+// Coincidencia flexible (no exact match): permite que "sur" matchee con
+// "Zona Sur", o "depa" con "Departamento", sin tener que adivinar el string
+// exacto que guardo el modelo en el lead.
+function coincideTexto(valorLead, valorPropiedad) {
+  if (!valorLead) return true;
+  const a = valorLead.toLowerCase().trim();
+  const b = (valorPropiedad || "").toLowerCase().trim();
+  return b.includes(a) || a.includes(b);
+}
+
+// Motor de busqueda real: el modelo NUNCA decide que propiedades mostrar
+// por su cuenta, solo ve el resultado ya filtrado por este codigo. Esto
+// bloquea a nivel de codigo (no solo de prompt) que se mezcle venta con
+// alquiler, que se muestren propiedades sin filtrar, o mas de 3 a la vez.
+function buscarPropiedadesFiltradas(propiedades, lead = {}) {
+  return propiedades
+    .filter(
+      (p) =>
+        (!lead.tipoOperacion || p.operacion === lead.tipoOperacion) &&
+        coincideTexto(lead.zonaInteres, p.zona) &&
+        coincideTexto(lead.tipoPropiedad, p.tipo)
+    )
+    .slice(0, 3);
+}
+
+function filtrosCompletos(lead = {}) {
+  return Boolean(lead.zonaInteres && lead.tipoOperacion && lead.tipoPropiedad);
+}
+
+function seccionPropiedades(propiedades, lead = {}) {
+  if (!filtrosCompletos(lead)) {
+    return "Todavia faltan datos del flujo (zona, operacion y/o tipo de propiedad) antes de poder buscar. NO menciones ni inventes ninguna propiedad ahora, sigue el flujo pidiendo el siguiente dato que falte.";
+  }
+  const resultados = buscarPropiedadesFiltradas(propiedades, lead);
+  if (!resultados.length) {
+    return "NINGUNA propiedad calza exactamente con los filtros actuales del cliente (zona/operacion/tipo). No digas simplemente que no hay nada: reencuadra ofreciendo ajustar un filtro (zona cercana, otro tipo, otro presupuesto).";
+  }
+  return `Estas son las UNICAS propiedades que puedes mostrar ahora (ya filtradas y limitadas a un maximo de 3, son las unicas reales que calzan con lo que pidio el cliente, no existen otras, NUNCA inventes ninguna):\n${formatearPropiedades(resultados)}`;
 }
 
 const NOMBRES_DIA = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
@@ -142,11 +181,10 @@ Informacion comercial disponible:
 - Requisitos para alquiler: ${business.requisitosAlquiler}
 - Requisitos para compra: ${business.requisitosCompra}
 
-Propiedades disponibles ahora mismo (esta es la UNICA fuente real de propiedades, no existen otras, NUNCA inventes ninguna):
-${formatearPropiedades(propiedades)}
+${seccionPropiedades(propiedades, lead)}
 
 REGLAS SOBRE EL INVENTARIO:
-- Solo puedes mencionar, describir u ofrecer las propiedades listadas arriba, con sus datos exactos. No inventes propiedades, precios, zonas, fotos o disponibilidad que no esten en esa lista.
+- El bloque de propiedades de arriba ya viene filtrado por codigo segun zona, operacion y tipo del cliente (maximo 3). Es la UNICA fuente real, no existen otras. No inventes propiedades, precios, zonas, fotos o disponibilidad que no esten ahi.
 - Si con los filtros del cliente no hay ninguna propiedad que calce, NUNCA digas simplemente "no hay propiedades" o "no tengo nada". En vez de eso, reencuadra: ofrece ajustar un filtro (otra zona cercana, otro tipo, otro rango de presupuesto) y pregunta cual prefiere ajustar. Ejemplo: "Por ahora no tengo algo exacto con eso, pero podemos ajustar un poco la busqueda. ¿Te abririas a ver opciones en una zona cercana, o prefieres que te avise cuando entre algo asi?".
 - No cierres ventas directamente, tu rol es calificar al prospecto y agendar visitas reales o derivar a un asesor.
 - Usa derivar_a_asesor SOLO si: el cliente lo pide explicitamente, esta molesto o insiste, o la consulta esta totalmente fuera de tu alcance. Es la excepcion, no la regla.
