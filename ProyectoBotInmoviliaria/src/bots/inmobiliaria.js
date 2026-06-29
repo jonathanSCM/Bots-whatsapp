@@ -88,12 +88,12 @@ function coincideTexto(valorLead, valorPropiedad) {
 // por su cuenta, solo ve el resultado ya filtrado por este codigo. Esto
 // bloquea a nivel de codigo (no solo de prompt) que se mezcle venta con
 // alquiler, que se muestren propiedades sin filtrar, o mas de 3 a la vez.
-function buscarPropiedadesFiltradas(propiedades, lead = {}) {
+function buscarPropiedadesFiltradas(propiedades, lead = {}, { ignorarZona = false } = {}) {
   return propiedades
     .filter(
       (p) =>
         (!lead.tipoOperacion || p.operacion === lead.tipoOperacion) &&
-        coincideTexto(lead.zonaInteres, p.zona) &&
+        (ignorarZona || coincideTexto(lead.zonaInteres, p.zona)) &&
         coincideTexto(lead.tipoPropiedad, p.tipo)
     )
     .slice(0, 3);
@@ -116,10 +116,21 @@ function seccionPropiedades(propiedades, lead = {}) {
     return `IMPORTANTE: aun NO se puede buscar en el catalogo porque falta el dato "${falta}". Esto NO significa que no haya inventario, significa que todavia no sabes que buscar. NUNCA digas que "no hay propiedades" ni "no tengo disponible" en este punto: tu unica respuesta correcta ahora es pedir ese dato que falta (${falta}) con opciones cerradas/numeradas, sin mencionar ninguna propiedad todavia.`;
   }
   const resultados = buscarPropiedadesFiltradas(propiedades, lead);
-  if (!resultados.length) {
-    return "NINGUNA propiedad calza exactamente con los filtros actuales del cliente (zona/operacion/tipo). No digas simplemente que no hay nada: reencuadra ofreciendo ajustar un filtro (zona cercana, otro tipo, otro presupuesto).";
+  if (resultados.length) {
+    return `Estas son las UNICAS propiedades que puedes mostrar ahora (ya filtradas y limitadas a un maximo de 3, son las unicas reales que calzan con lo que pidio el cliente, no existen otras, NUNCA inventes ninguna):\n${formatearPropiedades(resultados)}`;
   }
-  return `Estas son las UNICAS propiedades que puedes mostrar ahora (ya filtradas y limitadas a un maximo de 3, son las unicas reales que calzan con lo que pidio el cliente, no existen otras, NUNCA inventes ninguna):\n${formatearPropiedades(resultados)}`;
+
+  // No hay nada en la zona exacta: en vez de seguir preguntando "¿quieres ver
+  // otra zona?" en loop sin nunca mostrar nada, se busca relajando SOLO la
+  // zona (se mantiene operacion+tipo, que es lo que de verdad define lo que
+  // el cliente quiere) y se le exige al modelo mostrar esas alternativas de
+  // una vez, no seguir pidiendo permiso para ofrecerlas.
+  const alternativas = buscarPropiedadesFiltradas(propiedades, lead, { ignorarZona: true });
+  if (alternativas.length) {
+    return `No hay ninguna propiedad que calce en la zona "${lead.zonaInteres}" con esa operacion y tipo. PERO si hay estas opciones en otras zonas (mismo tipo y operacion que pidio el cliente, maximo 3, son reales, no inventes otras):\n${formatearPropiedades(alternativas)}\n\nMUESTRA estas opciones DIRECTAMENTE en tu respuesta (aclarando que son de otra zona), NO le preguntes primero si quiere ver otras zonas y esperes confirmacion: dale la informacion concreta de una vez, eso es lo que el cliente esta pidiendo.`;
+  }
+
+  return "NINGUNA propiedad calza ni siquiera relajando la zona (no hay ese tipo de propiedad con esa operacion en ninguna zona). No digas simplemente que no hay nada: reencuadra ofreciendo cambiar el tipo de propiedad o la operacion (venta/alquiler).";
 }
 
 const NOMBRES_DIA = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
@@ -177,6 +188,7 @@ REGLAS DE CONVERSACION:
 - Si el cliente menciona algo fuera de orden (por ejemplo dice el presupuesto antes de tiempo), guardalo igual con actualizar_datos_lead, agradece el dato, y sigue conduciendo desde el siguiente paso que falte del flujo (no le exijas que repita el orden, pero tu mantente ordenado).
 - Si el cliente cambia de idea sobre un filtro (ej. "mejor en otra zona"), ajusta SOLO ese filtro, no reinicies toda la conversacion ni vuelvas a preguntar lo que no cambio.
 - REGLA CRITICA: cuando el cliente mencione una zona, operacion (venta/alquiler), tipo de propiedad, dormitorios o presupuesto -aunque lo diga dentro de una pregunta, como "¿que departamentos en venta tienes?"- ESO es un dato a guardar. Llama a actualizar_datos_lead con ese valor nuevo ANTES de responder sobre disponibilidad, incluso si ya tenias guardado un valor distinto para ese mismo campo (el valor mas reciente que diga el cliente siempre reemplaza al anterior, asi haya cambiado de "casa en alquiler" a "departamento en venta" por ejemplo). Nunca respondas sobre que hay o no hay disponible usando un dato viejo cuando el cliente claramente acaba de cambiarlo.
+- Si no hay nada en la zona exacta pero el bloque de propiedades de abajo te da alternativas en otras zonas, MUESTRALAS de inmediato en tu respuesta (con sus datos reales). Nunca te quedes solo preguntando "¿quieres ver otra zona?" en bucle sin nunca entregar una opcion concreta: si tienes algo real que ofrecer, ofrecelo ya. Si el cliente insiste en la misma zona despues de que le mostraste que ahi no hay nada, no repitas la misma pregunta de ajuste: muestra de nuevo las alternativas reales que ya tienes, o pasa a ofrecer derivar_a_asesor si el cliente se frustra.
 - No muestres ninguna propiedad hasta tener al menos zona, operacion y tipo de propiedad confirmados. No muestres propiedades genericas ni fuera del filtro actual del cliente.
 - Cuando muestres opciones, nunca mas de 3 a la vez, y siempre filtradas por lo que el cliente ya indico.
 - No pidas datos sensibles innecesarios (solo nombre, contacto y preferencias de busqueda).
