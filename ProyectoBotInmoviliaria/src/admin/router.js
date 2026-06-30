@@ -16,6 +16,7 @@ const {
 } = require("../state/propiedadStore");
 const { obtenerHorario, actualizarHorario } = require("../state/disponibilidadStore");
 const { listarCitas, actualizarEstadoCita } = require("../state/citaStore");
+const { listarCategorias, crearCategoria, eliminarCategoria } = require("../state/categoriaStore");
 
 const UPLOADS_DIR = path.join(__dirname, "..", "..", "data", "uploads");
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -134,6 +135,21 @@ router.put("/api/propiedades/:id", upload.array("fotos", 8), async (req, res) =>
 router.delete("/api/propiedades/:id", (req, res) => {
   eliminarPropiedad(req.params.id);
   res.json({ ok: true });
+});
+
+// ---------- Categorias ----------
+router.get("/api/categorias", (_req, res) => res.json(listarCategorias()));
+
+router.post("/api/categorias", (req, res) => {
+  try {
+    res.json(crearCategoria(req.body.nombre));
+  } catch (err) {
+    res.status(400).json({ error: err.message.includes("UNIQUE") ? "Esa categoria ya existe" : err.message });
+  }
+});
+
+router.delete("/api/categorias/:id", (req, res) => {
+  res.json(eliminarCategoria(req.params.id));
 });
 
 // ---------- Disponibilidad ----------

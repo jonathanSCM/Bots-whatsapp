@@ -1,24 +1,28 @@
 let leads = [];
 let propiedadesCache = [];
+let categoriasCache = [];
 
 const DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
 // ---------- Carga general ----------
 async function cargarTodo() {
-  const [resumen, leadsRes, propiedades, citas, disponibilidad] = await Promise.all([
+  const [resumen, leadsRes, propiedades, citas, disponibilidad, categorias] = await Promise.all([
     fetch("api/resumen").then((r) => r.json()),
     fetch("api/leads").then((r) => r.json()),
     fetch("api/propiedades").then((r) => r.json()),
     fetch("api/citas").then((r) => r.json()),
     fetch("api/disponibilidad").then((r) => r.json()),
+    fetch("api/categorias").then((r) => r.json()),
   ]);
   leads = leadsRes;
   propiedadesCache = propiedades;
+  categoriasCache = categorias;
   renderStats(resumen);
   renderLeads(leads);
   renderPropiedades(propiedades);
   renderCitas(citas, propiedades);
   renderDisponibilidad(disponibilidad);
+  renderCategorias(categorias);
 }
 
 function renderStats(r) {
@@ -74,12 +78,17 @@ function abrirModalPropiedad(id) {
   const form = document.getElementById("form-propiedad");
   form.reset();
   document.getElementById("prop-fotos-existentes").innerHTML = "";
+  document.getElementById("prop-tipo").innerHTML = categoriasCache.map((c) => `<option value="${c.nombre}">${c.nombre}</option>`).join("");
 
   if (id) {
     const p = propiedadesCache.find((x) => x.id === id);
     document.getElementById("modal-propiedad-titulo").textContent = `Editar ${p.id}`;
     document.getElementById("prop-id").value = p.id;
-    document.getElementById("prop-tipo").value = p.tipo;
+    const selectTipo = document.getElementById("prop-tipo");
+    if (p.tipo && ![...selectTipo.options].some((o) => o.value === p.tipo)) {
+      selectTipo.insertAdjacentHTML("beforeend", `<option value="${p.tipo}">${p.tipo} (sin categoría)</option>`);
+    }
+    selectTipo.value = p.tipo;
     document.getElementById("prop-operacion").value = p.operacion;
     document.getElementById("prop-zona").value = p.zona;
     document.getElementById("prop-precio").value = p.precio;
@@ -307,6 +316,44 @@ document.getElementById("btn-guardar-disponibilidad").addEventListener("click", 
     body: JSON.stringify({ dias }),
   });
   alert("Horario guardado");
+});
+
+// ---------- Categorias ----------
+function renderCategorias(lista) {
+  document.getElementById("categorias-lista").innerHTML = lista
+    .map(
+      (c) => `
+    <div class="categoria-chip" data-id="${c.id}">
+      <span>${c.nombre}</span>
+      <button type="button" class="btn-borrar-categoria" data-id="${c.id}" title="Eliminar">✕</button>
+    </div>`
+    )
+    .join("");
+
+  document.querySelectorAll(".btn-borrar-categoria").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("¿Eliminar esta categoría? Las propiedades que ya la usan no se modifican.")) return;
+      await fetch(`api/categorias/${btn.dataset.id}`, { method: "DELETE" });
+      cargarTodo();
+    });
+  });
+}
+
+document.getElementById("form-categoria").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const input = document.getElementById("categoria-nombre");
+  const res = await fetch("api/categorias", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nombre: input.value }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    alert(data.error || "No se pudo crear la categoría");
+    return;
+  }
+  input.value = "";
+  cargarTodo();
 });
 
 document.getElementById("btn-logout").addEventListener("click", async () => {

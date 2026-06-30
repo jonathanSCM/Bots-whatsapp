@@ -67,6 +67,12 @@ db.exec(`
     horaInicio TEXT DEFAULT '09:00',
     horaFin TEXT DEFAULT '18:00'
   );
+
+  CREATE TABLE IF NOT EXISTS categorias (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL UNIQUE,
+    fechaCreacion TEXT
+  );
 `);
 
 // Migracion best-effort para bases de datos creadas antes de agregar estas columnas.
@@ -93,6 +99,17 @@ if (totalDias === 0) {
     [6, 1, "09:00", "13:00"], // sabado
   ];
   for (const fila of DEFAULTS) insertDia.run(...fila);
+}
+
+// Semilla de categorias por defecto (los tipos de propiedad que ya existian
+// como texto libre antes de tener este catalogo).
+const totalCategorias = db.prepare("SELECT COUNT(*) AS n FROM categorias").get().n;
+if (totalCategorias === 0) {
+  const insertCategoria = db.prepare("INSERT INTO categorias (nombre, fechaCreacion) VALUES (?, ?)");
+  const fecha = new Date().toISOString();
+  for (const nombre of ["Casa", "Departamento", "Terreno", "Local comercial", "Oficina", "Duplex"]) {
+    insertCategoria.run(nombre, fecha);
+  }
 }
 
 module.exports = db;

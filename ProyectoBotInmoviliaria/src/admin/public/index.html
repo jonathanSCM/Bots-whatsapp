@@ -27,6 +27,7 @@
     <button class="tab" data-tab="citas">Citas</button>
     <button class="tab" data-tab="leads">Leads</button>
     <button class="tab" data-tab="disponibilidad">Disponibilidad</button>
+    <button class="tab" data-tab="categorias">Categorías</button>
   </nav>
 
   <!-- PROPIEDADES -->
@@ -74,6 +75,18 @@
     <button class="btn-primary" id="btn-guardar-disponibilidad">Guardar horario</button>
   </section>
 
+  <!-- CATEGORIAS -->
+  <section id="panel-categorias" class="panel hidden">
+    <div class="panel-head">
+      <h2>Categorías de propiedad</h2>
+    </div>
+    <form id="form-categoria" class="form-categoria">
+      <input type="text" id="categoria-nombre" placeholder="Nombre de la categoría, ej: Penthouse" required>
+      <button type="submit" class="btn-primary">+ Añadir</button>
+    </form>
+    <div class="categorias-lista" id="categorias-lista"></div>
+  </section>
+
 </main>
 
 <!-- Modal lead -->
@@ -109,7 +122,7 @@
     <h3 id="modal-propiedad-titulo">Nueva propiedad</h3>
     <form id="form-propiedad" class="form-propiedad">
       <input type="hidden" id="prop-id">
-      <label>Tipo <input type="text" id="prop-tipo" placeholder="departamento, casa, terreno..." required></label>
+      <label>Tipo <select id="prop-tipo" required></select></label>
       <label>Operación
         <select id="prop-operacion" required>
           <option value="venta">Venta</option>
