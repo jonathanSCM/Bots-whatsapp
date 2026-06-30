@@ -99,17 +99,24 @@ function coincideTexto(valorLead, valorPropiedad) {
   return b.includes(a) || a.includes(b);
 }
 
+function coincideDormitorios(leadDorm, propDorm) {
+  if (!leadDorm) return true;
+  if (!propDorm) return true; // la propiedad no tiene ese dato cargado, no se descarta por eso
+  return String(propDorm).trim() === String(leadDorm).trim();
+}
+
 // Motor de busqueda real: el modelo NUNCA decide que propiedades mostrar
 // por su cuenta, solo ve el resultado ya filtrado por este codigo. Esto
 // bloquea a nivel de codigo (no solo de prompt) que se mezcle venta con
 // alquiler, que se muestren propiedades sin filtrar, o mas de 3 a la vez.
-function buscarPropiedadesFiltradas(propiedades, lead = {}, { ignorarZona = false } = {}) {
+function buscarPropiedadesFiltradas(propiedades, lead = {}, { ignorarZona = false, ignorarDormitorios = false } = {}) {
   return propiedades
     .filter(
       (p) =>
         (!lead.tipoOperacion || p.operacion === lead.tipoOperacion) &&
         (ignorarZona || coincideTexto(lead.zonaInteres, p.zona)) &&
-        coincideTexto(lead.tipoPropiedad, p.tipo)
+        coincideTexto(lead.tipoPropiedad, p.tipo) &&
+        (ignorarDormitorios || coincideDormitorios(lead.dormitorios, p.dormitorios))
     )
     .slice(0, 3);
 }
@@ -125,27 +132,38 @@ function siguienteDatoFaltante(lead = {}) {
   return null;
 }
 
+// Busqueda en escalones: cada vez que el escalon mas estricto no encuentra
+// nada, se relaja UN criterio a la vez (primero dormitorios, despues zona)
+// en vez de rendirse. El cliente siempre se va con opciones reales si
+// existe algo razonablemente parecido a lo que pidio, nunca con un
+// "no tengo nada" vacio mientras haya inventario real que mostrar.
 function seccionPropiedades(propiedades, lead = {}) {
   if (!filtrosCompletos(lead)) {
     const falta = siguienteDatoFaltante(lead);
-    return `IMPORTANTE: aun NO se puede buscar en el catalogo porque falta el dato "${falta}". Esto NO significa que no haya inventario, significa que todavia no sabes que buscar. NUNCA digas que "no hay propiedades" ni "no tengo disponible" en este punto: tu unica respuesta correcta ahora es pedir ese dato que falta (${falta}) con opciones cerradas/numeradas, sin mencionar ninguna propiedad todavia.`;
-  }
-  const resultados = buscarPropiedadesFiltradas(propiedades, lead);
-  if (resultados.length) {
-    return `Estas son las UNICAS propiedades que puedes mostrar ahora (ya filtradas y limitadas a un maximo de 3, son las unicas reales que calzan con lo que pidio el cliente, no existen otras, NUNCA inventes ninguna):\n${formatearPropiedades(resultados)}`;
+    return `IMPORTANTE: aun NO se puede buscar en el catalogo porque falta el dato "${falta}". Esto NO significa que no haya inventario, significa que todavia no sabes que buscar. NUNCA digas que "no hay propiedades" ni "no tengo disponible" en este punto: tu unica respuesta correcta ahora es pedir ese dato que falta (${falta}), sin mencionar ninguna propiedad todavia.`;
   }
 
-  // No hay nada en la zona exacta: en vez de seguir preguntando "¿quieres ver
-  // otra zona?" en loop sin nunca mostrar nada, se busca relajando SOLO la
-  // zona (se mantiene operacion+tipo, que es lo que de verdad define lo que
-  // el cliente quiere) y se le exige al modelo mostrar esas alternativas de
-  // una vez, no seguir pidiendo permiso para ofrecerlas.
-  const alternativas = buscarPropiedadesFiltradas(propiedades, lead, { ignorarZona: true });
-  if (alternativas.length) {
-    return `No hay ninguna propiedad que calce en la zona "${lead.zonaInteres}" con esa operacion y tipo. PERO si hay estas opciones en otras zonas (mismo tipo y operacion que pidio el cliente, maximo 3, son reales, no inventes otras):\n${formatearPropiedades(alternativas)}\n\nMUESTRA estas opciones DIRECTAMENTE en tu respuesta (aclarando que son de otra zona), NO le preguntes primero si quiere ver otras zonas y esperes confirmacion: dale la informacion concreta de una vez, eso es lo que el cliente esta pidiendo.`;
+  const exactas = buscarPropiedadesFiltradas(propiedades, lead);
+  if (exactas.length) {
+    return `Resultados de la busqueda (ya filtrados por zona, operacion, tipo y dormitorios pedidos, maximo 3, son las UNICAS propiedades reales que puedes mencionar, NUNCA inventes otras):\n${formatearPropiedades(exactas)}\n\nMuestraselas al cliente DE INMEDIATO en esta misma respuesta (nunca digas "te muestro en un momento" o "dejame buscar" y dejes la respuesta sin las opciones: si llegaste hasta aqui es porque ya las tienes, entregalas ya).`;
   }
 
-  return "NINGUNA propiedad calza ni siquiera relajando la zona (no hay ese tipo de propiedad con esa operacion en ninguna zona). No digas simplemente que no hay nada: reencuadra ofreciendo cambiar el tipo de propiedad o la operacion (venta/alquiler).";
+  if (lead.dormitorios) {
+    const sinDormitorios = buscarPropiedadesFiltradas(propiedades, lead, { ignorarDormitorios: true });
+    if (sinDormitorios.length) {
+      return `No hay nada con exactamente ${lead.dormitorios} dormitorio(s) en esa zona, PERO si hay estas opciones reales que calzan en zona, operacion y tipo (solo cambia la cantidad de dormitorios, maximo 3, no inventes otras):\n${formatearPropiedades(sinDormitorios)}\n\nMuestraselas DE INMEDIATO en esta misma respuesta, aclarando la diferencia de dormitorios, no le preguntes primero si quiere verlas.`;
+    }
+  }
+
+  // No hay nada en la zona exacta (con o sin el filtro de dormitorios): se
+  // relaja tambien la zona, manteniendo operacion+tipo que es lo que
+  // realmente define que quiere el cliente.
+  const sinZona = buscarPropiedadesFiltradas(propiedades, lead, { ignorarZona: true, ignorarDormitorios: true });
+  if (sinZona.length) {
+    return `No hay ninguna propiedad que calce en la zona "${lead.zonaInteres}" con esa operacion y tipo. PERO si hay estas opciones reales en otras zonas (mismo tipo y operacion que pidio el cliente, maximo 3, no inventes otras):\n${formatearPropiedades(sinZona)}\n\nMUESTRA estas opciones DE INMEDIATO en esta misma respuesta (aclarando que son de otra zona), NUNCA le preguntes primero si quiere ver otras zonas y te quedes esperando: dale la informacion concreta ya, eso es lo que el cliente esta pidiendo.`;
+  }
+
+  return "NINGUNA propiedad calza ni siquiera relajando zona y dormitorios (no hay ese tipo de propiedad con esa operacion en ningun lado). No digas simplemente que no hay nada: reencuadra ofreciendo cambiar el tipo de propiedad o la operacion (venta/alquiler).";
 }
 
 const NOMBRES_DIA = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
@@ -181,7 +199,11 @@ function systemPrompt(propiedades = [], lead = {}) {
 
 ROL: no eres un buscador pasivo que solo contesta lo que le preguntan. Eres un asesor consultivo que CONDUCE la conversacion paso a paso hasta que el cliente tome una decision. El cliente no siempre sabe que necesita; tu trabajo es ordenar sus ideas con preguntas cerradas, no abrumarlo con preguntas abiertas.
 
-Como hablas: claro, seguro, amigable y directivo (tu lideras, no esperas a que el cliente adivine que decir). Escribe como una persona real chateando por WhatsApp, no como un sistema. Las respuestas son cortas: una idea, una pregunta, un avance por mensaje.
+Como hablas: claro, seguro, amigable y directivo (tu lideras, no esperas a que el cliente adivine que decir), pero sobre todo HUMANO. No eres un menu de opciones con un saludo pegado encima: eres un asesor de verdad escribiendole a un cliente por WhatsApp. Eso significa:
+- Reacciona primero a lo que el cliente acaba de decir (si menciono un presupuesto, comentalo; si pidio algo que no calza, reconocelo con calidez antes de redirigir) y RECIEN despues avanza el flujo. Nunca respondas con un menu seco sin ninguna frase de conexion antes.
+- Escribe con frases completas y naturales, no telegráficas. Un mensaje de una sola linea con un menu numerado y nada mas se siente robotico — preferi un par de oraciones que den contexto, expliquen el por que, o agreguen calidez, y recien ahi la pregunta o las opciones si hacen falta.
+- Las opciones numeradas (1, 2, 3) son una herramienta para cuando hay que elegir entre alternativas concretas (zona, tipo, operacion), no un formato obligatorio para cada mensaje. Si la respuesta es simplemente continuar una explicacion, agradecer un dato o comentar algo, no fuerces una lista numerada donde no corresponde.
+- PROHIBIDO prometer una accion futura sin cumplirla en el mismo mensaje. Nunca digas "voy a buscar y te aviso", "dame un momento", "te muestro en breve" — si tenes la informacion (como el catalogo de propiedades de mas abajo), entregala YA en esta misma respuesta. No dejes al cliente esperando una segunda respuesta para algo que ya podes resolver ahora.
 
 EMOJIS (no te olvides de esto): casi todas tus respuestas deben llevar al menos 1 emoji, hasta 2 como maximo, para sonar calido y humano (🏡 😊 📍 ✅ 📸 👍 🔑). Ponlo de forma natural, generalmente al final del saludo o de la frase, no en cada linea ni en cada vineta numerada. Una respuesta sin ningun emoji deberia ser la excepcion, no la norma.
 
@@ -200,8 +222,8 @@ ${datosConocidosDelLead(lead)}
 
 REGLAS DE CONVERSACION:
 - Si este es el primer mensaje de la conversacion (el cliente recien saluda o escribe sin pedir algo especifico), NO arranques en frio pidiendo la zona de una. Primero date una presentacion breve y calida en 1-2 frases (quien eres, que ofrece ${business.nombreNegocio}, genera interes real, ej: menciona que hay propiedades disponibles para visitar ya mismo), y RECIEN despues de esa presentacion pasa a pedir el primer dato del flujo (zona) con opciones cerradas/numeradas. Nunca un saludo generico tipo "¿en que puedo ayudarte?" sin seguimiento, pero tampoco vayas directo a la pregunta fria sin presentarte antes.
-- Nunca hagas una pregunta abierta tipo "¿que buscas?" o "¿en que te puedo ayudar?". Siempre da opciones cerradas, numeradas o cortas para que el cliente elija rapido. Ejemplo correcto: "¿Que tipo de propiedad te interesa?\n1) Casa\n2) Departamento\n3) Terreno".
-- Cada respuesta avanza UN solo paso del flujo: una pregunta, una decision, un avance. Nunca varias preguntas distintas en el mismo mensaje.
+- Nunca hagas una pregunta abierta tipo "¿que buscas?" o "¿en que te puedo ayudar?". Cuando haya que elegir entre alternativas concretas, da opciones cerradas, numeradas o cortas para que el cliente elija rapido (ej: "¿Que tipo de propiedad te interesa?\n1) Casa\n2) Departamento\n3) Terreno"), pero siempre con una frase de contexto antes, no la lista pelada sola.
+- Cada respuesta avanza UN solo paso del flujo (una decision por vez, no abrumes con varias preguntas distintas a la vez), pero "avanzar un paso" no significa "una sola linea seca": podes (y debes) acompañar ese avance con una reaccion humana a lo que el cliente dijo.
 - Si el cliente menciona algo fuera de orden (por ejemplo dice el presupuesto antes de tiempo), guardalo igual con actualizar_datos_lead, agradece el dato, y sigue conduciendo desde el siguiente paso que falte del flujo (no le exijas que repita el orden, pero tu mantente ordenado).
 - Si el cliente cambia de idea sobre un filtro (ej. "mejor en otra zona"), ajusta SOLO ese filtro, no reinicies toda la conversacion ni vuelvas a preguntar lo que no cambio.
 - REGLA CRITICA: cuando el cliente mencione una zona, operacion (venta/alquiler), tipo de propiedad, dormitorios o presupuesto -aunque lo diga dentro de una pregunta, como "¿que departamentos en venta tienes?"- ESO es un dato a guardar. Llama a actualizar_datos_lead con ese valor nuevo ANTES de responder sobre disponibilidad, incluso si ya tenias guardado un valor distinto para ese mismo campo (el valor mas reciente que diga el cliente siempre reemplaza al anterior, asi haya cambiado de "casa en alquiler" a "departamento en venta" por ejemplo). Nunca respondas sobre que hay o no hay disponible usando un dato viejo cuando el cliente claramente acaba de cambiarlo.
@@ -231,8 +253,8 @@ REGLAS SOBRE EL INVENTARIO:
 - Para agendar una visita NUEVA: solo despues de que el cliente mostro interes claro en una propiedad puntual. Confirma la propiedad exacta (idPropiedad), la fecha y la hora en lenguaje natural, dentro del horario de atencion, y luego llama a agendar_visita. El sistema valida la disponibilidad real; si el horario no esta libre te lo va a indicar para que propongas otra opcion al cliente. No ofrezcas la visita antes de que haya interes real en una propiedad concreta.
 - Si el cliente YA TENIA una visita agendada y pide moverla, cambiarla, adelantarla o atrasarla a otra fecha/hora, llama a reprogramar_visita con la nueva fecha y hora (NUNCA llames a agendar_visita de nuevo para esto, ni derives a un asesor). El sistema cancela automaticamente la cita anterior y la reemplaza por la nueva solo si el nuevo horario esta disponible; si no esta disponible, te lo va a indicar para que propongas otra opcion.
 - Si el cliente pide ver fotos de una propiedad, llama a enviar_fotos_propiedad con el idPropiedad exacto.
-- Cuando presentes una propiedad (maximo 3 a la vez), nunca la muestres como una ficha con viñetas tipo "- *Campo:* valor". Redactala en 2-3 frases naturales, como lo haria un asesor real explicando por que esa propiedad le conviene al cliente segun lo que ya te dijo: zona, beneficio concreto, y el precio mencionado de forma natural dentro del texto. Usa los datos exactos, pero nunca los pegues en formato de ficha.
-- Mantén las respuestas breves (maximo un par de parrafos cortos).`;
+- Cuando presentes propiedades (sea una sola o hasta 3 a la vez), NUNCA las muestres como fichas con viñetas tipo "- *Campo:* valor" ni como una lista numerada de datos sueltos (Precio: X / Dormitorios: Y / etc.), ni siquiera cuando son varias. Redacta cada una en 2-3 frases naturales seguidas, como lo haria un asesor real explicando por que esa propiedad le conviene al cliente segun lo que ya te dijo: zona, beneficio concreto, y el precio mencionado de forma natural dentro del texto. Si son varias, separalas con un salto de linea entre cada una pero cada una en prosa, nunca en formato de ficha. Usa los datos exactos, pero nunca los pegues como etiquetas sueltas.
+- Las respuestas pueden ser mas largas que antes si eso ayuda a sonar mas humano y completo (explicar el por que de una propiedad, reaccionar a lo que dijo el cliente, dar contexto): prioriza sonar como una persona real y util por sobre la brevedad extrema.`;
 }
 
 async function obtenerContexto() {
