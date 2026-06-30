@@ -36,6 +36,21 @@
       <h2>Propiedades</h2>
       <button class="btn-primary" id="btn-nueva-propiedad">+ Nueva propiedad</button>
     </div>
+    <div class="filtros-propiedades">
+      <input type="text" id="filtro-prop-busqueda" placeholder="Buscar por ID, zona o descripción...">
+      <select id="filtro-prop-tipo"><option value="">Todos los tipos</option></select>
+      <select id="filtro-prop-operacion">
+        <option value="">Venta o alquiler</option>
+        <option value="venta">Venta</option>
+        <option value="alquiler">Alquiler</option>
+      </select>
+      <select id="filtro-prop-estado">
+        <option value="">Cualquier estado</option>
+        <option value="disponible">Disponible</option>
+        <option value="reservada">Reservada</option>
+        <option value="vendida">Vendida/Alquilada</option>
+      </select>
+    </div>
     <div class="cards-grid" id="grid-propiedades"></div>
   </section>
 

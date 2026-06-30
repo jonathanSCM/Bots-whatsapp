@@ -19,10 +19,17 @@ async function cargarTodo() {
   categoriasCache = categorias;
   renderStats(resumen);
   renderLeads(leads);
-  renderPropiedades(propiedades);
   renderCitas(citas, propiedades);
   renderDisponibilidad(disponibilidad);
   renderCategorias(categorias);
+
+  const selectFiltroTipo = document.getElementById("filtro-prop-tipo");
+  const tipoSeleccionado = selectFiltroTipo.value;
+  selectFiltroTipo.innerHTML =
+    `<option value="">Todos los tipos</option>` + categorias.map((c) => `<option value="${c.nombre}">${c.nombre}</option>`).join("");
+  selectFiltroTipo.value = tipoSeleccionado;
+
+  aplicarFiltrosPropiedades();
 }
 
 function renderStats(r) {
@@ -72,6 +79,33 @@ function renderPropiedades(lista) {
     card.addEventListener("click", () => abrirModalPropiedad(card.dataset.id));
   });
 }
+
+function aplicarFiltrosPropiedades() {
+  const texto = document.getElementById("filtro-prop-busqueda").value.toLowerCase().trim();
+  const tipo = document.getElementById("filtro-prop-tipo").value;
+  const operacion = document.getElementById("filtro-prop-operacion").value;
+  const estado = document.getElementById("filtro-prop-estado").value;
+
+  const filtradas = propiedadesCache.filter((p) => {
+    if (tipo && p.tipo !== tipo) return false;
+    if (operacion && p.operacion !== operacion) return false;
+    if (estado && p.estado !== estado) return false;
+    if (texto) {
+      const haystack = `${p.id} ${p.zona} ${p.descripcion || ""}`.toLowerCase();
+      if (!haystack.includes(texto)) return false;
+    }
+    return true;
+  });
+
+  renderPropiedades(filtradas);
+}
+
+["input", "change"].forEach((evento) => {
+  document.getElementById("filtro-prop-busqueda").addEventListener(evento, aplicarFiltrosPropiedades);
+  document.getElementById("filtro-prop-tipo").addEventListener(evento, aplicarFiltrosPropiedades);
+  document.getElementById("filtro-prop-operacion").addEventListener(evento, aplicarFiltrosPropiedades);
+  document.getElementById("filtro-prop-estado").addEventListener(evento, aplicarFiltrosPropiedades);
+});
 
 function abrirModalPropiedad(id) {
   const modal = document.getElementById("modal-propiedad");

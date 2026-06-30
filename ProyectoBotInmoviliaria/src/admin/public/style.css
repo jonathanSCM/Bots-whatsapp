@@ -101,6 +101,19 @@ select.estado-select option{background:var(--violet-700);color:var(--ink);}
 .btn-primary:hover{filter:brightness(1.05);}
 .btn-danger{background:rgba(255,90,90,.15);color:#ff9a9a;border:1px solid rgba(255,90,90,.3);padding:8px 14px;border-radius:8px;font-weight:700;font-size:.78rem;cursor:pointer;font-family:inherit;}
 
+.filtros-propiedades{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
+.filtros-propiedades input{flex:1;min-width:220px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:10px 14px;color:var(--ink);font-family:inherit;font-size:.85rem;transition:border-color .15s,box-shadow .15s;}
+.filtros-propiedades input::placeholder{color:var(--ink-dim);}
+.filtros-propiedades input:focus{outline:none;border-color:var(--mint);box-shadow:0 0 0 3px rgba(34,227,166,.18);}
+.filtros-propiedades select{
+  appearance:none;-webkit-appearance:none;
+  background-color:rgba(255,255,255,.06);background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="%23cdb9ec" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  background-repeat:no-repeat;background-position:right 12px center;
+  border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:10px 32px 10px 14px;color:var(--ink);font-family:inherit;font-size:.85rem;cursor:pointer;transition:border-color .15s,box-shadow .15s;
+}
+.filtros-propiedades select:focus{outline:none;border-color:var(--mint);box-shadow:0 0 0 3px rgba(34,227,166,.18);}
+.filtros-propiedades select option{background:var(--violet-700);color:var(--ink);}
+
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
 .prop-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:border-color .2s;}
 .prop-card:hover{border-color:rgba(34,227,166,.4);}
@@ -116,6 +129,13 @@ select.estado-select option{background:var(--violet-700);color:var(--ink);}
 .form-propiedad input, .form-propiedad select, .form-propiedad textarea{
   background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:9px 10px;color:var(--ink);font-family:inherit;font-size:.85rem;
 }
+.form-propiedad select{
+  appearance:none;-webkit-appearance:none;
+  background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="%23cdb9ec" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;cursor:pointer;
+}
+.form-propiedad select option{background:var(--violet-700);color:var(--ink);}
+.form-propiedad select:focus{outline:none;border-color:var(--mint);box-shadow:0 0 0 3px rgba(34,227,166,.18);}
 .fotos-existentes{display:flex;gap:8px;flex-wrap:wrap;}
 .fotos-existentes img{width:60px;height:60px;object-fit:cover;border-radius:6px;}
 
