@@ -109,15 +109,25 @@ function coincideDormitorios(leadDorm, propDorm) {
 // por su cuenta, solo ve el resultado ya filtrado por este codigo. Esto
 // bloquea a nivel de codigo (no solo de prompt) que se mezcle venta con
 // alquiler, que se muestren propiedades sin filtrar, o mas de 3 a la vez.
+// Busca en zona primero, y si no encuentra, busca en descripcion tambien
+// (para que "Av. Banzer" encuentre propiedades aunque ese sea un detalle
+// de la descripcion, no la zona macro).
 function buscarPropiedadesFiltradas(propiedades, lead = {}, { ignorarZona = false, ignorarDormitorios = false } = {}) {
   return propiedades
-    .filter(
-      (p) =>
-        (!lead.tipoOperacion || p.operacion === lead.tipoOperacion) &&
-        (ignorarZona || coincideTexto(lead.zonaInteres, p.zona)) &&
-        coincideTexto(lead.tipoPropiedad, p.tipo) &&
-        (ignorarDormitorios || coincideDormitorios(lead.dormitorios, p.dormitorios))
-    )
+    .filter((p) => {
+      if (lead.tipoOperacion && p.operacion !== lead.tipoOperacion) return false;
+      if (!coincideTexto(lead.tipoPropiedad, p.tipo)) return false;
+      if (!ignorarDormitorios && !coincideDormitorios(lead.dormitorios, p.dormitorios)) return false;
+
+      // Zona: busca en zona macro primero, y si no coincide, busca en descripcion
+      if (!ignorarZona && lead.zonaInteres) {
+        const coincideEnZona = coincideTexto(lead.zonaInteres, p.zona);
+        const coincideEnDescripcion = coincideTexto(lead.zonaInteres, p.descripcion || "");
+        if (!coincideEnZona && !coincideEnDescripcion) return false;
+      }
+
+      return true;
+    })
     .slice(0, 3);
 }
 
