@@ -303,23 +303,23 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
   const { numero, getOrCreateLead, updateLead, ESTADOS_LEAD } = helpers;
 
   if (toolCall.function.name === "actualizar_datos_lead") {
-    updateLead(numero, { ...args, estadoLead: ESTADOS_LEAD.EN_CONVERSACION });
+    await updateLead(numero, { ...args, estadoLead: ESTADOS_LEAD.EN_CONVERSACION });
     return null;
   }
 
   if (toolCall.function.name === "agendar_visita") {
-    const propiedad = obtenerPropiedad(args.idPropiedad);
+    const propiedad = await obtenerPropiedad(args.idPropiedad);
     if (!propiedad) {
       return `No encontre la propiedad ${args.idPropiedad}. Revisemos cual es la que te interesa.`;
     }
 
-    const { disponible, motivo } = verificarDisponibilidad(args.fecha, args.hora);
+    const { disponible, motivo } = await verificarDisponibilidad(args.fecha, args.hora);
     if (!disponible) {
       return `Ese horario no esta disponible (${motivo}). ¿Quieres proponer otra fecha u hora dentro de nuestro horario de atencion?`;
     }
 
-    const lead = getOrCreateLead(numero);
-    const cita = crearCita({
+    const lead = await getOrCreateLead(numero);
+    const cita = await crearCita({
       idLead: numero,
       nombre: lead.nombre,
       whatsapp: numero,
@@ -328,7 +328,7 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
       hora: args.hora,
     });
 
-    updateLead(numero, { fechaVisita: args.fecha, horaVisita: args.hora, estadoLead: ESTADOS_LEAD.VISITA_AGENDADA });
+    await updateLead(numero, { fechaVisita: args.fecha, horaVisita: args.hora, estadoLead: ESTADOS_LEAD.VISITA_AGENDADA });
 
     if (GOOGLE_CALENDAR_HABILITADO) {
       try {
@@ -343,17 +343,17 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
   }
 
   if (toolCall.function.name === "reprogramar_visita") {
-    const citaActiva = obtenerCitaActivaPorLead(numero);
+    const citaActiva = await obtenerCitaActivaPorLead(numero);
     if (!citaActiva) {
       return "No encontre ninguna visita activa a tu nombre para reprogramar. ¿Quieres agendar una nueva?";
     }
 
-    const { disponible, motivo } = verificarDisponibilidad(args.fecha, args.hora);
+    const { disponible, motivo } = await verificarDisponibilidad(args.fecha, args.hora);
     if (!disponible) {
       return `Ese horario no esta disponible (${motivo}). Tu cita anterior sigue como estaba. ¿Quieres proponer otra fecha u hora?`;
     }
 
-    actualizarEstadoCita(citaActiva.id, "cancelada");
+    await actualizarEstadoCita(citaActiva.id, "cancelada");
     if (GOOGLE_CALENDAR_HABILITADO && citaActiva.googleEventId) {
       try {
         await cancelarEventoVisita(citaActiva.googleEventId);
@@ -362,9 +362,9 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
       }
     }
 
-    const propiedad = obtenerPropiedad(citaActiva.propiedadId);
-    const lead = getOrCreateLead(numero);
-    const nuevaCita = crearCita({
+    const propiedad = await obtenerPropiedad(citaActiva.propiedadId);
+    const lead = await getOrCreateLead(numero);
+    const nuevaCita = await crearCita({
       idLead: numero,
       nombre: lead.nombre,
       whatsapp: numero,
@@ -373,7 +373,7 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
       hora: args.hora,
     });
 
-    updateLead(numero, { fechaVisita: args.fecha, horaVisita: args.hora, estadoLead: ESTADOS_LEAD.VISITA_AGENDADA });
+    await updateLead(numero, { fechaVisita: args.fecha, horaVisita: args.hora, estadoLead: ESTADOS_LEAD.VISITA_AGENDADA });
 
     if (GOOGLE_CALENDAR_HABILITADO) {
       try {
@@ -388,7 +388,7 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
   }
 
   if (toolCall.function.name === "enviar_fotos_propiedad") {
-    const propiedad = contexto.find((p) => p.id === args.idPropiedad) || obtenerPropiedad(args.idPropiedad);
+    const propiedad = contexto.find((p) => p.id === args.idPropiedad) || (await obtenerPropiedad(args.idPropiedad));
     if (!propiedad) return "No encontre esa propiedad para mostrarte las fotos.";
     if (!propiedad.fotos?.length) return `Por ahora no tengo fotos cargadas de la propiedad ${propiedad.id}, pero puedo darte mas detalles.`;
 
