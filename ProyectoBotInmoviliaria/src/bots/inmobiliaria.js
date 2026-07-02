@@ -90,13 +90,34 @@ function formatearPropiedades(propiedades) {
 }
 
 // Coincidencia flexible (no exact match): permite que "sur" matchee con
-// "Zona Sur", o "depa" con "Departamento", sin tener que adivinar el string
-// exacto que guardo el modelo en el lead.
+// "Zona Sur", "depa" con "Departamento", o "avenida banzer" con "Av. Banzer",
+// sin tener que adivinar el string exacto que guardo el modelo en el lead.
+// Se compara por palabras clave: se normaliza (acentos, puntuacion) y se
+// descartan palabras genericas de direcciones ("av", "avenida", "calle",
+// "zona", articulos) que hacen fallar la comparacion literal.
+const PALABRAS_GENERICAS = new Set([
+  "av", "avda", "avenida", "calle", "c", "zona", "barrio", "urbanizacion", "urb",
+  "la", "el", "de", "del", "los", "las", "en", "por",
+]);
+
+function palabrasClave(texto) {
+  return (texto || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // quita acentos
+    .replace(/[^a-z0-9ñ\s]/g, " ") // quita puntuacion ("av." -> "av")
+    .split(/\s+/)
+    .filter((p) => p.length > 1 && !PALABRAS_GENERICAS.has(p));
+}
+
 function coincideTexto(valorLead, valorPropiedad) {
   if (!valorLead) return true;
-  const a = valorLead.toLowerCase().trim();
-  const b = (valorPropiedad || "").toLowerCase().trim();
-  return b.includes(a) || a.includes(b);
+  const clavesLead = palabrasClave(valorLead);
+  const clavesProp = palabrasClave(valorPropiedad);
+  if (!clavesLead.length) return true; // el lead solo dijo genericos ("la zona"), no filtra
+  // Todas las palabras clave del lead deben aparecer (o ser prefijo/contener)
+  // en alguna palabra de la propiedad: "banzer" ⊂ "banzer", "depa" ⊂ "departamento".
+  return clavesLead.every((a) => clavesProp.some((b) => b.includes(a) || a.includes(b)));
 }
 
 function coincideDormitorios(leadDorm, propDorm) {
