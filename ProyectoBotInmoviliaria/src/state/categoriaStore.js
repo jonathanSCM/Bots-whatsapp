@@ -1,4 +1,4 @@
-const db = require("./db");
+const { db } = require("./db");
 
 function listarCategorias() {
   return db.prepare("SELECT * FROM categorias ORDER BY nombre ASC").all();
