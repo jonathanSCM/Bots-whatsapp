@@ -79,36 +79,36 @@ async function convertirFotosAJpg(files) {
 }
 
 // ---------- Leads ----------
-router.get("/api/leads", (_req, res) => res.json(listarLeads()));
+router.get("/api/leads", async (_req, res) => res.json(await listarLeads()));
 
-router.get("/api/leads/:id", (req, res) => {
-  const lead = obtenerLeadPorId(req.params.id);
+router.get("/api/leads/:id", async (req, res) => {
+  const lead = await obtenerLeadPorId(req.params.id);
   if (!lead) return res.status(404).json({ error: "Lead no encontrado" });
   res.json(lead);
 });
 
-router.put("/api/leads/:id", (req, res) => {
+router.put("/api/leads/:id", async (req, res) => {
   const camposPermitidos = ["nombre", "tipoOperacion", "tipoPropiedad", "zonaInteres", "presupuesto", "dormitorios", "observaciones", "nivelInteres"];
   const datos = {};
   for (const campo of camposPermitidos) {
     if (campo in req.body) datos[campo] = req.body[campo] === "" ? null : req.body[campo];
   }
-  const lead = obtenerLeadPorId(req.params.id);
+  const lead = await obtenerLeadPorId(req.params.id);
   if (!lead) return res.status(404).json({ error: "Lead no encontrado" });
-  res.json(updateLead(req.params.id, datos));
+  res.json(await updateLead(req.params.id, datos));
 });
 
-router.post("/api/leads/:id/estado", (req, res) => {
+router.post("/api/leads/:id/estado", async (req, res) => {
   const { estado } = req.body;
   if (!Object.values(ESTADOS_LEAD).includes(estado)) return res.status(400).json({ error: "Estado invalido" });
-  res.json(updateLead(req.params.id, { estadoLead: estado }));
+  res.json(await updateLead(req.params.id, { estadoLead: estado }));
 });
 
 // ---------- Propiedades ----------
-router.get("/api/propiedades", (_req, res) => res.json(listarPropiedades()));
+router.get("/api/propiedades", async (_req, res) => res.json(await listarPropiedades()));
 
-router.get("/api/propiedades/:id", (req, res) => {
-  const propiedad = obtenerPropiedad(req.params.id);
+router.get("/api/propiedades/:id", async (req, res) => {
+  const propiedad = await obtenerPropiedad(req.params.id);
   if (!propiedad) return res.status(404).json({ error: "Propiedad no encontrada" });
   res.json(propiedad);
 });
@@ -116,12 +116,12 @@ router.get("/api/propiedades/:id", (req, res) => {
 router.post("/api/propiedades", upload.array("fotos", 8), async (req, res) => {
   const nombres = await convertirFotosAJpg(req.files);
   const fotos = nombres.map((n) => urlPublicaDeArchivo(req, n));
-  const propiedad = crearPropiedad({ ...req.body, fotos });
+  const propiedad = await crearPropiedad({ ...req.body, fotos });
   res.json(propiedad);
 });
 
 router.put("/api/propiedades/:id", upload.array("fotos", 8), async (req, res) => {
-  const propiedad = obtenerPropiedad(req.params.id);
+  const propiedad = await obtenerPropiedad(req.params.id);
   if (!propiedad) return res.status(404).json({ error: "Propiedad no encontrada" });
 
   const nombres = await convertirFotosAJpg(req.files);
@@ -129,11 +129,11 @@ router.put("/api/propiedades/:id", upload.array("fotos", 8), async (req, res) =>
   const fotosExistentes = req.body.fotosExistentes ? JSON.parse(req.body.fotosExistentes) : propiedad.fotos;
   const fotos = [...fotosExistentes, ...fotosNuevas];
 
-  res.json(actualizarPropiedad(req.params.id, { ...req.body, fotos }));
+  res.json(await actualizarPropiedad(req.params.id, { ...req.body, fotos }));
 });
 
-router.delete("/api/propiedades/:id", (req, res) => {
-  eliminarPropiedad(req.params.id);
+router.delete("/api/propiedades/:id", async (req, res) => {
+  await eliminarPropiedad(req.params.id);
   res.json({ ok: true });
 });
 
@@ -153,29 +153,29 @@ router.delete("/api/categorias/:id", (req, res) => {
 });
 
 // ---------- Disponibilidad ----------
-router.get("/api/disponibilidad", (_req, res) => res.json(obtenerHorario()));
+router.get("/api/disponibilidad", async (_req, res) => res.json(await obtenerHorario()));
 
-router.post("/api/disponibilidad", (req, res) => {
+router.post("/api/disponibilidad", async (req, res) => {
   const { dias } = req.body;
   if (!Array.isArray(dias)) return res.status(400).json({ error: "Formato invalido" });
-  res.json(actualizarHorario(dias));
+  res.json(await actualizarHorario(dias));
 });
 
 // ---------- Citas ----------
-router.get("/api/citas", (_req, res) => res.json(listarCitas()));
+router.get("/api/citas", async (_req, res) => res.json(await listarCitas()));
 
-router.post("/api/citas/:id/estado", (req, res) => {
+router.post("/api/citas/:id/estado", async (req, res) => {
   const { estado } = req.body;
   if (!["confirmada", "cancelada", "completada"].includes(estado)) return res.status(400).json({ error: "Estado invalido" });
-  actualizarEstadoCita(req.params.id, estado);
+  await actualizarEstadoCita(req.params.id, estado);
   res.json({ ok: true });
 });
 
 // ---------- Resumen / estadisticas ----------
-router.get("/api/resumen", (_req, res) => {
-  const leads = listarLeads();
-  const citas = listarCitas();
-  const propiedades = listarPropiedades();
+router.get("/api/resumen", async (_req, res) => {
+  const leads = await listarLeads();
+  const citas = await listarCitas();
+  const propiedades = await listarPropiedades();
 
   const hoyISO = new Date().toLocaleDateString("en-CA", { timeZone: "America/La_Paz" });
 
