@@ -1,4 +1,4 @@
-const db = require("./db");
+const { query } = require("./db");
 const { ahoraLaPaz } = require("../utils/fecha");
 const { obtenerHorarioDia } = require("./disponibilidadStore");
 
@@ -18,7 +18,7 @@ function horaAMinutos(hhmm) {
 
 // Verifica que la fecha/hora solicitada caiga dentro del horario configurado
 // y que no choque con otra cita ya agendada. No agenda nada, solo valida.
-function verificarDisponibilidad(fecha, hora) {
+async function verificarDisponibilidad(fecha, hora) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || !/^\d{2}:\d{2}$/.test(hora)) {
     return { disponible: false, motivo: "Formato de fecha u hora invalido." };
   }
@@ -28,7 +28,7 @@ function verificarDisponibilidad(fecha, hora) {
     return { disponible: false, motivo: "La fecha ya paso." };
   }
 
-  const horario = obtenerHorarioDia(diaSemanaDe(fecha));
+  const horario = await obtenerHorarioDia(diaSemanaDe(fecha));
   if (!horario || !horario.activo) {
     return { disponible: false, motivo: "Ese dia no se atiende." };
   }
@@ -38,64 +38,69 @@ function verificarDisponibilidad(fecha, hora) {
     return { disponible: false, motivo: `Fuera de horario de atencion (${horario.horaInicio} a ${horario.horaFin}).` };
   }
 
-  const choque = db
-    .prepare("SELECT id FROM citas WHERE fecha = ? AND hora = ? AND estado != 'cancelada'")
-    .get(fecha, hora);
-  if (choque) {
+  const { rows } = await query(
+    `SELECT "id" FROM citas WHERE "fecha" = $1 AND "hora" = $2 AND "estado" != 'cancelada'`,
+    [fecha, hora]
+  );
+  if (rows.length) {
     return { disponible: false, motivo: "Ese horario ya esta ocupado por otra cita." };
   }
 
   return { disponible: true, motivo: null };
 }
 
-function crearCita({ idLead, nombre, whatsapp, propiedadId, fecha, hora }) {
-  const res = db
-    .prepare(
-      `INSERT INTO citas (idLead, nombre, whatsapp, propiedadId, fecha, hora, estado, recordatorioEnviado, fechaCreacion)
-       VALUES (?, ?, ?, ?, ?, ?, 'confirmada', 0, ?)`
-    )
-    .run(idLead, nombre, whatsapp, propiedadId, fecha, hora, ahoraLaPaz());
-  return obtenerCita(Number(res.lastInsertRowid));
+async function crearCita({ idLead, nombre, whatsapp, propiedadId, fecha, hora }) {
+  const { rows } = await query(
+    `INSERT INTO citas ("idLead","nombre","whatsapp","propiedadId","fecha","hora","estado","recordatorioEnviado","fechaCreacion")
+     VALUES ($1,$2,$3,$4,$5,$6,'confirmada',0,$7) RETURNING "id"`,
+    [idLead, nombre, whatsapp, propiedadId, fecha, hora, ahoraLaPaz()]
+  );
+  return obtenerCita(rows[0].id);
 }
 
-function obtenerCita(id) {
-  return db.prepare("SELECT * FROM citas WHERE id = ?").get(id);
+async function obtenerCita(id) {
+  const { rows } = await query(`SELECT * FROM citas WHERE "id" = $1`, [id]);
+  return rows[0] || null;
 }
 
 // Para reprogramar: la cita confirmada mas reciente de ese cliente.
-function obtenerCitaActivaPorLead(idLead) {
-  return db
-    .prepare("SELECT * FROM citas WHERE idLead = ? AND estado = 'confirmada' ORDER BY fecha DESC, hora DESC LIMIT 1")
-    .get(idLead);
+async function obtenerCitaActivaPorLead(idLead) {
+  const { rows } = await query(
+    `SELECT * FROM citas WHERE "idLead" = $1 AND "estado" = 'confirmada' ORDER BY "fecha" DESC, "hora" DESC LIMIT 1`,
+    [idLead]
+  );
+  return rows[0] || null;
 }
 
-function listarCitas() {
-  return db.prepare("SELECT * FROM citas ORDER BY fecha DESC, hora DESC").all();
+async function listarCitas() {
+  const { rows } = await query(`SELECT * FROM citas ORDER BY "fecha" DESC, "hora" DESC`);
+  return rows;
 }
 
-function actualizarEstadoCita(id, estado) {
-  db.prepare("UPDATE citas SET estado = ? WHERE id = ?").run(estado, id);
+async function actualizarEstadoCita(id, estado) {
+  await query(`UPDATE citas SET "estado" = $1 WHERE "id" = $2`, [estado, id]);
 }
 
-function guardarGoogleEventId(id, googleEventId) {
-  db.prepare("UPDATE citas SET googleEventId = ? WHERE id = ?").run(googleEventId, id);
+async function guardarGoogleEventId(id, googleEventId) {
+  await query(`UPDATE citas SET "googleEventId" = $1 WHERE "id" = $2`, [googleEventId, id]);
 }
 
 // Citas que ocurren entre 11h45 y 12h15 desde ahora, confirmadas, sin recordatorio enviado.
-function obtenerCitasParaRecordar() {
+async function obtenerCitasParaRecordar() {
   const ahora = new Date();
   const desde = new Date(ahora.getTime() + 11.75 * 60 * 60 * 1000);
   const hasta = new Date(ahora.getTime() + 12.25 * 60 * 60 * 1000);
 
-  return listarCitas().filter((c) => {
+  const citas = await listarCitas();
+  return citas.filter((c) => {
     if (c.estado !== "confirmada" || c.recordatorioEnviado) return false;
     const fechaHora = new Date(`${c.fecha}T${c.hora}:00-04:00`); // offset fijo de Bolivia
     return fechaHora >= desde && fechaHora <= hasta;
   });
 }
 
-function marcarRecordatorioEnviado(id) {
-  db.prepare("UPDATE citas SET recordatorioEnviado = 1 WHERE id = ?").run(id);
+async function marcarRecordatorioEnviado(id) {
+  await query(`UPDATE citas SET "recordatorioEnviado" = 1 WHERE "id" = $1`, [id]);
 }
 
 module.exports = {

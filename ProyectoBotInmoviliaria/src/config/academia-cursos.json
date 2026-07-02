@@ -1,0 +1,6 @@
+[
+  { "idCurso": "C001", "area": "Tecnología", "nombre": "Desarrollo Web Full Stack", "precio": "Bs 1200", "duracion": "4 meses", "modalidad": "Presencial u online", "descripcion": "De cero a desarrollador junior, con proyecto final.", "disponible": "si" },
+  { "idCurso": "C002", "area": "Diseño", "nombre": "Diseño Gráfico Digital", "precio": "Bs 900", "duracion": "3 meses", "modalidad": "Presencial u online", "descripcion": "Identidad visual, redes sociales y herramientas Adobe.", "disponible": "si" },
+  { "idCurso": "C003", "area": "Negocios", "nombre": "Marketing Digital", "precio": "Bs 800", "duracion": "2 meses", "modalidad": "Online", "descripcion": "Redes sociales, publicidad paga y analítica.", "disponible": "si" },
+  { "idCurso": "C004", "area": "Idiomas", "nombre": "Inglés Conversacional", "precio": "Bs 600", "duracion": "6 meses", "modalidad": "Presencial", "descripcion": "Enfoque práctico para hablar con fluidez desde el primer mes.", "disponible": "si" }
+]

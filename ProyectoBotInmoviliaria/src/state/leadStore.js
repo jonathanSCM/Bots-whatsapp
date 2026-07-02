@@ -1,6 +1,6 @@
-// Almacenamiento persistente de leads (SQLite) y su estado de conversacion.
+// Almacenamiento persistente de leads (Postgres) y su estado de conversacion.
 
-const db = require("./db");
+const { query } = require("./db");
 const { ahoraLaPaz } = require("../utils/fecha");
 const { DEFAULT_BOT_ID } = require("../bots");
 
@@ -29,54 +29,58 @@ const ESTADOS_CONVERSACION = {
   CERRADO: "conversacion_cerrada",
 };
 
-const selectStmt = db.prepare("SELECT * FROM leads WHERE idLead = ?");
-const insertStmt = db.prepare(`
-  INSERT INTO leads (idLead, whatsapp, bot, nombre, tipoOperacion, tipoPropiedad, zonaInteres,
-    presupuesto, dormitorios, personas, tipoPedido, zonaDelivery, observaciones, nivelInteres,
-    fechaVisita, horaVisita, fuente, estadoLead, estadoConversacion, historial, fechaRegistro,
-    fechaActualizacion)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-`);
-const updateStmt = db.prepare(`
-  UPDATE leads SET whatsapp=?, bot=?, nombre=?, tipoOperacion=?, tipoPropiedad=?, zonaInteres=?,
-    presupuesto=?, dormitorios=?, personas=?, tipoPedido=?, zonaDelivery=?, observaciones=?,
-    nivelInteres=?, fechaVisita=?, horaVisita=?, fuente=?, estadoLead=?, estadoConversacion=?,
-    historial=?, fechaActualizacion=?
-  WHERE idLead=?
-`);
-
 function filaToLead(fila) {
   if (!fila) return null;
-  return { ...fila, historial: JSON.parse(fila.historial || "[]") };
+  return {
+    ...fila,
+    historial: JSON.parse(fila.historial || "[]"),
+    datosBot: JSON.parse(fila.datosBot || "{}"),
+  };
 }
 
-function persistir(lead) {
-  const fila = selectStmt.get(lead.idLead);
+async function persistir(lead) {
+  const { rows } = await query(`SELECT "idLead" FROM leads WHERE "idLead" = $1`, [lead.idLead]);
   const historialJSON = JSON.stringify(lead.historial || []);
+  const datosBotJSON = JSON.stringify(lead.datosBot || {});
   lead.fechaActualizacion = ahoraLaPaz();
 
-  if (!fila) {
-    insertStmt.run(
-      lead.idLead, lead.whatsapp, lead.bot, lead.nombre, lead.tipoOperacion, lead.tipoPropiedad,
-      lead.zonaInteres, lead.presupuesto, lead.dormitorios, lead.personas, lead.tipoPedido,
-      lead.zonaDelivery, lead.observaciones, lead.nivelInteres, lead.fechaVisita, lead.horaVisita,
-      lead.fuente, lead.estadoLead, lead.estadoConversacion, historialJSON, lead.fechaRegistro,
-      lead.fechaActualizacion
+  if (!rows.length) {
+    await query(
+      `INSERT INTO leads ("idLead","whatsapp","bot","nombre","tipoOperacion","tipoPropiedad","zonaInteres",
+        "presupuesto","dormitorios","personas","tipoPedido","zonaDelivery","observaciones","datosBot","nivelInteres",
+        "fechaVisita","horaVisita","fuente","estadoLead","estadoConversacion","historial","fechaRegistro",
+        "fechaActualizacion")
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)`,
+      [
+        lead.idLead, lead.whatsapp, lead.bot, lead.nombre, lead.tipoOperacion, lead.tipoPropiedad,
+        lead.zonaInteres, lead.presupuesto, lead.dormitorios, lead.personas, lead.tipoPedido,
+        lead.zonaDelivery, lead.observaciones, datosBotJSON, lead.nivelInteres, lead.fechaVisita,
+        lead.horaVisita, lead.fuente, lead.estadoLead, lead.estadoConversacion, historialJSON,
+        lead.fechaRegistro, lead.fechaActualizacion,
+      ]
     );
   } else {
-    updateStmt.run(
-      lead.whatsapp, lead.bot, lead.nombre, lead.tipoOperacion, lead.tipoPropiedad, lead.zonaInteres,
-      lead.presupuesto, lead.dormitorios, lead.personas, lead.tipoPedido, lead.zonaDelivery,
-      lead.observaciones, lead.nivelInteres, lead.fechaVisita, lead.horaVisita, lead.fuente,
-      lead.estadoLead, lead.estadoConversacion, historialJSON, lead.fechaActualizacion, lead.idLead
+    await query(
+      `UPDATE leads SET "whatsapp"=$1,"bot"=$2,"nombre"=$3,"tipoOperacion"=$4,"tipoPropiedad"=$5,"zonaInteres"=$6,
+        "presupuesto"=$7,"dormitorios"=$8,"personas"=$9,"tipoPedido"=$10,"zonaDelivery"=$11,"observaciones"=$12,
+        "datosBot"=$13,"nivelInteres"=$14,"fechaVisita"=$15,"horaVisita"=$16,"fuente"=$17,"estadoLead"=$18,
+        "estadoConversacion"=$19,"historial"=$20,"fechaActualizacion"=$21
+       WHERE "idLead"=$22`,
+      [
+        lead.whatsapp, lead.bot, lead.nombre, lead.tipoOperacion, lead.tipoPropiedad, lead.zonaInteres,
+        lead.presupuesto, lead.dormitorios, lead.personas, lead.tipoPedido, lead.zonaDelivery,
+        lead.observaciones, datosBotJSON, lead.nivelInteres, lead.fechaVisita, lead.horaVisita,
+        lead.fuente, lead.estadoLead, lead.estadoConversacion, historialJSON, lead.fechaActualizacion,
+        lead.idLead,
+      ]
     );
   }
   return lead;
 }
 
-function getOrCreateLead(numeroWhatsapp) {
-  const fila = selectStmt.get(numeroWhatsapp);
-  if (fila) return filaToLead(fila);
+async function getOrCreateLead(numeroWhatsapp) {
+  const { rows } = await query(`SELECT * FROM leads WHERE "idLead" = $1`, [numeroWhatsapp]);
+  if (rows.length) return filaToLead(rows[0]);
 
   const nuevoLead = {
     idLead: numeroWhatsapp,
@@ -92,6 +96,7 @@ function getOrCreateLead(numeroWhatsapp) {
     tipoPedido: null,
     zonaDelivery: null,
     observaciones: null,
+    datosBot: {},
     nivelInteres: "frio",
     fechaVisita: null,
     horaVisita: null,
@@ -104,26 +109,36 @@ function getOrCreateLead(numeroWhatsapp) {
   return persistir(nuevoLead);
 }
 
-function updateLead(numeroWhatsapp, data) {
-  const lead = getOrCreateLead(numeroWhatsapp);
+async function updateLead(numeroWhatsapp, data) {
+  const lead = await getOrCreateLead(numeroWhatsapp);
   Object.assign(lead, data);
   return persistir(lead);
 }
 
-function appendHistorial(numeroWhatsapp, rol, mensaje) {
-  const lead = getOrCreateLead(numeroWhatsapp);
+// Campo generico (JSON libre) para que cada bot vertical (clinica, ecommerce,
+// gimnasio, etc.) guarde sus propios datos de conversacion sin necesitar una
+// columna nueva en la tabla por cada vertical nuevo.
+async function updateDatosBot(numeroWhatsapp, data) {
+  const lead = await getOrCreateLead(numeroWhatsapp);
+  lead.datosBot = { ...(lead.datosBot || {}), ...data };
+  return persistir(lead);
+}
+
+async function appendHistorial(numeroWhatsapp, rol, mensaje) {
+  const lead = await getOrCreateLead(numeroWhatsapp);
   lead.historial.push({ rol, mensaje, fecha: ahoraLaPaz() });
   if (lead.historial.length > 30) lead.historial.shift();
   return persistir(lead);
 }
 
-function listarLeads() {
-  const filas = db.prepare("SELECT * FROM leads ORDER BY fechaActualizacion DESC").all();
-  return filas.map(filaToLead);
+async function listarLeads() {
+  const { rows } = await query(`SELECT * FROM leads ORDER BY "fechaActualizacion" DESC`);
+  return rows.map(filaToLead);
 }
 
-function obtenerLeadPorId(idLead) {
-  return filaToLead(selectStmt.get(idLead));
+async function obtenerLeadPorId(idLead) {
+  const { rows } = await query(`SELECT * FROM leads WHERE "idLead" = $1`, [idLead]);
+  return filaToLead(rows[0]);
 }
 
 module.exports = {
@@ -131,6 +146,7 @@ module.exports = {
   ESTADOS_CONVERSACION,
   getOrCreateLead,
   updateLead,
+  updateDatosBot,
   appendHistorial,
   listarLeads,
   obtenerLeadPorId,

@@ -1,82 +1,81 @@
-const db = require("./db");
+const { query } = require("./db");
 const { ahoraLaPaz } = require("../utils/fecha");
-
-const selectStmt = db.prepare("SELECT * FROM propiedades WHERE id = ?");
-const insertStmt = db.prepare(`
-  INSERT INTO propiedades (id, tipo, operacion, zona, precio, dormitorios, descripcion, estado, fotos, fechaCreacion, fechaActualizacion)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-`);
-const updateStmt = db.prepare(`
-  UPDATE propiedades SET tipo=?, operacion=?, zona=?, precio=?, dormitorios=?, descripcion=?, estado=?, fotos=?, fechaActualizacion=?
-  WHERE id=?
-`);
 
 function filaToPropiedad(fila) {
   if (!fila) return null;
   return { ...fila, fotos: JSON.parse(fila.fotos || "[]") };
 }
 
-function generarId() {
-  const ultimo = db.prepare("SELECT id FROM propiedades ORDER BY rowid DESC LIMIT 1").get();
+async function generarId() {
+  const { rows } = await query(`SELECT "id" FROM propiedades ORDER BY "fechaCreacion" DESC LIMIT 1`);
+  const ultimo = rows[0];
   const n = ultimo ? parseInt(ultimo.id.replace(/\D/g, ""), 10) + 1 : 1;
   return `P${String(n).padStart(3, "0")}`;
 }
 
-function listarPropiedades() {
-  return db.prepare("SELECT * FROM propiedades ORDER BY fechaCreacion DESC").all().map(filaToPropiedad);
+async function listarPropiedades() {
+  const { rows } = await query(`SELECT * FROM propiedades ORDER BY "fechaCreacion" DESC`);
+  return rows.map(filaToPropiedad);
 }
 
-function listarDisponibles() {
-  return db
-    .prepare("SELECT * FROM propiedades WHERE estado = 'disponible' ORDER BY fechaCreacion DESC")
-    .all()
-    .map(filaToPropiedad);
+async function listarDisponibles() {
+  const { rows } = await query(`SELECT * FROM propiedades WHERE "estado" = 'disponible' ORDER BY "fechaCreacion" DESC`);
+  return rows.map(filaToPropiedad);
 }
 
-function obtenerPropiedad(id) {
-  return filaToPropiedad(selectStmt.get(id));
+async function obtenerPropiedad(id) {
+  const { rows } = await query(`SELECT * FROM propiedades WHERE "id" = $1`, [id]);
+  return filaToPropiedad(rows[0]);
 }
 
-function crearPropiedad(datos) {
-  const id = generarId();
+async function crearPropiedad(datos) {
+  const id = await generarId();
   const ahora = ahoraLaPaz();
-  insertStmt.run(
-    id,
-    datos.tipo || "",
-    datos.operacion || "",
-    datos.zona || "",
-    datos.precio || "",
-    datos.dormitorios || "",
-    datos.descripcion || "",
-    datos.estado || "disponible",
-    JSON.stringify(datos.fotos || []),
-    ahora,
-    ahora
+  await query(
+    `INSERT INTO propiedades ("id","tipo","operacion","zona","precio","dormitorios","descripcion","estado","fotos","fechaCreacion","fechaActualizacion")
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+    [
+      id,
+      datos.tipo || "",
+      datos.operacion || "",
+      datos.zona || "",
+      datos.precio || "",
+      datos.dormitorios || "",
+      datos.descripcion || "",
+      datos.estado || "disponible",
+      JSON.stringify(datos.fotos || []),
+      ahora,
+      ahora,
+    ]
   );
   return obtenerPropiedad(id);
 }
 
-function actualizarPropiedad(id, datos) {
-  const actual = obtenerPropiedad(id);
+async function actualizarPropiedad(id, datos) {
+  const actual = await obtenerPropiedad(id);
   if (!actual) return null;
   const fusionado = { ...actual, ...datos };
-  updateStmt.run(
-    fusionado.tipo,
-    fusionado.operacion,
-    fusionado.zona,
-    fusionado.precio,
-    fusionado.dormitorios,
-    fusionado.descripcion,
-    fusionado.estado,
-    JSON.stringify(fusionado.fotos || []),
-    ahoraLaPaz(),
-    id
+  await query(
+    `UPDATE propiedades SET "tipo"=$1,"operacion"=$2,"zona"=$3,"precio"=$4,"dormitorios"=$5,"descripcion"=$6,"estado"=$7,"fotos"=$8,"fechaActualizacion"=$9
+     WHERE "id"=$10`,
+    [
+      fusionado.tipo,
+      fusionado.operacion,
+      fusionado.zona,
+      fusionado.precio,
+      fusionado.dormitorios,
+      fusionado.descripcion,
+      fusionado.estado,
+      JSON.stringify(fusionado.fotos || []),
+      ahoraLaPaz(),
+      id,
+    ]
   );
   return obtenerPropiedad(id);
 }
 
-function eliminarPropiedad(id) {
-  db.prepare("DELETE FROM propiedades WHERE id = ?").run(id);
+async function eliminarPropiedad(id) {
+  await query(`DELETE FROM propiedades WHERE "id" = $1`, [id]);
 }
 
 module.exports = {

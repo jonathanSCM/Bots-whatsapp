@@ -1,0 +1,7 @@
+{
+  "nombreNegocio": "Nimbo Tienda Demo",
+  "horarios": "Atención online 24/7, despachos de lunes a sábado",
+  "zonasEnvio": ["Zona Norte", "Zona Sur", "Centro", "Envío a todo el país"],
+  "metodosPago": "Tarjeta, transferencia o QR",
+  "estiloComunicacion": "Entusiasta, directo y orientado a cerrar la venta sin presionar. Respuestas breves."
+}

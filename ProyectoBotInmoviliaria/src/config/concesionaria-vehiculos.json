@@ -1,0 +1,5 @@
+[
+  { "idVehiculo": "V001", "tipo": "Sedán", "nombre": "Modelo Aria", "precio": "USD 18,500", "descripcion": "Sedán compacto, automático, ideal para ciudad.", "disponible": "si" },
+  { "idVehiculo": "V002", "tipo": "SUV", "nombre": "Modelo Trek", "precio": "USD 27,900", "descripcion": "SUV 4x2, 7 asientos, gran espacio para familia.", "disponible": "si" },
+  { "idVehiculo": "V003", "tipo": "Pickup", "nombre": "Modelo Forza", "precio": "USD 31,200", "descripcion": "Pickup 4x4 doble cabina, alta capacidad de carga.", "disponible": "si" }
+]

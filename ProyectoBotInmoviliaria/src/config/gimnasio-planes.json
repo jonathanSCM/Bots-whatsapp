@@ -1,0 +1,5 @@
+[
+  { "idPlan": "G001", "nombre": "Plan Básico", "precio": "Bs 150/mes", "descripcion": "Acceso a sala de musculación y cardio en horario regular.", "disponible": "si" },
+  { "idPlan": "G002", "nombre": "Plan Full", "precio": "Bs 250/mes", "descripcion": "Acceso ilimitado a sala y todas las clases grupales (funcional, spinning, yoga).", "disponible": "si" },
+  { "idPlan": "G003", "nombre": "Plan Personal Trainer", "precio": "Bs 450/mes", "descripcion": "Incluye Plan Full más 8 sesiones mensuales con entrenador personal.", "disponible": "si" }
+]

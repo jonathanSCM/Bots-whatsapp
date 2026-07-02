@@ -1,0 +1,7 @@
+[
+  { "idProducto": "P001", "categoria": "Audio", "nombre": "Audífonos inalámbricos Pulse", "precio": "Bs 280", "descripcion": "Bluetooth 5.3, 24h de batería, cancelación de ruido.", "disponible": "si" },
+  { "idProducto": "P002", "categoria": "Audio", "nombre": "Parlante portátil Boom Mini", "precio": "Bs 220", "descripcion": "Resistente al agua, 12h de batería, sonido 360°.", "disponible": "si" },
+  { "idProducto": "P003", "categoria": "Wearables", "nombre": "Smartwatch Orbit", "precio": "Bs 450", "descripcion": "Monitor de ritmo cardíaco, GPS, resistente al agua.", "disponible": "si" },
+  { "idProducto": "P004", "categoria": "Accesorios", "nombre": "Power bank 20000mAh", "precio": "Bs 150", "descripcion": "Carga rápida, dos puertos USB-C.", "disponible": "si" },
+  { "idProducto": "P005", "categoria": "Accesorios", "nombre": "Mochila urbana ProShop", "precio": "Bs 190", "descripcion": "Compartimento acolchado para laptop de 15'.", "disponible": "si" }
+]

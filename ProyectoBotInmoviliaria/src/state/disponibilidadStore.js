@@ -1,17 +1,21 @@
-const db = require("./db");
+const { query } = require("./db");
 
-function obtenerHorario() {
-  return db.prepare("SELECT * FROM disponibilidad ORDER BY diaSemana ASC").all();
+async function obtenerHorario() {
+  const { rows } = await query(`SELECT * FROM disponibilidad ORDER BY "diaSemana" ASC`);
+  return rows;
 }
 
-function obtenerHorarioDia(diaSemana) {
-  return db.prepare("SELECT * FROM disponibilidad WHERE diaSemana = ?").get(diaSemana);
+async function obtenerHorarioDia(diaSemana) {
+  const { rows } = await query(`SELECT * FROM disponibilidad WHERE "diaSemana" = $1`, [diaSemana]);
+  return rows[0];
 }
 
-function actualizarHorario(dias) {
-  const stmt = db.prepare("UPDATE disponibilidad SET activo=?, horaInicio=?, horaFin=? WHERE diaSemana=?");
+async function actualizarHorario(dias) {
   for (const dia of dias) {
-    stmt.run(dia.activo ? 1 : 0, dia.horaInicio, dia.horaFin, dia.diaSemana);
+    await query(
+      `UPDATE disponibilidad SET "activo"=$1,"horaInicio"=$2,"horaFin"=$3 WHERE "diaSemana"=$4`,
+      [dia.activo ? 1 : 0, dia.horaInicio, dia.horaFin, dia.diaSemana]
+    );
   }
   return obtenerHorario();
 }

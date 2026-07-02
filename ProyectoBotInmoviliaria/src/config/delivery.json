@@ -1,0 +1,6 @@
+{
+  "nombreNegocio": "Nimbo Delivery Demo",
+  "horarios": "Rastreo de pedidos disponible 24/7",
+  "zonasCobertura": ["Zona Norte", "Zona Sur", "Centro", "Zona Este"],
+  "estiloComunicacion": "Directo, eficiente y tranquilizador. Respuestas breves enfocadas en dar el estado exacto del pedido."
+}

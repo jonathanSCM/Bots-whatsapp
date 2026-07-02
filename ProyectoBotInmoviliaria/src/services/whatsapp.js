@@ -38,6 +38,30 @@ async function enviarImagen(numeroDestino, urlImagen, caption) {
   }
 }
 
+// Manda un mensaje interactivo tipo "lista" (hasta 10 opciones en una sola
+// seccion). Se usa para el menu de seleccion de bot cuando alguien escribe
+// sin especificar a cual demo se refiere.
+async function enviarLista(numeroDestino, bodyText, buttonText, sections) {
+  try {
+    await axios.post(
+      BASE_URL,
+      {
+        messaging_product: "whatsapp",
+        to: numeroDestino,
+        type: "interactive",
+        interactive: {
+          type: "list",
+          body: { text: bodyText },
+          action: { button: buttonText, sections },
+        },
+      },
+      { headers: { Authorization: `Bearer ${TOKEN}` } }
+    );
+  } catch (err) {
+    console.error("Error enviando lista de WhatsApp:", err.response?.data || err.message);
+  }
+}
+
 function esperar(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -55,4 +79,4 @@ async function enviarImagenes(numeroDestino, urlsImagenes) {
   }
 }
 
-module.exports = { enviarMensaje, enviarImagen, enviarImagenes };
+module.exports = { enviarMensaje, enviarImagen, enviarImagenes, enviarLista };

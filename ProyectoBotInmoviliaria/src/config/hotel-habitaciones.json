@@ -1,0 +1,5 @@
+[
+  { "idHabitacion": "H001", "tipo": "Sencilla", "nombre": "Habitación Sencilla", "precio": "Bs 280/noche", "capacidad": "2 personas", "descripcion": "Cama matrimonial, vista al jardín, desayuno incluido.", "disponible": "si" },
+  { "idHabitacion": "H002", "tipo": "Doble", "nombre": "Habitación Doble Superior", "precio": "Bs 380/noche", "capacidad": "4 personas", "descripcion": "Dos camas queen, balcón, vista a la montaña.", "disponible": "si" },
+  { "idHabitacion": "H003", "tipo": "Suite", "nombre": "Suite Altavista", "precio": "Bs 650/noche", "capacidad": "4 personas", "descripcion": "Sala separada, jacuzzi, vista panorámica.", "disponible": "si" }
+]

@@ -1,0 +1,6 @@
+[
+  { "idFaq": "F001", "categoria": "Cuenta", "problema": "No puedo iniciar sesión", "solucion": "Restablece tu contraseña desde 'Olvidé mi contraseña' en el login. El enlace llega al correo registrado en menos de 5 minutos.", "disponible": "si" },
+  { "idFaq": "F002", "categoria": "Facturación", "problema": "Me cobraron dos veces", "solucion": "Esto suele ser una pre-autorización del banco que se libera sola en 24-48h. Si pasado ese plazo sigue duplicado, se deriva a un asesor.", "disponible": "si" },
+  { "idFaq": "F003", "categoria": "App", "problema": "La app se cierra sola", "solucion": "Actualiza a la última versión desde la tienda de apps y reinicia el dispositivo. Si persiste, revisa que tengas al menos 500MB libres.", "disponible": "si" },
+  { "idFaq": "F004", "categoria": "Conexión", "problema": "El servicio aparece como caído", "solucion": "Revisa el estado en status.nimbo.demo. Si ahí figura operativo, reinicia tu router y vuelve a intentar en 2 minutos.", "disponible": "si" }
+]

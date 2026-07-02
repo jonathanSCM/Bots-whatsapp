@@ -105,14 +105,14 @@ async function ejecutarFuncion(toolCall, _contexto, helpers) {
   const { numero, updateLead, ESTADOS_LEAD, notificarInteresNegocio } = helpers;
 
   if (toolCall.function.name === "actualizar_datos_cliente") {
-    updateLead(numero, { ...args, estadoLead: ESTADOS_LEAD.EN_CONVERSACION });
+    await updateLead(numero, { ...args, estadoLead: ESTADOS_LEAD.EN_CONVERSACION });
     return null;
   }
 
   if (toolCall.function.name === "agendar_reserva") {
     // Es solo una demostracion: no existe un restaurante real, asi que no se
     // agenda nada. Se aclara y se registra como lead caliente para ProShop.
-    updateLead(numero, { estadoLead: ESTADOS_LEAD.INTERESADO_COTIZACION });
+    await updateLead(numero, { estadoLead: ESTADOS_LEAD.INTERESADO_COTIZACION });
     await notificarInteresNegocio(
       `Intento agendar una reserva en la demo (${args.fecha || "-"} ${args.hora || "-"}, ${args.personas || "-"} personas) - cliente interesado en tener su propio bot`
     );
@@ -120,7 +120,7 @@ async function ejecutarFuncion(toolCall, _contexto, helpers) {
   }
 
   if (toolCall.function.name === "derivar_a_asesor") {
-    updateLead(numero, { estadoLead: ESTADOS_LEAD.DERIVADO });
+    await updateLead(numero, { estadoLead: ESTADOS_LEAD.DERIVADO });
     await notificarInteresNegocio("Pidio hablar con un encargado durante la demo de restaurante");
     return "Perfecto, voy a derivarte con un encargado para que pueda ayudarte con mas detalle. Por favor espera unos momentos.";
   }

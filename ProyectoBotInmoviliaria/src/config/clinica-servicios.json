@@ -1,0 +1,7 @@
+[
+  { "idServicio": "S001", "especialidad": "Medicina General", "nombre": "Consulta general", "precio": "Bs 80", "duracion": "30 min", "descripcion": "Evaluación general y orientación médica.", "disponible": "si" },
+  { "idServicio": "S002", "especialidad": "Pediatría", "nombre": "Consulta pediátrica", "precio": "Bs 100", "duracion": "30 min", "descripcion": "Control y atención para niños y adolescentes.", "disponible": "si" },
+  { "idServicio": "S003", "especialidad": "Odontología", "nombre": "Limpieza dental", "precio": "Bs 150", "duracion": "45 min", "descripcion": "Limpieza y revisión dental completa.", "disponible": "si" },
+  { "idServicio": "S004", "especialidad": "Dermatología", "nombre": "Consulta dermatológica", "precio": "Bs 120", "duracion": "30 min", "descripcion": "Evaluación de piel, manchas o alergias.", "disponible": "si" },
+  { "idServicio": "S005", "especialidad": "Laboratorio", "nombre": "Análisis de sangre básico", "precio": "Bs 90", "duracion": "15 min", "descripcion": "Hemograma completo con resultados en 24h.", "disponible": "si" }
+]

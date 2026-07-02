@@ -1,0 +1,6 @@
+[
+  { "numeroPedido": "ND-1001", "estado": "En camino", "detalle": "Tu pedido salió de la sucursal Centro y llega en aprox. 25 minutos.", "ultimaActualizacion": "hace 10 minutos" },
+  { "numeroPedido": "ND-1002", "estado": "En preparación", "detalle": "Tu pedido está siendo alistado en bodega, sale en los próximos 20 minutos.", "ultimaActualizacion": "hace 5 minutos" },
+  { "numeroPedido": "ND-1003", "estado": "Entregado", "detalle": "Entregado y firmado por el destinatario.", "ultimaActualizacion": "ayer" },
+  { "numeroPedido": "ND-1004", "estado": "Demorado", "detalle": "Hay una demora por tráfico en la zona, el repartidor llega en aprox. 40 minutos adicionales.", "ultimaActualizacion": "hace 2 minutos" }
+]
