@@ -75,9 +75,12 @@ for (let i = 1; i <= 104; i++) {
   const id = `P${String(i).padStart(3, "0")}`;
   if (existe.get(id)) continue;
 
-  const zona = ZONAS[i % ZONAS.length];
-  const tipo = TIPOS[i % TIPOS.length];
-  const operacion = OPERACIONES[i % OPERACIONES.length];
+  // Asignacion aleatoria (no ciclica): con ciclos, zonas y tipos se alinean
+  // (8 zonas vs 6 tipos comparten factor 2) y algunas combinaciones zona+tipo
+  // nunca existen (ej. departamentos en Av. Banzer).
+  const zona = ZONAS[Math.floor(Math.random() * ZONAS.length)];
+  const tipo = TIPOS[Math.floor(Math.random() * TIPOS.length)];
+  const operacion = OPERACIONES[Math.floor(Math.random() * OPERACIONES.length)];
   const dormitorios = dormitoriosPara(tipo);
   const descripcion = `${tipo} en ${zona}. ${DESCRIPCIONES[i % DESCRIPCIONES.length]}`;
 
