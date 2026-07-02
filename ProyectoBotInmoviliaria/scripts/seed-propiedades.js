@@ -71,17 +71,33 @@ const insertar = db.prepare(
 const ahora = new Date().toISOString().slice(0, 19).replace("T", " ");
 let creadas = 0;
 
+// Combinaciones garantizadas: con puro azar puede quedar 0 propiedades en una
+// combinacion zona+tipo+operacion que se usa para probar (ej. departamento en
+// venta en Av. Banzer). Estas primeras N propiedades cubren esos casos si o si.
+const FIJAS = [
+  { tipo: "Departamento", operacion: "venta", zona: "Av. Banzer", dormitorios: "2" },
+  { tipo: "Departamento", operacion: "venta", zona: "Av. Banzer", dormitorios: "3" },
+  { tipo: "Departamento", operacion: "alquiler", zona: "Av. Banzer", dormitorios: "2" },
+  { tipo: "Casa", operacion: "venta", zona: "Av. Banzer", dormitorios: "4" },
+  { tipo: "Departamento", operacion: "venta", zona: "Centro", dormitorios: "2" },
+  { tipo: "Departamento", operacion: "alquiler", zona: "Centro", dormitorios: "1" },
+  { tipo: "Casa", operacion: "venta", zona: "Zona Norte", dormitorios: "3" },
+  { tipo: "Casa", operacion: "alquiler", zona: "Zona Sur", dormitorios: "3" },
+];
+
 for (let i = 1; i <= 104; i++) {
   const id = `P${String(i).padStart(3, "0")}`;
   if (existe.get(id)) continue;
 
-  // Asignacion aleatoria (no ciclica): con ciclos, zonas y tipos se alinean
-  // (8 zonas vs 6 tipos comparten factor 2) y algunas combinaciones zona+tipo
-  // nunca existen (ej. departamentos en Av. Banzer).
-  const zona = ZONAS[Math.floor(Math.random() * ZONAS.length)];
-  const tipo = TIPOS[Math.floor(Math.random() * TIPOS.length)];
-  const operacion = OPERACIONES[Math.floor(Math.random() * OPERACIONES.length)];
-  const dormitorios = dormitoriosPara(tipo);
+  let zona, tipo, operacion, dormitorios;
+  if (i <= FIJAS.length) {
+    ({ zona, tipo, operacion, dormitorios } = FIJAS[i - 1]);
+  } else {
+    zona = ZONAS[Math.floor(Math.random() * ZONAS.length)];
+    tipo = TIPOS[Math.floor(Math.random() * TIPOS.length)];
+    operacion = OPERACIONES[Math.floor(Math.random() * OPERACIONES.length)];
+    dormitorios = dormitoriosPara(tipo);
+  }
   const descripcion = `${tipo} en ${zona}. ${DESCRIPCIONES[i % DESCRIPCIONES.length]}`;
 
   insertar.run(id, tipo, operacion, zona, precioPara(tipo, operacion), dormitorios, descripcion, JSON.stringify(fotosPara(i)), ahora, ahora);
