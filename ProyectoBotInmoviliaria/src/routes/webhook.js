@@ -185,7 +185,11 @@ async function procesarMensaje(numero, texto) {
 
   lead = await appendHistorial(numero, "user", textoParaIA);
 
-  const historialParaIA = lead.historial.map((h) => ({
+  // Solo los ultimos mensajes: un historial largo lleno de respuestas viejas
+  // ("no hay disponible en X") hace que el modelo repita ese patron aunque el
+  // system prompt le muestre inventario nuevo. Menos historial = mas peso a
+  // la verdad actual del catalogo.
+  const historialParaIA = lead.historial.slice(-12).map((h) => ({
     role: h.rol === "user" ? "user" : "assistant",
     content: h.mensaje,
   }));

@@ -381,7 +381,7 @@ function seccionPropiedades(propiedades, lead = {}, geo = null) {
 
   const exactas = buscarPropiedadesFiltradas(propiedades, lead, {}, geo);
   if (exactas.length) {
-    return `Resultados de la busqueda (ya filtrados por zona, operacion, tipo y dormitorios pedidos, maximo 3, son las UNICAS propiedades reales que puedes mencionar, NUNCA inventes otras):\n${formatearPropiedades(exactas)}\n\nMuestraselas al cliente DE INMEDIATO en esta misma respuesta (nunca digas "te muestro en un momento" o "dejame buscar" y dejes la respuesta sin las opciones: si llegaste hasta aqui es porque ya las tienes, entregalas ya).`;
+    return `Resultados de la busqueda (ya filtrados por zona, operacion, tipo y dormitorios pedidos, maximo 3, son las UNICAS propiedades reales que puedes mencionar, NUNCA inventes otras):\n${formatearPropiedades(exactas)}\n\nMuestraselas al cliente DE INMEDIATO en esta misma respuesta (nunca digas "te muestro en un momento" o "dejame buscar" y dejes la respuesta sin las opciones: si llegaste hasta aqui es porque ya las tienes, entregalas ya).\n\nADVERTENCIA SOBRE EL HISTORIAL: si en mensajes anteriores de esta conversacion dijiste que "no habia propiedades disponibles" en esta zona, eso quedo OBSOLETO. El bloque de arriba es la UNICA verdad actual del inventario. NO repitas "lamentablemente no tengo propiedades" cuando el bloque de arriba te esta dando resultados: corrigete con naturalidad ("¡Buenas noticias! Encontre estas opciones...") y muestra las propiedades.`;
   }
 
   if (lead.dormitorios) {
