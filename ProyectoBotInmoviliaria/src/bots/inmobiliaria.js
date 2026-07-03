@@ -592,9 +592,9 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
       return `Ya te envie todas las fotos disponibles de la propiedad ${propiedad.id} 📸 ¿Quieres:\n1) Mas informacion\n2) Agendar una visita\n3) Ver otras opciones parecidas?`;
     }
 
-    // Solo 2 fotos de gancho por el chat; el resto se ve en la galeria web
-    // (el link va en la ficha de la primera foto).
-    await enviarImagenes(numero, propiedad.fotos.slice(0, 2), fichaPropiedad(propiedad));
+    // Una sola foto de portada con la ficha; todas las demas se ven en la
+    // galeria web (el link va en la misma ficha).
+    await enviarImagenes(numero, propiedad.fotos.slice(0, 1), fichaPropiedad(propiedad));
     if (helpers.updateDatosBot) {
       await helpers.updateDatosBot(numero, { fotosEnviadas: [...fotosEnviadas, propiedad.id] });
     }
