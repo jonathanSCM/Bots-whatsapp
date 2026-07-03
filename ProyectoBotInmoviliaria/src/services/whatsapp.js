@@ -70,11 +70,13 @@ function esperar(ms) {
 // Sin esta pausa, WhatsApp Cloud API acepta todas las llamadas (devuelve un
 // id de mensaje exitoso para cada una) pero en la practica solo entrega la
 // ultima si se mandan demasiado rapido una tras otra.
-// Las imagenes van sin caption individual (se manda un solo texto aparte,
-// una vez, para no repetir la misma descripcion debajo de cada foto).
-async function enviarImagenes(numeroDestino, urlsImagenes) {
+// La primera imagen puede llevar un caption (la ficha de la propiedad, estilo
+// portal inmobiliario); las siguientes van limpias para no repetir el texto.
+async function enviarImagenes(numeroDestino, urlsImagenes, captionPrimera) {
+  let primera = true;
   for (const url of urlsImagenes) {
-    await enviarImagen(numeroDestino, url);
+    await enviarImagen(numeroDestino, url, primera ? captionPrimera : undefined);
+    primera = false;
     await esperar(1200);
   }
 }

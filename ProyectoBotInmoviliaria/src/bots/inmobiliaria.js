@@ -3,7 +3,7 @@ const { listarDisponibles, obtenerPropiedad } = require("../state/propiedadStore
 const { verificarDisponibilidad, crearCita, guardarGoogleEventId, obtenerCitaActivaPorLead, actualizarEstadoCita } = require("../state/citaStore");
 const { obtenerHorario } = require("../state/disponibilidadStore");
 const { crearEventoVisita, cancelarEventoVisita } = require("../services/calendar");
-const { enviarImagenes, enviarMensaje } = require("../services/whatsapp");
+const { enviarImagenes } = require("../services/whatsapp");
 
 const TIMEZONE_NEGOCIO = "America/La_Paz";
 const NOMBRE_ASISTENTE = "Inmobyte";
@@ -82,6 +82,18 @@ const TOOLS = [
     },
   },
 ];
+
+// Ficha de la propiedad al estilo portal inmobiliario, para usar como caption
+// de la primera foto (WhatsApp muestra *texto* en negrita).
+function fichaPropiedad(p) {
+  const titulo = `*${p.tipo} en ${p.operacion === "venta" ? "Venta" : "Alquiler"} - ${p.zona}*`;
+  const lineas = [`· *Precio*: ${p.precio}`];
+  if (p.dormitorios) lineas.push(`· *Dormitorios*: ${p.dormitorios}`);
+  lineas.push(`· *Zona*: ${p.zona}`);
+  lineas.push(`· *Codigo*: ${p.id}`);
+  if (p.descripcion) lineas.push(`\n${p.descripcion}`);
+  return `${titulo}\n\n${lineas.join("\n")}`;
+}
 
 function formatearPropiedades(propiedades) {
   return propiedades
@@ -462,8 +474,7 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
       return `Ya te envie todas las fotos disponibles de la propiedad ${propiedad.id} 📸 ¿Quieres:\n1) Mas informacion\n2) Agendar una visita\n3) Ver otras opciones parecidas?`;
     }
 
-    await enviarImagenes(numero, propiedad.fotos);
-    await enviarMensaje(numero, `${propiedad.tipo} en ${propiedad.operacion}, ${propiedad.zona}`);
+    await enviarImagenes(numero, propiedad.fotos, fichaPropiedad(propiedad));
     if (helpers.updateDatosBot) {
       await helpers.updateDatosBot(numero, { fotosEnviadas: [...fotosEnviadas, propiedad.id] });
     }
