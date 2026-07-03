@@ -229,25 +229,26 @@ async function procesarMensaje(numero, texto) {
     }
   }
 
-  // Si en esta misma vuelta el modelo actualizo datos del lead (ej. corrigio
-  // la zona o la operacion), el texto que ya genero (respuestaIA.content) fue
-  // redactado mirando el catalogo ANTES de ese cambio, asi que puede sonar
-  // como "no hay nada" aunque el dato nuevo si tenga coincidencias reales.
-  // Se vuelve a generar el texto final (sin tools, solo para redactar) con el
-  // catalogo ya recalculado segun el lead actualizado.
-  const huboActualizacionLead = respuestaIA.tool_calls?.some((tc) => tc.function.name === "actualizar_datos_lead");
+  // Si el modelo ejecuto funciones en este turno (actualizo el lead, envio
+  // fotos, agendo, etc.), el texto que genero junto con esas llamadas fue
+  // redactado ANTES de conocer el resultado, y puede contradecirlas (ej.
+  // manda las fotos de una propiedad y en el texto dice "no tengo nada").
+  // Se regenera el texto final con el catalogo recalculado y contandole al
+  // modelo que acciones YA se ejecutaron, para que redacte coherente.
   let contenidoFinal = respuestaIA.content;
-  if (huboActualizacionLead) {
+  let textoFinal;
+  if (respuestaIA.tool_calls?.length) {
     const leadActualizado = await getOrCreateLead(numero);
-    const promptActualizado = await bot.systemPrompt(contexto, leadActualizado);
+    let promptActualizado = await bot.systemPrompt(contexto, leadActualizado);
+    if (mensajesDeFunciones.length) {
+      promptActualizado += `\n\nACCIONES YA EJECUTADAS POR EL SISTEMA EN ESTE MISMO TURNO (ya ocurrieron de verdad, el cliente ya las recibio; tu respuesta debe asumirlas como hechas, sin prometerlas a futuro y sin contradecirlas):\n${[...new Set(mensajesDeFunciones)].map((m) => `- ${m}`).join("\n")}`;
+    }
     const segundaPasada = await generarRespuesta(historialParaIA, promptActualizado, []);
-    contenidoFinal = segundaPasada.content || contenidoFinal;
+    textoFinal = segundaPasada.content || [contenidoFinal, ...new Set(mensajesDeFunciones)].filter(Boolean).join("\n\n");
+  } else {
+    textoFinal = contenidoFinal;
   }
-
-  const mensajesDeFuncionesUnicos = [...new Set(mensajesDeFunciones)];
-  const textoFinal =
-    [contenidoFinal, ...mensajesDeFuncionesUnicos].filter(Boolean).join("\n\n") ||
-    "Gracias por tu mensaje, lo estamos procesando.";
+  textoFinal = textoFinal || "Gracias por tu mensaje, lo estamos procesando.";
   await appendHistorial(numero, "assistant", textoFinal);
   console.log(`<<< [${bot.id}] BOT:`, textoFinal);
   await enviarMensaje(numero, textoFinal);
