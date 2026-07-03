@@ -168,10 +168,10 @@ async function procesarMensaje(numero, texto) {
     await notificarInteresNegocio(numero, lead.bot, "Quiere un agente de WhatsApp con IA para su negocio");
   }
 
-  if (lead.estadoLead === ESTADOS_LEAD.DERIVADO) {
-    // Ya esta con un asesor humano, el bot no vuelve a responder automaticamente.
-    return;
-  }
+  // Nota: aunque el lead este "derivado_a_asesor", el bot SIGUE respondiendo.
+  // Dejarlo mudo era peor experiencia (el asesor puede tardar y el cliente
+  // queda hablando solo). El estado queda marcado en el panel para que el
+  // equipo humano lo vea, pero la conversacion automatica no se corta.
 
   // Primer contacto genuino (nunca hablo, no vino de la web, no eligio bot
   // todavia ni escribio algo reconocible): en vez de arrancar directo con el
