@@ -85,6 +85,9 @@ async function init() {
       "descripcion" TEXT,
       "estado" TEXT DEFAULT 'disponible',
       "fotos" TEXT DEFAULT '[]',
+      "ubicacionMaps" TEXT,
+      "lat" REAL,
+      "lng" REAL,
       "fechaCreacion" TEXT,
       "fechaActualizacion" TEXT
     );
@@ -115,6 +118,14 @@ async function init() {
       "nombre" TEXT NOT NULL UNIQUE,
       "fechaCreacion" TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS geocache (
+      "consulta" TEXT PRIMARY KEY,
+      "lat" REAL,
+      "lng" REAL,
+      "encontrado" INTEGER DEFAULT 0,
+      "fecha" TEXT
+    );
   `);
 
   // Migracion best-effort para bases creadas antes de agregar estas columnas.
@@ -128,6 +139,15 @@ async function init() {
   for (const definicion of columnasNuevas) {
     try {
       db.exec(`ALTER TABLE leads ADD COLUMN ${definicion}`);
+    } catch (err) {
+      // La columna ya existe, no hay nada que hacer.
+    }
+  }
+
+  const columnasPropiedades = [`"ubicacionMaps" TEXT`, `"lat" REAL`, `"lng" REAL`];
+  for (const definicion of columnasPropiedades) {
+    try {
+      db.exec(`ALTER TABLE propiedades ADD COLUMN ${definicion}`);
     } catch (err) {
       // La columna ya existe, no hay nada que hacer.
     }

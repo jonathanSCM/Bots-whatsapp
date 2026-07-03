@@ -4,6 +4,7 @@ const { verificarDisponibilidad, crearCita, guardarGoogleEventId, obtenerCitaAct
 const { obtenerHorario } = require("../state/disponibilidadStore");
 const { crearEventoVisita, cancelarEventoVisita } = require("../services/calendar");
 const { enviarImagenes } = require("../services/whatsapp");
+const { geocodificar, distanciaKm, zonaMacroDe, zonaMacroDeTexto } = require("../services/geo");
 
 const TIMEZONE_NEGOCIO = "America/La_Paz";
 const NOMBRE_ASISTENTE = "Inmobyte";
@@ -91,6 +92,7 @@ function fichaPropiedad(p) {
   if (p.dormitorios) lineas.push(`· *Dormitorios*: ${p.dormitorios}`);
   lineas.push(`· *Zona*: ${p.zona}`);
   lineas.push(`· *Codigo*: ${p.id}`);
+  if (p.ubicacionMaps) lineas.push(`· *Ubicacion*: ${p.ubicacionMaps}`);
   if (p.descripcion) lineas.push(`\n${p.descripcion}`);
   return `${titulo}\n\n${lineas.join("\n")}`;
 }
@@ -187,7 +189,28 @@ function scorePropiedad(p, lead = {}) {
 // Busca en zona primero, y si no encuentra, busca en descripcion tambien
 // (para que "Av. Banzer" encuentre propiedades aunque ese sea un detalle
 // de la descripcion, no la zona macro).
-function buscarPropiedadesFiltradas(propiedades, lead = {}, { ignorarZona = false, ignorarDormitorios = false, ignorarPresupuesto = false } = {}) {
+// Radio en km para considerar que una propiedad "esta en" la zona que pidio
+// el cliente cuando se compara por coordenadas reales.
+const RADIO_MISMA_ZONA_KM = 2.5;
+
+// Coincidencia de zona en 3 capas (cualquiera vale):
+// 1. Texto: palabras clave del lead vs zona/descripcion de la propiedad.
+// 2. Distancia real: la zona pedida geocodificada (Nominatim) vs las
+//    coordenadas de la propiedad (del link de Maps) — matchea aunque los
+//    nombres no se parezcan en nada ("Equipetrol" vs "Av. San Martin").
+// 3. Zona macro geometrica: si pidio "zona norte/sur/centro/este/oeste",
+//    se calcula de que lado de la ciudad esta la propiedad por coordenadas.
+function coincideZona(lead, p, geo) {
+  if (coincideTexto(lead.zonaInteres, p.zona)) return true;
+  if (coincideTexto(lead.zonaInteres, p.descripcion || "")) return true;
+  if (p.lat != null && p.lng != null) {
+    if (geo?.coords && distanciaKm(geo.coords.lat, geo.coords.lng, p.lat, p.lng) <= RADIO_MISMA_ZONA_KM) return true;
+    if (geo?.macro && zonaMacroDe(p.lat, p.lng) === geo.macro) return true;
+  }
+  return false;
+}
+
+function buscarPropiedadesFiltradas(propiedades, lead = {}, { ignorarZona = false, ignorarDormitorios = false, ignorarPresupuesto = false } = {}, geo = null) {
   return propiedades
     .filter((p) => {
       if (lead.tipoOperacion && p.operacion !== lead.tipoOperacion) return false;
@@ -202,17 +225,31 @@ function buscarPropiedadesFiltradas(propiedades, lead = {}, { ignorarZona = fals
         if (!ignorarPresupuesto && estado === "excedido") return false;
       }
 
-      // Zona: busca en zona macro primero, y si no coincide, busca en descripcion
-      if (!ignorarZona && lead.zonaInteres) {
-        const coincideEnZona = coincideTexto(lead.zonaInteres, p.zona);
-        const coincideEnDescripcion = coincideTexto(lead.zonaInteres, p.descripcion || "");
-        if (!coincideEnZona && !coincideEnDescripcion) return false;
-      }
+      if (!ignorarZona && lead.zonaInteres && !coincideZona(lead, p, geo)) return false;
 
       return true;
     })
-    .sort((a, b) => scorePropiedad(b, lead) - scorePropiedad(a, lead))
+    .sort((a, b) => {
+      const porScore = scorePropiedad(b, lead) - scorePropiedad(a, lead);
+      if (porScore !== 0) return porScore;
+      // Desempate: la mas cercana al punto que pidio el cliente primero.
+      if (geo?.coords && a.lat != null && b.lat != null) {
+        return distanciaKm(geo.coords.lat, geo.coords.lng, a.lat, a.lng) - distanciaKm(geo.coords.lat, geo.coords.lng, b.lat, b.lng);
+      }
+      return 0;
+    })
     .slice(0, 3);
+}
+
+// Contexto geografico de lo que pidio el cliente: si es una zona macro
+// ("zona norte") se resuelve por geometria; si es un lugar especifico
+// ("avenida banzer") se geocodifica con Nominatim (cacheado en BD).
+async function geoDelLead(lead = {}) {
+  if (!lead.zonaInteres) return null;
+  const macro = zonaMacroDeTexto(lead.zonaInteres);
+  const coords = macro ? null : await geocodificar(lead.zonaInteres);
+  if (!macro && !coords) return null;
+  return { macro, coords };
 }
 
 function filtrosCompletos(lead = {}) {
@@ -231,19 +268,19 @@ function siguienteDatoFaltante(lead = {}) {
 // en vez de rendirse. El cliente siempre se va con opciones reales si
 // existe algo razonablemente parecido a lo que pidio, nunca con un
 // "no tengo nada" vacio mientras haya inventario real que mostrar.
-function seccionPropiedades(propiedades, lead = {}) {
+function seccionPropiedades(propiedades, lead = {}, geo = null) {
   if (!filtrosCompletos(lead)) {
     const falta = siguienteDatoFaltante(lead);
     return `IMPORTANTE: aun NO se puede buscar en el catalogo porque falta el dato "${falta}". Esto NO significa que no haya inventario, significa que todavia no sabes que buscar. NUNCA digas que "no hay propiedades" ni "no tengo disponible" en este punto: tu unica respuesta correcta ahora es pedir ese dato que falta (${falta}), sin mencionar ninguna propiedad todavia.`;
   }
 
-  const exactas = buscarPropiedadesFiltradas(propiedades, lead);
+  const exactas = buscarPropiedadesFiltradas(propiedades, lead, {}, geo);
   if (exactas.length) {
     return `Resultados de la busqueda (ya filtrados por zona, operacion, tipo y dormitorios pedidos, maximo 3, son las UNICAS propiedades reales que puedes mencionar, NUNCA inventes otras):\n${formatearPropiedades(exactas)}\n\nMuestraselas al cliente DE INMEDIATO en esta misma respuesta (nunca digas "te muestro en un momento" o "dejame buscar" y dejes la respuesta sin las opciones: si llegaste hasta aqui es porque ya las tienes, entregalas ya).`;
   }
 
   if (lead.dormitorios) {
-    const sinDormitorios = buscarPropiedadesFiltradas(propiedades, lead, { ignorarDormitorios: true });
+    const sinDormitorios = buscarPropiedadesFiltradas(propiedades, lead, { ignorarDormitorios: true }, geo);
     if (sinDormitorios.length) {
       return `No hay nada con exactamente ${lead.dormitorios} dormitorio(s) en esa zona, PERO si hay estas opciones reales que calzan en zona, operacion y tipo (solo cambia la cantidad de dormitorios, maximo 3, no inventes otras):\n${formatearPropiedades(sinDormitorios)}\n\nMuestraselas DE INMEDIATO en esta misma respuesta, aclarando la diferencia de dormitorios, no le preguntes primero si quiere verlas.`;
     }
@@ -252,7 +289,7 @@ function seccionPropiedades(propiedades, lead = {}) {
   // Se relaja el presupuesto (hasta +50% del monto dicho): son opciones un
   // poco por encima de lo que el cliente dijo, se muestran avisando eso.
   if (lead.presupuesto) {
-    const sinPresupuesto = buscarPropiedadesFiltradas(propiedades, lead, { ignorarDormitorios: true, ignorarPresupuesto: true });
+    const sinPresupuesto = buscarPropiedadesFiltradas(propiedades, lead, { ignorarDormitorios: true, ignorarPresupuesto: true }, geo);
     if (sinPresupuesto.length) {
       return `No hay nada dentro del presupuesto (${lead.presupuesto}) con esos filtros, PERO si hay estas opciones reales apenas por encima del presupuesto (misma zona, operacion y tipo, maximo 3, no inventes otras):\n${formatearPropiedades(sinPresupuesto)}\n\nMuestraselas DE INMEDIATO en esta misma respuesta, siendo transparente en que estan un poco por encima de su presupuesto, y pregunta si tiene flexibilidad o prefiere ajustar otro criterio (zona/tipo).`;
     }
@@ -261,7 +298,7 @@ function seccionPropiedades(propiedades, lead = {}) {
   // No hay nada en la zona exacta (con o sin el filtro de dormitorios): se
   // relaja tambien la zona, manteniendo operacion+tipo que es lo que
   // realmente define que quiere el cliente.
-  const sinZona = buscarPropiedadesFiltradas(propiedades, lead, { ignorarZona: true, ignorarDormitorios: true });
+  const sinZona = buscarPropiedadesFiltradas(propiedades, lead, { ignorarZona: true, ignorarDormitorios: true }, geo);
   if (sinZona.length) {
     return `No hay ninguna propiedad que calce en la zona "${lead.zonaInteres}" con esa operacion y tipo. PERO si hay estas opciones reales en otras zonas (mismo tipo y operacion que pidio el cliente, maximo 3, no inventes otras):\n${formatearPropiedades(sinZona)}\n\nMUESTRA estas opciones DE INMEDIATO en esta misma respuesta (aclarando que son de otra zona), NUNCA le preguntes primero si quiere ver otras zonas y te quedes esperando: dale la informacion concreta ya, eso es lo que el cliente esta pidiendo.`;
   }
@@ -349,7 +386,7 @@ Informacion comercial disponible:
 - Requisitos para alquiler: ${business.requisitosAlquiler}
 - Requisitos para compra: ${business.requisitosCompra}
 
-${seccionPropiedades(propiedades, lead)}
+${seccionPropiedades(propiedades, lead, await geoDelLead(lead))}
 
 REGLAS SOBRE EL INVENTARIO Y LA VENTA:
 - El bloque de propiedades de arriba ya viene filtrado por codigo segun zona, operacion y tipo del cliente (maximo 3). Es la UNICA fuente real, no existen otras. No inventes propiedades, precios, zonas, fotos o disponibilidad que no esten ahi.

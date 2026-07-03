@@ -17,6 +17,7 @@ const {
 const { obtenerHorario, actualizarHorario } = require("../state/disponibilidadStore");
 const { listarCitas, actualizarEstadoCita } = require("../state/citaStore");
 const { listarCategorias, crearCategoria, eliminarCategoria } = require("../state/categoriaStore");
+const { resolverLinkMaps, geocodificar } = require("../services/geo");
 
 const UPLOADS_DIR = path.join(__dirname, "..", "..", "data", "uploads");
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -113,10 +114,25 @@ router.get("/api/propiedades/:id", async (req, res) => {
   res.json(propiedad);
 });
 
+// Coordenadas de la propiedad: primero del link de Google Maps (exacto);
+// si no hay link, se geocodifica el texto de la zona (aproximado). Se
+// recalcula solo cuando el link o la zona cambian.
+async function conCoordenadas(datos, actual = {}) {
+  const linkCambio = datos.ubicacionMaps !== undefined && datos.ubicacionMaps !== actual.ubicacionMaps;
+  const zonaCambio = datos.zona !== undefined && datos.zona !== actual.zona;
+  if (!linkCambio && !zonaCambio && actual.lat != null) return datos;
+
+  const link = datos.ubicacionMaps !== undefined ? datos.ubicacionMaps : actual.ubicacionMaps;
+  let coords = link ? await resolverLinkMaps(link) : null;
+  if (!coords) coords = await geocodificar(datos.zona !== undefined ? datos.zona : actual.zona);
+  return { ...datos, lat: coords?.lat ?? null, lng: coords?.lng ?? null };
+}
+
 router.post("/api/propiedades", upload.array("fotos", 8), async (req, res) => {
   const nombres = await convertirFotosAJpg(req.files);
   const fotos = nombres.map((n) => urlPublicaDeArchivo(req, n));
-  const propiedad = await crearPropiedad({ ...req.body, fotos });
+  const datos = await conCoordenadas({ ...req.body, fotos });
+  const propiedad = await crearPropiedad(datos);
   res.json(propiedad);
 });
 
@@ -129,7 +145,8 @@ router.put("/api/propiedades/:id", upload.array("fotos", 8), async (req, res) =>
   const fotosExistentes = req.body.fotosExistentes ? JSON.parse(req.body.fotosExistentes) : propiedad.fotos;
   const fotos = [...fotosExistentes, ...fotosNuevas];
 
-  res.json(await actualizarPropiedad(req.params.id, { ...req.body, fotos }));
+  const datos = await conCoordenadas({ ...req.body, fotos }, propiedad);
+  res.json(await actualizarPropiedad(req.params.id, datos));
 });
 
 router.delete("/api/propiedades/:id", async (req, res) => {
