@@ -126,6 +126,48 @@ function coincideDormitorios(leadDorm, propDorm) {
   return String(propDorm).trim() === String(leadDorm).trim();
 }
 
+// Extrae el monto numerico y la moneda de un precio/presupuesto escrito libre:
+// "USD 136,500" -> { monto: 136500, moneda: "usd" }, "3500 bs" -> { monto: 3500, moneda: "bs" }.
+// Devuelve null si no hay un numero reconocible.
+function parsePrecio(texto) {
+  if (texto === null || texto === undefined) return null;
+  const t = String(texto).toLowerCase();
+  const m = t.replace(/[.,](?=\d{3}\b)/g, "").match(/\d+(?:\.\d+)?/);
+  if (!m) return null;
+  let monto = Number(m[0]);
+  if (/\d\s*(k\b|mil\b)/.test(t)) monto *= 1000; // "20k" o "20 mil" -> 20000
+  const moneda = /\b(bs|bob|boliviano)/.test(t) ? "bs" : /(usd|\$us|us\$|\$|dolar)/.test(t) ? "usd" : null;
+  return { monto, moneda };
+}
+
+// Presupuesto flexible (no binario): se aceptan propiedades hasta un 30% por
+// encima de lo que dijo el cliente. Mas alla del 50% NUNCA se muestran (fuera
+// de perfil). Si las monedas son distintas o algun monto no se entiende, no
+// se filtra por precio (mejor mostrar que descartar por error de parseo).
+const TOLERANCIA_PRESUPUESTO = 1.3;
+const TOPE_PRESUPUESTO = 1.5;
+
+function estadoPresupuesto(leadPresupuesto, propPrecio) {
+  const presupuesto = parsePrecio(leadPresupuesto);
+  const precio = parsePrecio(propPrecio);
+  if (!presupuesto || !precio || !presupuesto.monto || !precio.monto) return "dentro";
+  if (presupuesto.moneda && precio.moneda && presupuesto.moneda !== precio.moneda) return "dentro";
+  if (precio.monto > presupuesto.monto * TOPE_PRESUPUESTO) return "fuera_de_perfil";
+  if (precio.monto > presupuesto.monto * TOLERANCIA_PRESUPUESTO) return "excedido";
+  return "dentro";
+}
+
+// Ranking: cuando hay mas candidatas que cupo (3), se muestran primero las
+// que mejor calzan con lo pedido, no las primeras que aparezcan en la BD.
+function scorePropiedad(p, lead = {}) {
+  let score = 0;
+  if (lead.zonaInteres && coincideTexto(lead.zonaInteres, p.zona)) score += 3;
+  if (lead.tipoPropiedad && coincideTexto(lead.tipoPropiedad, p.tipo)) score += 3;
+  if (lead.dormitorios && coincideDormitorios(lead.dormitorios, p.dormitorios) && p.dormitorios) score += 2;
+  if (lead.presupuesto && estadoPresupuesto(lead.presupuesto, p.precio) === "dentro") score += 2;
+  return score;
+}
+
 // Motor de busqueda real: el modelo NUNCA decide que propiedades mostrar
 // por su cuenta, solo ve el resultado ya filtrado por este codigo. Esto
 // bloquea a nivel de codigo (no solo de prompt) que se mezcle venta con
@@ -133,12 +175,20 @@ function coincideDormitorios(leadDorm, propDorm) {
 // Busca en zona primero, y si no encuentra, busca en descripcion tambien
 // (para que "Av. Banzer" encuentre propiedades aunque ese sea un detalle
 // de la descripcion, no la zona macro).
-function buscarPropiedadesFiltradas(propiedades, lead = {}, { ignorarZona = false, ignorarDormitorios = false } = {}) {
+function buscarPropiedadesFiltradas(propiedades, lead = {}, { ignorarZona = false, ignorarDormitorios = false, ignorarPresupuesto = false } = {}) {
   return propiedades
     .filter((p) => {
       if (lead.tipoOperacion && p.operacion !== lead.tipoOperacion) return false;
       if (!coincideTexto(lead.tipoPropiedad, p.tipo)) return false;
       if (!ignorarDormitorios && !coincideDormitorios(lead.dormitorios, p.dormitorios)) return false;
+
+      // Presupuesto: hasta +30% pasa; +30% a +50% solo si se relaja el
+      // criterio; mas de +50% NUNCA se muestra (fuera de perfil, sin excepcion).
+      if (lead.presupuesto) {
+        const estado = estadoPresupuesto(lead.presupuesto, p.precio);
+        if (estado === "fuera_de_perfil") return false;
+        if (!ignorarPresupuesto && estado === "excedido") return false;
+      }
 
       // Zona: busca en zona macro primero, y si no coincide, busca en descripcion
       if (!ignorarZona && lead.zonaInteres) {
@@ -149,6 +199,7 @@ function buscarPropiedadesFiltradas(propiedades, lead = {}, { ignorarZona = fals
 
       return true;
     })
+    .sort((a, b) => scorePropiedad(b, lead) - scorePropiedad(a, lead))
     .slice(0, 3);
 }
 
@@ -183,6 +234,15 @@ function seccionPropiedades(propiedades, lead = {}) {
     const sinDormitorios = buscarPropiedadesFiltradas(propiedades, lead, { ignorarDormitorios: true });
     if (sinDormitorios.length) {
       return `No hay nada con exactamente ${lead.dormitorios} dormitorio(s) en esa zona, PERO si hay estas opciones reales que calzan en zona, operacion y tipo (solo cambia la cantidad de dormitorios, maximo 3, no inventes otras):\n${formatearPropiedades(sinDormitorios)}\n\nMuestraselas DE INMEDIATO en esta misma respuesta, aclarando la diferencia de dormitorios, no le preguntes primero si quiere verlas.`;
+    }
+  }
+
+  // Se relaja el presupuesto (hasta +50% del monto dicho): son opciones un
+  // poco por encima de lo que el cliente dijo, se muestran avisando eso.
+  if (lead.presupuesto) {
+    const sinPresupuesto = buscarPropiedadesFiltradas(propiedades, lead, { ignorarDormitorios: true, ignorarPresupuesto: true });
+    if (sinPresupuesto.length) {
+      return `No hay nada dentro del presupuesto (${lead.presupuesto}) con esos filtros, PERO si hay estas opciones reales apenas por encima del presupuesto (misma zona, operacion y tipo, maximo 3, no inventes otras):\n${formatearPropiedades(sinPresupuesto)}\n\nMuestraselas DE INMEDIATO en esta misma respuesta, siendo transparente en que estan un poco por encima de su presupuesto, y pregunta si tiene flexibilidad o prefiere ajustar otro criterio (zona/tipo).`;
     }
   }
 
@@ -282,6 +342,7 @@ REGLAS SOBRE EL INVENTARIO Y LA VENTA:
 - REGLA ANTI-INVENTO (LA MAS IMPORTANTE DE TODAS): cada propiedad que muestres DEBE salir copiada del bloque de arriba, citando SIEMPRE su codigo (ej: "ref P083"), su precio EXACTO y su zona EXACTA tal como aparecen ahi. Si estas por escribir una propiedad y no puedes citar su codigo P0XX del bloque, esa propiedad NO EXISTE: mostrarla seria mentirle a un cliente real y hacerle perder el tiempo. Nunca cambies ni redondees un precio, y nunca agregues caracteristicas que la descripcion no menciona (piscina, gimnasio, etc.). Si el bloque tiene 1 sola propiedad, muestra 1 sola; NUNCA "completes" la lista hasta 3 con opciones inventadas.
 - PROACTIVIDAD CON FOTOS: cuando el cliente muestre interes claro en una propiedad especifica ("me gusta", "esa", "me interesa", "que precio tiene", o cualquier cosa positiva sobre esa propiedad en particular), AUTOMATICAMENTE llama a enviar_fotos_propiedad sin que lo pida. Las fotos son el cierre, no esperes a que pregunte. Luego en tu siguiente respuesta comenta sobre las fotos y por que esa propiedad le conviene.
 - SUGERENCIAS SIMILARES AUTOMATICAS: si el cliente no muestra entusiasmo por las opciones (dice "no me convence", "muy caro", "quiero mas dormitorios", etc.), automaticamente busca y sugiere 1-2 propiedades similares (misma zona/tipo/operacion, solo varia dormitorios o presupuesto segun lo que pide) y directamente llama enviar_fotos_propiedad de esas para que las vea. Di algo como "Tengo estas otras que creo te van a gustar mas 😊 Miralas" — no preguntes si quiere ver, simplemente muestra.
+- ETAPAS DE CONVERSION (respeta el orden, no te saltes etapas): despues de enviar fotos, tu siguiente mensaje pregunta QUE LE PARECIERON, no ofrezcas agendar visita todavia. Solo cuando el cliente reaccione positivo a las fotos ("me gusta", "esta linda") ofreces agendar la visita. Si pide fotos, manda fotos (no le respondas con "agenda una visita"); si ya las tiene y reacciona bien, ahi si cierras con la visita.
 - ENTIENDE LAS NECESIDADES REALES: no solo completes los datos del flujo mecanicamente. Si el cliente menciona algo importante ("quiero con patio", "que sea seguro", "cerca del metro", "para vivir con mi familia"), GUARDA ESO en observaciones con actualizar_datos_lead y luego EXPLICA en cada propiedad por que cumple o no eso que pidio. No es solo "Precio X, Dormitorios Y" — es "Esta tiene patio grande que pediste, zona tranquila, y esta a 10 min del metro 📍".
 - Cuando presentes propiedades, redacta en prosa natural (2-3 frases) que explique POR QUE esa propiedad le conviene AL CLIENTE, no una lista de datos. Usa lo que ya te dijo: si busca familia, resalta espacios; si busca inversion, resalta ubicacion; si busca economico, resalta que es el mas accesible del grupo. Incluye siempre el codigo de referencia de cada una (ej: "ref P083") para que el cliente pueda nombrarla despues.
 - EMOJIS EN CADA OPCION: cuando listes propiedades (sea 1 o 3), cada una debe tener 1 emoji que ayude a diferenciarla o resaltar su mejor caracteristica (🏡 para casas, 🏢 para depa lujoso, 💰 para barato, 🌳 para con verde, etc.).
@@ -393,8 +454,19 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
     if (!propiedad) return "No encontre esa propiedad para mostrarte las fotos.";
     if (!propiedad.fotos?.length) return `Por ahora no tengo fotos cargadas de la propiedad ${propiedad.id}, pero puedo darte mas detalles.`;
 
+    // Anti-loop: si ya se enviaron las fotos de esta propiedad en la
+    // conversacion, no se reenvia lo mismo; se redirige a la siguiente accion.
+    const leadActual = await getOrCreateLead(numero);
+    const fotosEnviadas = (leadActual.datosBot && leadActual.datosBot.fotosEnviadas) || [];
+    if (fotosEnviadas.includes(propiedad.id)) {
+      return `Ya te envie todas las fotos disponibles de la propiedad ${propiedad.id} 📸 ¿Quieres:\n1) Mas informacion\n2) Agendar una visita\n3) Ver otras opciones parecidas?`;
+    }
+
     await enviarImagenes(numero, propiedad.fotos);
     await enviarMensaje(numero, `${propiedad.tipo} en ${propiedad.operacion}, ${propiedad.zona}`);
+    if (helpers.updateDatosBot) {
+      await helpers.updateDatosBot(numero, { fotosEnviadas: [...fotosEnviadas, propiedad.id] });
+    }
     return "Te envie las fotos de la propiedad. ¿Que te parecio?";
   }
 
