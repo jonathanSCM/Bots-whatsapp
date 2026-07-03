@@ -4,6 +4,27 @@ const TOKEN = process.env.WHATSAPP_TOKEN;
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 const BASE_URL = `https://graph.facebook.com/v20.0/${PHONE_NUMBER_ID}/messages`;
 
+// WhatsApp NO entiende Markdown: la negrita es *un solo asterisco* pegado al
+// texto (sin espacios adentro). El modelo a veces escribe **doble asterisco**
+// (Markdown) o deja espacios (* texto *), y eso se muestra como asteriscos
+// literales en el chat. Este sanitizador convierte todo al formato WhatsApp.
+function formatoWhatsApp(texto) {
+  if (!texto) return texto;
+  return (
+    texto
+      // **negrita** o __negrita__ (Markdown) -> *negrita*
+      .replace(/\*\*([^*]+?)\*\*/g, "*$1*")
+      .replace(/__([^_]+?)__/g, "_$1_")
+      // titulos Markdown (## Titulo) -> *Titulo*
+      .replace(/^#{1,6}\s+(.+)$/gm, "*$1*")
+      // espacios pegados a los asteriscos cuando la linea entera es una
+      // negrita envuelta (* texto *) -> *texto*. Solo linea completa, para
+      // no romper asteriscos sueltos legitimos (ej. "2 * 3 = 6").
+      .replace(/^(\s*)\*\s+([^*\n]*?)\s*\*(\s*)$/gm, "$1*$2*$3")
+      .replace(/^(\s*)\*\s*([^*\n]*?)\s+\*(\s*)$/gm, "$1*$2*$3")
+  );
+}
+
 async function enviarMensaje(numeroDestino, texto) {
   try {
     await axios.post(
@@ -12,7 +33,7 @@ async function enviarMensaje(numeroDestino, texto) {
         messaging_product: "whatsapp",
         to: numeroDestino,
         type: "text",
-        text: { body: texto },
+        text: { body: formatoWhatsApp(texto) },
       },
       { headers: { Authorization: `Bearer ${TOKEN}` } }
     );
@@ -29,7 +50,7 @@ async function enviarImagen(numeroDestino, urlImagen, caption) {
         messaging_product: "whatsapp",
         to: numeroDestino,
         type: "image",
-        image: { link: urlImagen, caption: caption || "" },
+        image: { link: urlImagen, caption: formatoWhatsApp(caption) || "" },
       },
       { headers: { Authorization: `Bearer ${TOKEN}` } }
     );
