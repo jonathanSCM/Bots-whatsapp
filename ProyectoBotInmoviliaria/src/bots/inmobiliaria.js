@@ -84,6 +84,21 @@ const TOOLS = [
   },
 ];
 
+// URL base publica del servidor, para armar el link de la galeria web.
+// Se toma de PUBLIC_URL, o se deduce del dominio de las fotos ya cargadas.
+function urlBasePublica(p) {
+  if (process.env.PUBLIC_URL) return process.env.PUBLIC_URL.replace(/\/$/, "");
+  const foto = p.fotos?.[0];
+  if (foto) {
+    try {
+      return new URL(foto).origin;
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
+}
+
 // Ficha de la propiedad al estilo portal inmobiliario, para usar como caption
 // de la primera foto (WhatsApp muestra *texto* en negrita).
 function fichaPropiedad(p) {
@@ -94,6 +109,8 @@ function fichaPropiedad(p) {
   lineas.push(`· *Codigo*: ${p.id}`);
   if (p.ubicacionMaps) lineas.push(`· *Ubicacion*: ${p.ubicacionMaps}`);
   if (p.descripcion) lineas.push(`\n${p.descripcion}`);
+  const base = urlBasePublica(p);
+  if (base) lineas.push(`\n📸 *Todas las fotos*: ${base}/p/${p.id}`);
   return `${titulo}\n\n${lineas.join("\n")}`;
 }
 
@@ -513,7 +530,9 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
       return `Ya te envie todas las fotos disponibles de la propiedad ${propiedad.id} 📸 ¿Quieres:\n1) Mas informacion\n2) Agendar una visita\n3) Ver otras opciones parecidas?`;
     }
 
-    await enviarImagenes(numero, propiedad.fotos, fichaPropiedad(propiedad));
+    // Solo 2 fotos de gancho por el chat; el resto se ve en la galeria web
+    // (el link va en la ficha de la primera foto).
+    await enviarImagenes(numero, propiedad.fotos.slice(0, 2), fichaPropiedad(propiedad));
     if (helpers.updateDatosBot) {
       await helpers.updateDatosBot(numero, { fotosEnviadas: [...fotosEnviadas, propiedad.id] });
     }

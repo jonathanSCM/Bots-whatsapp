@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const webhookRouter = require("./src/routes/webhook");
 const adminRouter = require("./src/admin/router");
+const propiedadPublicaRouter = require("./src/routes/propiedadPublica");
 const { iniciarJobRecordatorios } = require("./src/jobs/recordatorios");
 const db = require("./src/state/db");
 
@@ -12,6 +13,7 @@ app.use(express.json());
 app.get("/", (_req, res) => res.send("Agente IA Inmobiliario - activo"));
 app.use("/webhook", webhookRouter);
 app.use("/admin", adminRouter);
+app.use("/p", propiedadPublicaRouter);
 
 const PORT = process.env.PORT || 3000;
 
