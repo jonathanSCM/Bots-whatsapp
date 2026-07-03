@@ -1,108 +1,152 @@
-# Bot Inmobiliario Habitad — Documento de traspaso
+# Bot Inmobiliario Habitad — Documento de traspaso (actualizado)
 
-Bot de WhatsApp con IA para la inmobiliaria **Habitad**: califica leads, muestra propiedades reales (nunca inventadas), envía fotos, agenda visitas con Google Calendar y tiene un panel admin web. Este documento resume todo para que otra persona continúe el desarrollo.
+Bot de WhatsApp con IA para la inmobiliaria **Habitad**: califica leads, muestra propiedades reales (nunca inventadas), envía fotos con ficha, tiene galería web pública por propiedad, agenda visitas con Google Calendar y un panel admin. Este documento resume todo para que otra persona continúe el desarrollo.
 
 ## Stack
 
-- **Node.js + Express** (`index.js` arranca todo en el puerto 3000)
-- **SQLite** (`node:sqlite`, archivo `data/bot.db`) — NO usa Postgres. Hubo una migración a Postgres que se revirtió; los stores quedaron escritos en estilo Postgres (`$1, $2`, `{ rows }`) y `src/state/db.js` tiene un **shim** que traduce eso a SQLite. No cambiar los stores, el shim lo maneja.
+- **Node.js + Express** (`index.js`, puerto 3000)
+- **SQLite** (`node:sqlite`, archivo `data/bot.db`) — NO usa Postgres. Los stores están escritos en estilo Postgres (`$1, $2`, `{ rows }`) y `src/state/db.js` tiene un **shim** que traduce eso a SQLite. No tocar los stores por esto.
 - **OpenAI** `gpt-4o-mini` con function calling (`src/services/openai.js`)
-- **WhatsApp Cloud API v20.0** (webhook de Meta en `src/routes/webhook.js`)
+- **WhatsApp Cloud API v20.0** (webhook Meta en `src/routes/webhook.js`)
 - **Google Calendar** con service account JWT (`src/services/calendar.js`)
-- **Multer + Sharp** para subir fotos (convierte WEBP→JPEG automáticamente, WhatsApp no entrega WEBP)
+- **Nominatim/OpenStreetMap** (gratis) para geolocalización (`src/services/geo.js`)
+- **Multer + Sharp** para fotos (convierte WEBP→JPEG automático; WhatsApp no entrega WEBP)
 
 ## Despliegue
 
-- **Coolify** en un servidor Contabo, app `bots-whatsapp` (repo GitHub `jonathanSCM/Bots-whatsapp`, rama `main`).
+- **Coolify** en servidor Contabo, repo GitHub `jonathanSCM/Bots-whatsapp`, rama `main`.
 - URL pública: `https://bot.deliveryavaroa.xyz`
-- Panel admin: `https://bot.deliveryavaroa.xyz/admin/` (login con sesión/cookie, credenciales en variables de entorno del panel).
-- **CRÍTICO: volumen persistente en `/app/data`** (Coolify → Storages). Ahí viven `bot.db` y `data/uploads/` (fotos). Sin volumen, cada redeploy borra la base — ya pasó una vez.
-- Redeploy: botón "Redeploy" en Coolify. Verificar en el log de deployment que tome el commit esperado.
+- Panel admin: `https://bot.deliveryavaroa.xyz/admin/` (login con sesión/cookie)
+- Galería pública por propiedad: `https://bot.deliveryavaroa.xyz/p/P041`
+- **CRÍTICO: volumen persistente en `/app/data`** (Coolify → Storages). Ahí viven `bot.db` y `data/uploads/`. Sin volumen, cada redeploy borra la base (ya pasó una vez).
+- Tras un redeploy verificar en el log de deployment el hash del commit. El rolling update tarda ~30-40s extra después de "Finished": mensajes en ese lapso los atiende el contenedor viejo.
 
 ### Variables de entorno (Coolify)
 - `OPENAI_API_KEY`
-- `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID`, `VERIFY_TOKEN` (webhook Meta)
-- `GOOGLE_CALENDAR_ID`, `GOOGLE_CLIENT_EMAIL`, y **`GOOGLE_PRIVATE_KEY_BASE64`** (el PEM completo en base64; evita el error "DECODER routines::unsupported" que da `GOOGLE_PRIVATE_KEY` con `\n` escapados)
+- `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `VERIFY_TOKEN`
+- `GOOGLE_CALENDAR_ID`, `GOOGLE_CLIENT_EMAIL`, **`GOOGLE_PRIVATE_KEY_BASE64`** (PEM completo en base64 — evita el error "DECODER routines::unsupported")
+- `PUBLIC_URL` (opcional; si falta, el link de galería se deduce del dominio de las fotos)
+- `WHATSAPP_NUMERO_PUBLICO` (opcional; activa el botón "Me interesa" de la galería que abre WhatsApp)
 - Credenciales del panel admin
 
 ## Arquitectura del bot (lo importante)
 
-### Principio central: el modelo NUNCA inventa propiedades
-`src/bots/inmobiliaria.js` → `buscarPropiedadesFiltradas()` filtra en **código** (no en el prompt) las propiedades según el lead (operación, tipo, zona, dormitorios). El modelo solo ve el resultado ya filtrado (máx. 3) dentro del system prompt. Búsqueda escalonada:
-1. Coincidencia exacta (zona + operación + tipo + dormitorios)
+### Principio 1: el modelo NUNCA inventa propiedades
+`buscarPropiedadesFiltradas()` en `src/bots/inmobiliaria.js` filtra en **código** según el lead. El modelo solo ve el resultado (máx. 3) en el system prompt. Búsqueda escalonada:
+1. Exacta (zona + operación + tipo + dormitorios + presupuesto)
 2. Relaja dormitorios
-3. Relaja zona (muestra alternativas de otras zonas, avisando)
-4. Si nada, el prompt le ordena ofrecer ajustar filtros
+3. Relaja presupuesto (muestra entre +30% y +50% avisando)
+4. Relaja zona (alternativas de otras zonas, aclarándolo)
+5. Nada: ofrece cambiar tipo/operación (nunca un "no hay" seco)
 
-La zona se compara por **palabras clave** (`coincideTexto` + `palabrasClave`): normaliza acentos/puntuación y descarta genéricos ("av", "avenida", "calle", "zona", artículos), así "avenida banzer" matchea "Av. Banzer". También busca la zona dentro de la **descripción** de la propiedad.
+### Principio 2: no confiar en el modelo para estado crítico
+`extraerFiltros()` detecta **por código** (regex/keywords) zona, tipo, operación y dormitorios en cada mensaje del cliente y actualiza el lead ANTES de armar el prompt (`webhook.js`). La zona detectada se guarda con el nombre **canónico del catálogo**. Esto se agregó porque gpt-4o-mini a veces no llamaba `actualizar_datos_lead` y respondía "no hay nada" con el filtro viejo.
 
-### Flujo de conversación (impuesto por prompt)
-zona → operación → tipo → características → presupuesto (siempre al final) → mostrar máx. 3 opciones → validar interés → conversión (info / agendar visita / similares). Tono: humano, 2-3 emojis por mensaje, menús numerados, proactivo (envía fotos automáticamente ante interés, sugiere similares sin que lo pidan).
+### Matching de zona (3 capas, cualquiera vale)
+1. **Texto por palabras clave**: normaliza acentos/puntuación y descarta genéricos ("av", "avenida", "calle", "zona") — "avenida banzer" matchea "Av. Banzer". También busca en la descripción.
+2. **Distancia real**: la zona pedida se geocodifica (Nominatim, cacheado en tabla `geocache`) y matchea si la propiedad está a ≤2.5 km (coordenadas del link de Maps).
+3. **Zona macro geométrica**: "zona norte/sur/centro/este/oeste" se resuelve por posición respecto de la Plaza 24 de Septiembre (centro = radio 2.2 km).
 
-### Segunda pasada tras actualizar el lead
-En `webhook.js`: si el modelo llamó `actualizar_datos_lead` en el turno, el texto que generó se descartó (miraba el catálogo viejo) y se **regenera** el mensaje con el prompt recalculado con el lead nuevo. Sin esto el bot decía "no hay nada" con datos recién corregidos.
+### Presupuesto flexible (no binario)
+`parsePrecio()` entiende "20000", "20k", "20 mil", "USD 136,500", "3500 bs". Tolerancia +30%; entre +30% y +50% solo en el escalón relajado; **más de +50% NUNCA se muestra**. Si las monedas difieren (Bs vs USD) no filtra por precio.
 
-### Tools del modelo (function calling)
-`actualizar_datos_lead`, `agendar_visita`, `reprogramar_visita`, `enviar_fotos_propiedad`, `derivar_a_asesor` (ver TOOLS en `src/bots/inmobiliaria.js`).
+### Ranking
+`scorePropiedad()`: zona +3, tipo +3, dormitorios +2, dentro de presupuesto +2; desempate por cercanía geográfica. Las 3 que se muestran son las mejores, no las primeras de la BD.
 
-### Multi-bot
-`src/bots/` soporta varios bots (inmobiliaria, restaurante) con menú de selección al primer contacto. **Solo importa el de inmobiliaria**; el resto es secundario.
+### Prompt: verdades calculadas por código
+- `resumenInventario()`: conteo real de zonas y tipos con stock (respetando operación/tipo del lead) para que el bot ofrezca alternativas VERDADERAS como menú numerado.
+- Advertencia anti-sesgo: si el bot dijo antes "no hay disponible", el bloque actual manda ("eso quedó OBSOLETO... corrígete y muestra").
+- Historial acotado a los **últimos 12 mensajes** (30 sesgaban al modelo a repetir respuestas viejas).
+- Segunda pasada: si el modelo llamó `actualizar_datos_lead`, se regenera la respuesta con el catálogo recalculado.
+
+### Envío de fotos y ficha
+- Al mostrar interés, el bot manda **1 sola foto de portada** cuyo caption es la **ficha** (formato portal: negritas de WhatsApp, precio, dormitorios, zona, link de Maps, descripción) + link a la **galería web** con todas las fotos.
+- Anti-loop: `datosBot.fotosEnviadas` registra qué propiedades ya recibieron fotos; si pide de nuevo, responde con menú (más info / visita / similares) en vez de reenviar.
+- Etapas de conversión: tras fotos pregunta opinión; solo ofrece visita con reacción positiva.
+- **Sanitizador de formato** en `whatsapp.js` (`formatoWhatsApp`): convierte Markdown del modelo (`**bold**`, `## titulos`) al formato real de WhatsApp (`*bold*`) en TODOS los mensajes y captions.
+- **Códigos internos (P001...) nunca van al cliente**: solo se usan para las tools; los mensajes describen por tipo/zona/precio.
+
+### Galería web pública (`/p/:id`)
+`src/routes/propiedadPublica.js`: página oscura responsive con hero, precio, chips, descripción, link Maps, grid de fotos y visor a pantalla completa. 404 amable si la propiedad ya no está disponible. Botón CTA a WhatsApp si está `WHATSAPP_NUMERO_PUBLICO`.
+
+### Tools del modelo
+`actualizar_datos_lead`, `agendar_visita`, `reprogramar_visita`, `enviar_fotos_propiedad`, `derivar_a_asesor`.
 
 ## Mapa de archivos
 
 ```
-index.js                        arranque, trust proxy (HTTPS detrás de Traefik)
-src/routes/webhook.js           webhook Meta, orquestación del turno, segunda pasada
-src/bots/inmobiliaria.js        system prompt, motor de búsqueda, tools, ejecutarFuncion
-src/services/openai.js          llamada a gpt-4o-mini
-src/services/whatsapp.js        envío de mensajes e imágenes (pausa ~1.2s entre fotos:
-                                sin pausa Meta solo entrega la última)
-src/services/calendar.js        Google Calendar (clave por base64)
-src/state/db.js                 SQLite + shim estilo Postgres + init de tablas
-src/state/leadStore.js          leads + historial (últimos 30 mensajes)
-src/state/propiedadStore.js     propiedades
-src/state/citaStore.js          citas + validación de disponibilidad
-src/state/disponibilidadStore.js horarios de atención por día
-src/state/categoriaStore.js     categorías de tipo de propiedad (panel)
-src/admin/router.js             API + estáticos del panel; /admin/uploads es PÚBLICO
-                                (antes del auth) para que Meta descargue las fotos
-src/admin/public/               frontend del panel (leads, propiedades, citas,
-                                disponibilidad, categorías, estadísticas)
-scripts/seed-propiedades.js     regenera 104 propiedades de prueba (idempotente,
-                                con combinaciones garantizadas ej. depa venta Av. Banzer)
-scripts/asignar-fotos.js        asigna 3 fotos por tipo desde assets/seed-fotos
-                                (uso: PUBLIC_URL=https://bot.deliveryavaroa.xyz node scripts/asignar-fotos.js)
-scripts/replicar-fotos.js       replica fotos subidas a mano hacia propiedades sin fotos
-assets/seed-fotos/              19 fotos libres (Unsplash) por tipo de propiedad
-data/                           bot.db + uploads/ (en el server es el volumen)
+index.js                          arranque, trust proxy, monta /webhook /admin /p
+src/routes/webhook.js             webhook Meta, extracción de filtros por código,
+                                  historial (últimos 12), segunda pasada
+src/routes/propiedadPublica.js    galería web pública por propiedad
+src/bots/inmobiliaria.js          prompt, motor de búsqueda, extracción, ficha, tools
+src/services/openai.js            gpt-4o-mini
+src/services/whatsapp.js          envío + sanitizador formatoWhatsApp + pausa 1.2s
+                                  entre imágenes (sin pausa Meta solo entrega la última)
+src/services/geo.js               Nominatim + parser links Maps + haversine + zona macro
+src/services/calendar.js          Google Calendar (clave base64)
+src/state/db.js                   SQLite + shim estilo Postgres + init/migraciones
+src/state/leadStore.js            leads + historial + datosBot
+src/state/propiedadStore.js       propiedades (con ubicacionMaps, lat, lng)
+src/state/citaStore.js            citas + disponibilidad de horarios
+src/state/disponibilidadStore.js  horario de atención por día
+src/state/categoriaStore.js       categorías de tipo de propiedad
+src/admin/router.js               API panel; /admin/uploads PÚBLICO (antes del auth,
+                                  Meta descarga las fotos sin credenciales); al guardar
+                                  propiedad resuelve link Maps → coordenadas
+src/admin/public/                 frontend del panel (campo "Ubicación (link Maps)")
+scripts/seed-propiedades.js       104 propiedades de prueba (idempotente, combos garantizados)
+scripts/asignar-fotos.js          asigna 3 fotos por tipo (PUBLIC_URL=... node scripts/...)
+scripts/geocodificar-propiedades.js  backfill de coordenadas (correr 1 vez tras seed)
+scripts/replicar-fotos.js         replica fotos subidas a mano a propiedades sin fotos
+assets/seed-fotos/                19 fotos libres (Unsplash) por tipo
+data/                             bot.db + uploads/ (volumen en el server)
 ```
 
-## Tablas (SQLite, identificadores camelCase entre comillas)
-`leads` (datos del prospecto + `historial` JSON + `datosBot` JSON), `propiedades` (con `fotos` JSON de URLs públicas), `citas` (con `googleEventId`, `recordatorioEnviado`), `disponibilidad` (horario por día de semana), `categorias`.
+## Tablas (SQLite)
+`leads`, `propiedades` (+ `ubicacionMaps`, `lat`, `lng`), `citas`, `disponibilidad`, `categorias`, `geocache` (caché de Nominatim). Identificadores camelCase entre comillas en todas las queries.
 
-## Bugs ya resueltos (no reintroducir)
+## Bugs resueltos (no reintroducir)
 
-1. **Fotos no llegaban**: `/admin/uploads` debe registrarse ANTES del middleware de auth (Meta las descarga sin credenciales).
-2. **Solo llegaba la última foto**: pausa de ~1.2s entre envíos consecutivos (`enviarImagenes`).
-3. **URLs http en vez de https**: `app.set("trust proxy", true)` (Traefik).
-4. **WEBP no se entrega**: conversión automática a JPEG con Sharp al subir.
-5. **"No hay disponible" con datos recién corregidos**: regla crítica en el prompt (guardar todo dato mencionado aunque venga en una pregunta) + segunda pasada del prompt.
-6. **Clave de Google corrupta**: usar `GOOGLE_PRIVATE_KEY_BASE64`.
+1. **Fotos no llegaban**: `/admin/uploads` debe ir ANTES del middleware de auth.
+2. **Solo llegaba la última foto**: pausa ~1.2s entre envíos.
+3. **URLs http**: `app.set("trust proxy", true)` (Traefik).
+4. **WEBP no se entrega**: conversión a JPEG con Sharp al subir.
+5. **Clave Google corrupta**: `GOOGLE_PRIVATE_KEY_BASE64`.
+6. **BD borrada en redeploy**: volumen persistente `/app/data`.
 7. **"avenida banzer" no matcheaba "Av. Banzer"**: matching por palabras clave.
-8. **BD borrada en redeploy**: volumen persistente en `/app/data`.
+8. **Modelo no guardaba filtros nuevos** ("no hay nada en X" con filtro viejo): extracción determinista por código antes del prompt.
+9. **Modelo repetía "no hay disponible" del historial** aunque el prompt tuviera resultados: advertencia anti-sesgo + historial cortado a 12.
+10. **Asteriscos literales en WhatsApp**: sanitizador Markdown→WhatsApp.
+11. **Presupuesto no filtraba** (mostraba 68k a quien pidió 20k): filtro +30%/tope +50%.
+12. **Migración accidental a Postgres** rompió el deploy: se revirtió a SQLite con shim de compatibilidad.
+
+## Puesta en marcha de un servidor desde cero
+
+```bash
+# 1. Volumen /app/data en Coolify (Storages) — ANTES del primer deploy
+# 2. Variables de entorno (ver arriba) y Deploy
+# 3. En la Terminal de Coolify:
+node scripts/seed-propiedades.js
+PUBLIC_URL=https://bot.deliveryavaroa.xyz node scripts/asignar-fotos.js
+node scripts/geocodificar-propiedades.js   # ~2 min (1 req/seg a Nominatim)
+```
 
 ## Estado actual / pendiente
 
-- **PENDIENTE — verificar en producción la búsqueda por zona**: en local, con el lead real del cliente (zona "Avenida Banzer", depto, venta, 3 dormitorios), el motor SÍ encuentra P083/P041 vía el nivel "relaja dormitorios". Pero en el servidor el bot seguía respondiendo "no tengo departamentos en Av. Banzer". Lo más probable: el deploy corriendo no incluye los últimos commits (verificar que el deployment tome ≥ `89aec6f`) o el proceso necesita reinicio. Diagnóstico útil: los logs imprimen `--- [inmobiliaria] function call:` y `<<< [inmobiliaria] BOT:` por cada turno.
-- Probar de punta a punta: fotos proactivas al mostrar interés, sugerencia automática de similares, agendado/reprogramación de visitas con Calendar, recordatorios 12h antes.
-- Los leads viejos pueden tener filtros guardados (dormitorios, presupuesto) que condicionan la búsqueda; el panel permite editarlos (PUT `/api/leads/:id`).
+- Verificar en producción el fix anti-sesgo del historial (commit `e8b8bfa`+): preguntar por una zona con stock y confirmar que muestra las opciones.
+- Probar de punta a punta: fotos proactivas, sugerencia de similares, agendado/reprogramación con Calendar, recordatorios 12h antes.
+- El panel permite editar leads (PUT `/api/leads/:id`) para resetear filtros guardados de pruebas viejas.
+- **Idea futura (SaaS multi-tenant)**: hay un plan por fases discutido — `empresaId` en todas las tablas, login real, webhook ruteando por `phone_id`, config del negocio en BD (hoy está en `src/config/business.json`), migrar a Postgres (los stores ya están en sintaxis Postgres), suscripciones con Stripe. Ver conversación/commits para contexto.
+- **Idea futura (WhatsApp Flows)**: para formulario de búsqueda y elección de fecha/hora de visita; para fotos se decidió galería web (mejor experiencia y sin límites).
 
 ## Cómo probar en local
 
 ```bash
 npm install
-node index.js            # levanta web + webhook + panel en :3000
+node index.js                        # web + webhook + panel + galería en :3000
 node scripts/seed-propiedades.js
+PUBLIC_URL=http://localhost:3000 node scripts/asignar-fotos.js
 ```
 
-El system prompt se puede probar sin WhatsApp llamando `bot.systemPrompt(props, lead)` en un script de Node (ver historial de commits para ejemplos).
+El system prompt se puede probar sin WhatsApp: `await bot.systemPrompt(props, lead)` en un script Node (init de db primero). La extracción: `bot.extraerFiltros(texto, propiedades)`.
