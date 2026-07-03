@@ -20,7 +20,7 @@ const TOOLS = [
         type: "object",
         properties: {
           nombre: { type: "string" },
-          tipoOperacion: { type: "string", enum: ["venta", "alquiler"] },
+          tipoOperacion: { type: "string", enum: ["venta", "alquiler", "anticretico"] },
           tipoPropiedad: { type: "string" },
           zonaInteres: { type: "string", description: "La zona con las palabras EXACTAS que uso el cliente (si dijo 'avenida banzer' guardar 'avenida banzer'). NUNCA la traduzcas ni la reemplaces por una zona macro (NO convertir 'avenida banzer' en 'Zona Sur'): el buscador interno necesita las palabras literales del cliente." },
           presupuesto: { type: "string" },
@@ -99,10 +99,14 @@ function urlBasePublica(p) {
   return null;
 }
 
+function nombreOperacion(op) {
+  return { venta: "Venta", alquiler: "Alquiler", anticretico: "Anticretico" }[op] || op;
+}
+
 // Ficha de la propiedad al estilo portal inmobiliario, para usar como caption
 // de la primera foto (WhatsApp muestra *texto* en negrita).
 function fichaPropiedad(p) {
-  const titulo = `*${p.tipo} en ${p.operacion === "venta" ? "Venta" : "Alquiler"} - ${p.zona}*`;
+  const titulo = `*${p.tipo} en ${nombreOperacion(p.operacion)} - ${p.zona}*`;
   const lineas = [`· *Precio*: ${p.precio}`];
   if (p.dormitorios) lineas.push(`· *Dormitorios*: ${p.dormitorios}`);
   lineas.push(`· *Zona*: ${p.zona}`);
@@ -282,7 +286,8 @@ function extraerFiltros(texto, propiedades = []) {
     .trim() + " ";
   const cambios = {};
 
-  if (/\b(alquilar|alquiler|rentar|renta|arrendar|arriendo)\b/.test(norm)) cambios.tipoOperacion = "alquiler";
+  if (/\b(anticretico|anticresis)\b/.test(norm)) cambios.tipoOperacion = "anticretico";
+  else if (/\b(alquilar|alquiler|rentar|renta|arrendar|arriendo)\b/.test(norm)) cambios.tipoOperacion = "alquiler";
   else if (/\b(comprar|compra|venta|vender)\b/.test(norm)) cambios.tipoOperacion = "venta";
 
   for (const [tipo, sinonimos] of SINONIMOS_TIPO) {
@@ -362,7 +367,7 @@ function filtrosCompletos(lead = {}) {
 
 function siguienteDatoFaltante(lead = {}) {
   if (!lead.zonaInteres) return "zona";
-  if (!lead.tipoOperacion) return "operacion (venta o alquiler)";
+  if (!lead.tipoOperacion) return "operacion (venta, alquiler o anticretico)";
   if (!lead.tipoPropiedad) return "tipo de propiedad";
   return null;
 }
@@ -407,7 +412,7 @@ function seccionPropiedades(propiedades, lead = {}, geo = null) {
     return `No hay ninguna propiedad que calce en la zona "${lead.zonaInteres}" con esa operacion y tipo. PERO si hay estas opciones reales en otras zonas (mismo tipo y operacion que pidio el cliente, maximo 3, no inventes otras):\n${formatearPropiedades(sinZona)}\n\nMUESTRA estas opciones DE INMEDIATO en esta misma respuesta (aclarando que son de otra zona), NUNCA le preguntes primero si quiere ver otras zonas y te quedes esperando: dale la informacion concreta ya, eso es lo que el cliente esta pidiendo.`;
   }
 
-  return "NINGUNA propiedad calza ni siquiera relajando zona y dormitorios (no hay ese tipo de propiedad con esa operacion en ningun lado). No digas simplemente que no hay nada: reencuadra ofreciendo cambiar el tipo de propiedad o la operacion (venta/alquiler).";
+  return "NINGUNA propiedad calza ni siquiera relajando zona y dormitorios (no hay ese tipo de propiedad con esa operacion en ningun lado). No digas simplemente que no hay nada: reencuadra ofreciendo cambiar el tipo de propiedad o la operacion (venta/alquiler/anticretico).";
 }
 
 const NOMBRES_DIA = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
@@ -457,7 +462,7 @@ EMOJIS SIEMPRE (no te olvides): casi TODAS las respuestas deben llevar 2-3 emoji
 
 FLUJO OBLIGATORIO (en este orden, sin saltarte pasos y sin volver a preguntar lo que el cliente ya te dijo):
 1. Zona de interes
-2. Operacion (venta o alquiler)
+2. Operacion (venta, alquiler o anticretico)
 3. Tipo de propiedad (casa, departamento, terreno, etc.)
 4. Caracteristicas (dormitorios, tamaño, alguna preferencia puntual)
 5. Presupuesto — NUNCA lo preguntes al inicio ni de los primeros, es lo ultimo que se pide, despues de tener zona+operacion+tipo
@@ -474,7 +479,7 @@ REGLAS DE CONVERSACION:
 - Cada respuesta avanza UN solo paso del flujo (una decision por vez, no abrumes con varias preguntas distintas a la vez), pero "avanzar un paso" no significa "una sola linea seca": podes (y debes) acompañar ese avance con una reaccion humana a lo que el cliente dijo.
 - Si el cliente menciona algo fuera de orden (por ejemplo dice el presupuesto antes de tiempo), guardalo igual con actualizar_datos_lead, agradece el dato, y sigue conduciendo desde el siguiente paso que falte del flujo (no le exijas que repita el orden, pero tu mantente ordenado).
 - Si el cliente cambia de idea sobre un filtro (ej. "mejor en otra zona"), ajusta SOLO ese filtro, no reinicies toda la conversacion ni vuelvas a preguntar lo que no cambio.
-- REGLA CRITICA: cuando el cliente mencione una zona, operacion (venta/alquiler), tipo de propiedad, dormitorios o presupuesto -aunque lo diga dentro de una pregunta, como "¿que departamentos en venta tienes?"- ESO es un dato a guardar. Llama a actualizar_datos_lead con ese valor nuevo ANTES de responder sobre disponibilidad, incluso si ya tenias guardado un valor distinto para ese mismo campo (el valor mas reciente que diga el cliente siempre reemplaza al anterior, asi haya cambiado de "casa en alquiler" a "departamento en venta" por ejemplo). Nunca respondas sobre que hay o no hay disponible usando un dato viejo cuando el cliente claramente acaba de cambiarlo.
+- REGLA CRITICA: cuando el cliente mencione una zona, operacion (venta/alquiler/anticretico), tipo de propiedad, dormitorios o presupuesto -aunque lo diga dentro de una pregunta, como "¿que departamentos en venta tienes?"- ESO es un dato a guardar. Llama a actualizar_datos_lead con ese valor nuevo ANTES de responder sobre disponibilidad, incluso si ya tenias guardado un valor distinto para ese mismo campo (el valor mas reciente que diga el cliente siempre reemplaza al anterior, asi haya cambiado de "casa en alquiler" a "departamento en venta" por ejemplo). Nunca respondas sobre que hay o no hay disponible usando un dato viejo cuando el cliente claramente acaba de cambiarlo.
 - Si no hay nada en la zona exacta pero el bloque de propiedades de abajo te da alternativas en otras zonas, MUESTRALAS de inmediato en tu respuesta (con sus datos reales). Nunca te quedes solo preguntando "¿quieres ver otra zona?" en bucle sin nunca entregar una opcion concreta: si tienes algo real que ofrecer, ofrecelo ya. Si el cliente insiste en la misma zona despues de que le mostraste que ahi no hay nada, no repitas la misma pregunta de ajuste: muestra de nuevo las alternativas reales que ya tienes, o pasa a ofrecer derivar_a_asesor si el cliente se frustra.
 - No muestres ninguna propiedad hasta tener al menos zona, operacion y tipo de propiedad confirmados. No muestres propiedades genericas ni fuera del filtro actual del cliente.
 - Cuando muestres opciones, nunca mas de 3 a la vez, y siempre filtradas por lo que el cliente ya indico.

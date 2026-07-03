@@ -16,7 +16,8 @@ router.get("/:id", async (req, res) => {
   }
 
   const fotos = p.fotos || [];
-  const titulo = `${p.tipo} en ${p.operacion === "venta" ? "Venta" : "Alquiler"} · ${p.zona}`;
+  const NOMBRE_OPERACION = { venta: "Venta", alquiler: "Alquiler", anticretico: "Anticretico" };
+  const titulo = `${p.tipo} en ${NOMBRE_OPERACION[p.operacion] || p.operacion} · ${p.zona}`;
   const numeroBot = (process.env.WHATSAPP_NUMERO_PUBLICO || "").replace(/\D/g, "");
   const msgWa = encodeURIComponent(`Hola! Me interesa el ${p.tipo.toLowerCase()} en ${p.operacion} en ${p.zona} (${p.precio}) que vi en la galeria. Quiero agendar una visita.`);
 
@@ -35,7 +36,7 @@ router.get("/:id", async (req, res) => {
     <div class="datos">
       ${p.dormitorios ? `<span>🛏 ${esc(p.dormitorios)} dormitorios</span>` : ""}
       <span>📍 ${esc(p.zona)}</span>
-      <span>${p.operacion === "venta" ? "🔑 Venta" : "📄 Alquiler"}</span>
+      <span>${p.operacion === "venta" ? "🔑 Venta" : p.operacion === "anticretico" ? "🤝 Anticretico" : "📄 Alquiler"}</span>
     </div>
 
     ${p.descripcion ? `<p class="descripcion">${esc(p.descripcion)}</p>` : ""}
