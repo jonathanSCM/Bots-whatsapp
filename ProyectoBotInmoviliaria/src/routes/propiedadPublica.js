@@ -18,7 +18,7 @@ router.get("/:id", async (req, res) => {
   const fotos = p.fotos || [];
   const titulo = `${p.tipo} en ${p.operacion === "venta" ? "Venta" : "Alquiler"} · ${p.zona}`;
   const numeroBot = (process.env.WHATSAPP_NUMERO_PUBLICO || "").replace(/\D/g, "");
-  const msgWa = encodeURIComponent(`Hola! Me interesa la propiedad ${p.id} (${p.tipo} en ${p.zona}). Quiero agendar una visita.`);
+  const msgWa = encodeURIComponent(`Hola! Me interesa el ${p.tipo.toLowerCase()} en ${p.operacion} en ${p.zona} (${p.precio}) que vi en la galeria. Quiero agendar una visita.`);
 
   const contenido = `
   <header>

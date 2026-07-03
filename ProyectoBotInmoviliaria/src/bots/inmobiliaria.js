@@ -106,7 +106,6 @@ function fichaPropiedad(p) {
   const lineas = [`· *Precio*: ${p.precio}`];
   if (p.dormitorios) lineas.push(`· *Dormitorios*: ${p.dormitorios}`);
   lineas.push(`· *Zona*: ${p.zona}`);
-  lineas.push(`· *Codigo*: ${p.id}`);
   if (p.ubicacionMaps) lineas.push(`· *Ubicacion*: ${p.ubicacionMaps}`);
   if (p.descripcion) lineas.push(`\n${p.descripcion}`);
   const base = urlBasePublica(p);
@@ -497,6 +496,7 @@ ${seccionPropiedades(propiedades, lead, await geoDelLead(lead))}
 
 REGLAS SOBRE EL INVENTARIO Y LA VENTA:
 - El bloque de propiedades de arriba ya viene filtrado por codigo segun zona, operacion y tipo del cliente (maximo 3). Es la UNICA fuente real, no existen otras. No inventes propiedades, precios, zonas, fotos o disponibilidad que no esten ahi.
+- CODIGOS INTERNOS (P001, P041, etc.): NUNCA los menciones al cliente en tus mensajes. Son solo para uso interno tuyo: usalos unicamente como idPropiedad al llamar las funciones (enviar_fotos_propiedad, agendar_visita). Al cliente describele las propiedades por tipo, zona y precio ("el departamento en Av. Banzer de USD 119,500"), y cuando le des a elegir entre varias usa un menu numerado (1, 2, 3) — tu internamente sabes a que codigo corresponde cada numero.
 - REGLA ANTI-INVENTO (LA MAS IMPORTANTE DE TODAS): cada propiedad que muestres DEBE salir copiada del bloque de arriba, citando SIEMPRE su codigo (ej: "ref P083"), su precio EXACTO y su zona EXACTA tal como aparecen ahi. Si estas por escribir una propiedad y no puedes citar su codigo P0XX del bloque, esa propiedad NO EXISTE: mostrarla seria mentirle a un cliente real y hacerle perder el tiempo. Nunca cambies ni redondees un precio, y nunca agregues caracteristicas que la descripcion no menciona (piscina, gimnasio, etc.). Si el bloque tiene 1 sola propiedad, muestra 1 sola; NUNCA "completes" la lista hasta 3 con opciones inventadas.
 - PROACTIVIDAD CON FOTOS: cuando el cliente muestre interes claro en una propiedad especifica ("me gusta", "esa", "me interesa", "que precio tiene", o cualquier cosa positiva sobre esa propiedad en particular), AUTOMATICAMENTE llama a enviar_fotos_propiedad sin que lo pida. Las fotos son el cierre, no esperes a que pregunte. Luego en tu siguiente respuesta comenta sobre las fotos y por que esa propiedad le conviene.
 - SUGERENCIAS SIMILARES AUTOMATICAS: si el cliente no muestra entusiasmo por las opciones (dice "no me convence", "muy caro", "quiero mas dormitorios", etc.), automaticamente busca y sugiere 1-2 propiedades similares (misma zona/tipo/operacion, solo varia dormitorios o presupuesto segun lo que pide) y directamente llama enviar_fotos_propiedad de esas para que las vea. Di algo como "Tengo estas otras que creo te van a gustar mas 😊 Miralas" — no preguntes si quiere ver, simplemente muestra.
@@ -530,7 +530,7 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
   if (toolCall.function.name === "agendar_visita") {
     const propiedad = await obtenerPropiedad(args.idPropiedad);
     if (!propiedad) {
-      return `No encontre la propiedad ${args.idPropiedad}. Revisemos cual es la que te interesa.`;
+      return `No encontre esa propiedad. Revisemos cual es la que te interesa.`;
     }
 
     const { disponible, motivo } = await verificarDisponibilidad(args.fecha, args.hora);
@@ -559,7 +559,7 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
       }
     }
 
-    return `Listo, tu visita a la propiedad ${propiedad.id} quedo agendada para el ${args.fecha} a las ${args.hora}. Te vamos a recordar por este mismo chat unas horas antes.`;
+    return `Listo, tu visita al ${propiedad.tipo.toLowerCase()} en ${propiedad.zona} quedo agendada para el ${args.fecha} a las ${args.hora}. Te vamos a recordar por este mismo chat unas horas antes.`;
   }
 
   if (toolCall.function.name === "reprogramar_visita") {
@@ -604,20 +604,20 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
       }
     }
 
-    return `Listo, movi tu visita a la propiedad ${citaActiva.propiedadId} para el ${args.fecha} a las ${args.hora}. La fecha anterior quedo liberada.`;
+    return `Listo, movi tu visita para el ${args.fecha} a las ${args.hora}. La fecha anterior quedo liberada.`;
   }
 
   if (toolCall.function.name === "enviar_fotos_propiedad") {
     const propiedad = contexto.find((p) => p.id === args.idPropiedad) || (await obtenerPropiedad(args.idPropiedad));
     if (!propiedad) return "No encontre esa propiedad para mostrarte las fotos.";
-    if (!propiedad.fotos?.length) return `Por ahora no tengo fotos cargadas de la propiedad ${propiedad.id}, pero puedo darte mas detalles.`;
+    if (!propiedad.fotos?.length) return `Por ahora no tengo fotos cargadas de esa propiedad, pero puedo darte mas detalles.`;
 
     // Anti-loop: si ya se enviaron las fotos de esta propiedad en la
     // conversacion, no se reenvia lo mismo; se redirige a la siguiente accion.
     const leadActual = await getOrCreateLead(numero);
     const fotosEnviadas = (leadActual.datosBot && leadActual.datosBot.fotosEnviadas) || [];
     if (fotosEnviadas.includes(propiedad.id)) {
-      return `Ya te envie todas las fotos disponibles de la propiedad ${propiedad.id} 📸 ¿Quieres:\n1) Mas informacion\n2) Agendar una visita\n3) Ver otras opciones parecidas?`;
+      return `Ya te envie todas las fotos disponibles de esa propiedad 📸 ¿Quieres:\n1) Mas informacion\n2) Agendar una visita\n3) Ver otras opciones parecidas?`;
     }
 
     // Una sola foto de portada con la ficha; todas las demas se ven en la
