@@ -191,6 +191,20 @@ async function procesarMensaje(numero, texto) {
   }));
 
   const contexto = await bot.obtenerContexto();
+
+  // Filtros detectados por codigo en el mensaje del cliente (zona, tipo,
+  // operacion, dormitorios): se aplican al lead ANTES de armar el prompt,
+  // sin depender de que el modelo llame a actualizar_datos_lead. Evita que
+  // el bot responda "no hay nada en X" mirando el filtro viejo del lead.
+  if (bot.extraerFiltros) {
+    const detectados = bot.extraerFiltros(textoParaIA, contexto);
+    const nuevos = Object.fromEntries(Object.entries(detectados).filter(([campo, valor]) => valor && lead[campo] !== valor));
+    if (Object.keys(nuevos).length) {
+      console.log(`--- [${bot.id}] filtros detectados por codigo:`, JSON.stringify(nuevos));
+      lead = await updateLead(numero, nuevos);
+    }
+  }
+
   const respuestaIA = await generarRespuesta(historialParaIA, await bot.systemPrompt(contexto, lead), bot.tools);
 
   const helpers = {

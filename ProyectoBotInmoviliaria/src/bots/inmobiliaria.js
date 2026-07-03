@@ -258,6 +258,68 @@ function buscarPropiedadesFiltradas(propiedades, lead = {}, { ignorarZona = fals
     .slice(0, 3);
 }
 
+// Extraccion determinista de filtros del mensaje del cliente, EN CODIGO.
+// El modelo deberia llamar a actualizar_datos_lead, pero en la practica a
+// veces no lo hace y responde con el estado viejo del lead ("no hay nada en
+// X" cuando el cliente acaba de pedir Y). Esto detecta zona / tipo /
+// operacion / dormitorios directamente del texto y actualiza el lead ANTES
+// de armar el prompt, para que el catalogo que ve el modelo ya este bien.
+const SINONIMOS_TIPO = [
+  ["departamento", ["departamento", "departamentos", "depa", "depas", "dpto", "dptos", "depto", "deptos"]],
+  ["casa", ["casa", "casas", "chalet"]],
+  ["terreno", ["terreno", "terrenos", "lote", "lotes"]],
+  ["oficina", ["oficina", "oficinas"]],
+  ["local", ["local", "locales"]],
+  ["duplex", ["duplex"]],
+];
+
+function extraerFiltros(texto, propiedades = []) {
+  const norm = " " + (texto || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9ñ\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim() + " ";
+  const cambios = {};
+
+  if (/\b(alquilar|alquiler|rentar|renta|arrendar|arriendo)\b/.test(norm)) cambios.tipoOperacion = "alquiler";
+  else if (/\b(comprar|compra|venta|vender)\b/.test(norm)) cambios.tipoOperacion = "venta";
+
+  for (const [tipo, sinonimos] of SINONIMOS_TIPO) {
+    if (sinonimos.some((s) => norm.includes(` ${s} `))) {
+      cambios.tipoPropiedad = tipo;
+      break;
+    }
+  }
+
+  // Zona: se compara contra las zonas reales del catalogo (canonicas). Gana
+  // la de mas palabras clave presentes en el mensaje (mas especifica).
+  let mejorZona = null;
+  let mejorPuntaje = 0;
+  const zonasUnicas = [...new Set(propiedades.map((p) => p.zona).filter(Boolean))];
+  for (const zona of zonasUnicas) {
+    const claves = palabrasClave(zona);
+    if (!claves.length) continue;
+    const presentes = claves.filter((c) => norm.includes(` ${c} `) || norm.includes(`${c} `)).length;
+    if (presentes === claves.length && presentes > mejorPuntaje) {
+      mejorZona = zona;
+      mejorPuntaje = presentes;
+    }
+  }
+  if (mejorZona) cambios.zonaInteres = mejorZona;
+  else {
+    // Zona macro dicha en el mensaje ("en el centro", "zona norte")
+    const macro = norm.match(/\b(centro|norte|sur|este|oeste)\b/);
+    if (macro && /\b(zona|centro)\b/.test(norm)) cambios.zonaInteres = macro[1] === "centro" ? "Centro" : `Zona ${macro[1][0].toUpperCase()}${macro[1].slice(1)}`;
+  }
+
+  const dorm = norm.match(/\b(\d+)\s*(dormitorios?|habitacion(?:es)?|cuartos?|dorms?)\b/);
+  if (dorm) cambios.dormitorios = dorm[1];
+
+  return cambios;
+}
+
 // Contexto geografico de lo que pidio el cliente: si es una zona macro
 // ("zona norte") se resuelve por geometria; si es un lugar especifico
 // ("avenida banzer") se geocodifica con Nominatim (cacheado en BD).
@@ -554,4 +616,5 @@ module.exports = {
   systemPrompt,
   obtenerContexto,
   ejecutarFuncion,
+  extraerFiltros,
 };
