@@ -320,6 +320,32 @@ function extraerFiltros(texto, propiedades = []) {
   return cambios;
 }
 
+// Resumen real del inventario para que el bot ofrezca alternativas VERDADERAS
+// (zonas y tipos donde si hay propiedades), en vez de sugerir zonas al azar.
+// Respeta la operacion/tipo que el cliente ya eligio.
+function resumenInventario(propiedades, lead = {}) {
+  const base = propiedades.filter(
+    (p) => (!lead.tipoOperacion || p.operacion === lead.tipoOperacion) && p.estado !== "vendida"
+  );
+  const contar = (lista, campo) => {
+    const c = {};
+    for (const p of lista) {
+      const v = (p[campo] || "").trim();
+      if (v) c[v] = (c[v] || 0) + 1;
+    }
+    return Object.entries(c).sort((a, b) => b[1] - a[1]);
+  };
+
+  const delTipo = lead.tipoPropiedad ? base.filter((p) => coincideTexto(lead.tipoPropiedad, p.tipo)) : base;
+  const zonas = contar(delTipo, "zona").map(([z, n]) => `${z} (${n})`).join(", ") || "ninguna";
+  const tipos = contar(base, "tipo").map(([t, n]) => `${t} (${n})`).join(", ") || "ninguno";
+
+  return `INVENTARIO REAL DISPONIBLE (conteo exacto calculado por el sistema${lead.tipoOperacion ? `, solo ${lead.tipoOperacion}` : ""}):
+- Zonas con ${lead.tipoPropiedad || "propiedades"}: ${zonas}
+- Tipos de propiedad disponibles: ${tipos}
+Usa SOLO estas zonas y tipos cuando ofrezcas alternativas o el cliente pregunte que hay ("¿que zonas tienes?", "¿y en otra zona?", "¿que tipos hay?"): presentalas como menu numerado (maximo 4-5 opciones, las de mas inventario primero). NUNCA ofrezcas una zona o tipo que no este en esta lista.`;
+}
+
 // Contexto geografico de lo que pidio el cliente: si es una zona macro
 // ("zona norte") se resuelve por geometria; si es un lugar especifico
 // ("avenida banzer") se geocodifica con Nominatim (cacheado en BD).
@@ -464,6 +490,8 @@ Informacion comercial disponible:
 - Tipos de propiedad: ${business.tiposPropiedad.join(", ")}
 - Requisitos para alquiler: ${business.requisitosAlquiler}
 - Requisitos para compra: ${business.requisitosCompra}
+
+${resumenInventario(propiedades, lead)}
 
 ${seccionPropiedades(propiedades, lead, await geoDelLead(lead))}
 
