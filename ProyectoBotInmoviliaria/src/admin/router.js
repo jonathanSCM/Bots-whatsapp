@@ -5,6 +5,19 @@ const multer = require("multer");
 const sharp = require("sharp");
 const router = express.Router();
 
+function deshabilitarCache(res) {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+}
+
+router.use((req, res, next) => {
+  if (req.path === "/" || req.path.startsWith("/api/") || req.path === "/login" || req.path.endsWith(".html") || req.path.endsWith(".js") || req.path.endsWith(".css")) {
+    deshabilitarCache(res);
+  }
+  next();
+});
+
 const { sessionAuth, crearCookieSesion, cookieLogout, validarCredenciales } = require("./auth");
 const { listarLeads, obtenerLeadPorId, updateLead, ESTADOS_LEAD } = require("../state/leadStore");
 const {
