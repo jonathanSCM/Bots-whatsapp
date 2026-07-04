@@ -110,6 +110,7 @@ function aplicarFiltrosPropiedades() {
 
 function renderCaracteristicasVista() {
   const contenedor = document.getElementById("prop-caracteristicas-lista");
+  if (!contenedor) return;
   contenedor.innerHTML = caracteristicasActuales
     .map(
       (caracteristica, index) => `
@@ -123,12 +124,18 @@ function renderCaracteristicasVista() {
 
 function agregarCaracteristicaDesdeInput() {
   const input = document.getElementById("prop-caracteristicas-input");
+  if (!input) {
+    console.warn("prop-caracteristicas-input no encontrado");
+    return;
+  }
   const valor = input.value.trim();
+  console.debug("Agregar caracteristica:", valor);
   if (!valor) return;
   const yaExiste = caracteristicasActuales.some((item) => item.toLowerCase() === valor.toLowerCase());
   if (!yaExiste) {
     caracteristicasActuales.push(valor);
     renderCaracteristicasVista();
+    console.debug("Caracteristicas actuales:", caracteristicasActuales);
   }
   input.value = "";
   input.focus();
@@ -183,19 +190,25 @@ function abrirModalPropiedad(id) {
   modal.classList.remove("hidden");
 }
 
-document.getElementById("btn-nueva-propiedad").addEventListener("click", () => abrirModalPropiedad(null));
-document.getElementById("modal-propiedad-close").addEventListener("click", () => {
-  document.getElementById("modal-propiedad").classList.add("hidden");
+const btnNuevaProp = document.getElementById("btn-nueva-propiedad");
+if (btnNuevaProp) btnNuevaProp.addEventListener("click", () => abrirModalPropiedad(null));
+const modalPropClose = document.getElementById("modal-propiedad-close");
+if (modalPropClose) modalPropClose.addEventListener("click", () => {
+  const modal = document.getElementById("modal-propiedad");
+  if (modal) modal.classList.add("hidden");
 });
 
-document.getElementById("btn-agregar-caracteristica").addEventListener("click", agregarCaracteristicaDesdeInput);
-document.getElementById("prop-caracteristicas-input").addEventListener("keydown", (e) => {
+const btnAgregarCar = document.getElementById("btn-agregar-caracteristica");
+if (btnAgregarCar) btnAgregarCar.addEventListener("click", agregarCaracteristicaDesdeInput);
+const inputCar = document.getElementById("prop-caracteristicas-input");
+if (inputCar) inputCar.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
     agregarCaracteristicaDesdeInput();
   }
 });
-document.getElementById("prop-caracteristicas-lista").addEventListener("click", (e) => {
+const listaCar = document.getElementById("prop-caracteristicas-lista");
+if (listaCar) listaCar.addEventListener("click", (e) => {
   const btn = e.target.closest(".btn-remove-caracteristica");
   if (!btn) return;
   const index = Number(btn.dataset.index);
