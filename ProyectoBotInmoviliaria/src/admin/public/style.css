@@ -129,6 +129,13 @@ select.estado-select option{background:var(--violet-700);color:var(--ink);}
 .form-propiedad input, .form-propiedad select, .form-propiedad textarea{
   background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:9px 10px;color:var(--ink);font-family:inherit;font-size:.85rem;
 }
+.btn-secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:var(--ink);padding:9px 12px;border-radius:8px;font-weight:700;font-size:.8rem;cursor:pointer;font-family:inherit;}
+.caracteristicas-editor{display:flex;flex-direction:column;gap:10px;}
+.caracteristicas-lista{display:flex;flex-wrap:wrap;gap:8px;min-height:40px;}
+.caracteristica-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(34,227,166,.14);color:var(--mint);border:1px solid rgba(34,227,166,.24);border-radius:999px;padding:7px 10px;font-size:.78rem;font-weight:700;}
+.btn-remove-caracteristica{background:none;border:none;color:inherit;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+.caracteristicas-add{display:flex;gap:8px;}
+.caracteristicas-add input{flex:1;min-width:0;}
 .form-propiedad select{
   appearance:none;-webkit-appearance:none;
   background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="%23cdb9ec" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>');

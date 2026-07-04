@@ -1,6 +1,7 @@
 let leads = [];
 let propiedadesCache = [];
 let categoriasCache = [];
+let caracteristicasActuales = [];
 
 const DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
@@ -107,10 +108,42 @@ function aplicarFiltrosPropiedades() {
   document.getElementById("filtro-prop-estado").addEventListener(evento, aplicarFiltrosPropiedades);
 });
 
+function renderCaracteristicasVista() {
+  const contenedor = document.getElementById("prop-caracteristicas-lista");
+  contenedor.innerHTML = caracteristicasActuales
+    .map(
+      (caracteristica, index) => `
+        <span class="caracteristica-chip">
+          <span>${caracteristica}</span>
+          <button type="button" class="btn-remove-caracteristica" data-index="${index}" aria-label="Eliminar característica">✕</button>
+        </span>`
+    )
+    .join("");
+}
+
+function agregarCaracteristicaDesdeInput() {
+  const input = document.getElementById("prop-caracteristicas-input");
+  const valor = input.value.trim();
+  if (!valor) return;
+  const yaExiste = caracteristicasActuales.some((item) => item.toLowerCase() === valor.toLowerCase());
+  if (!yaExiste) {
+    caracteristicasActuales.push(valor);
+    renderCaracteristicasVista();
+  }
+  input.value = "";
+  input.focus();
+}
+
+function obtenerCaracteristicasTexto() {
+  return caracteristicasActuales.join(", ");
+}
+
 function abrirModalPropiedad(id) {
   const modal = document.getElementById("modal-propiedad");
   const form = document.getElementById("form-propiedad");
   form.reset();
+  caracteristicasActuales = [];
+  renderCaracteristicasVista();
   document.getElementById("prop-fotos-existentes").innerHTML = "";
   document.getElementById("prop-tipo").innerHTML = categoriasCache.map((c) => `<option value="${c.nombre}">${c.nombre}</option>`).join("");
 
@@ -126,7 +159,8 @@ function abrirModalPropiedad(id) {
     document.getElementById("prop-operacion").value = p.operacion;
     document.getElementById("prop-zona").value = p.zona;
     document.getElementById("prop-ubicacion").value = p.ubicacionMaps || "";
-    document.getElementById("prop-caracteristicas").value = (p.caracteristicas || []).join(", ");
+    caracteristicasActuales = Array.isArray(p.caracteristicas) ? [...p.caracteristicas] : [];
+    renderCaracteristicasVista();
     document.getElementById("prop-precio").value = p.precio;
     document.getElementById("prop-dormitorios").value = p.dormitorios || "";
     document.getElementById("prop-descripcion").value = p.descripcion || "";
@@ -154,6 +188,21 @@ document.getElementById("modal-propiedad-close").addEventListener("click", () =>
   document.getElementById("modal-propiedad").classList.add("hidden");
 });
 
+document.getElementById("btn-agregar-caracteristica").addEventListener("click", agregarCaracteristicaDesdeInput);
+document.getElementById("prop-caracteristicas-input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    agregarCaracteristicaDesdeInput();
+  }
+});
+document.getElementById("prop-caracteristicas-lista").addEventListener("click", (e) => {
+  const btn = e.target.closest(".btn-remove-caracteristica");
+  if (!btn) return;
+  const index = Number(btn.dataset.index);
+  caracteristicasActuales.splice(index, 1);
+  renderCaracteristicasVista();
+});
+
 document.getElementById("form-propiedad").addEventListener("submit", async (e) => {
   e.preventDefault();
   const id = document.getElementById("prop-id").value;
@@ -162,7 +211,7 @@ document.getElementById("form-propiedad").addEventListener("submit", async (e) =
   fd.append("operacion", document.getElementById("prop-operacion").value);
   fd.append("zona", document.getElementById("prop-zona").value);
   fd.append("ubicacionMaps", document.getElementById("prop-ubicacion").value);
-  fd.append("caracteristicas", document.getElementById("prop-caracteristicas").value);
+  fd.append("caracteristicas", obtenerCaracteristicasTexto());
   fd.append("precio", document.getElementById("prop-precio").value);
   fd.append("dormitorios", document.getElementById("prop-dormitorios").value);
   fd.append("descripcion", document.getElementById("prop-descripcion").value);
