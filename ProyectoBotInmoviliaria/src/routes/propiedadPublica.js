@@ -24,7 +24,6 @@ router.get("/:id", async (req, res) => {
   const contenido = `
   <header>
     <span class="marca">${esc(business.nombreNegocio)}</span>
-    <span class="codigo">${esc(p.id)}</span>
   </header>
 
   ${fotos.length ? `<div class="hero"><img src="${esc(fotos[0])}" alt="${esc(titulo)}" onclick="ver(0)"></div>` : ""}
