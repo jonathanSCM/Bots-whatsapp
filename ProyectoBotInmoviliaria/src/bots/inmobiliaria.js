@@ -430,6 +430,15 @@ function resumenInventario(propiedades, lead = {}) {
     return Object.entries(c).sort((a, b) => b[1] - a[1]);
   };
 
+  // Si la operacion elegida no tiene NINGUNA propiedad en todo el inventario
+  // (ej. pidio anticretico y no hay), avisar claro y con los numeros reales de
+  // las otras operaciones, para que el bot reencuadre en vez de repetir "no hay".
+  if (lead.tipoOperacion && base.length === 0) {
+    const porOperacion = contar(propiedades.filter((p) => p.estado !== "vendida"), "operacion")
+      .map(([o, n]) => `${o} (${n})`).join(", ") || "ninguna";
+    return `ATENCION CRITICA DEL INVENTARIO: NO existe NINGUNA propiedad en ${lead.tipoOperacion} en todo el inventario. Es inutil ajustar zona, tipo o presupuesto: la unica salida es cambiar de operacion. Dile al cliente con transparencia que por ahora no manejan propiedades en ${lead.tipoOperacion}, y ofrecele de inmediato las operaciones que SI tienen inventario real: ${porOperacion}. Ejemplo: "Por ahora no tenemos propiedades en anticretico 🙏 pero si tenemos muy buenas opciones en venta y alquiler, ¿te muestro alguna? 1) Venta 2) Alquiler". Cuando el cliente elija, llama a actualizar_datos_lead con la nueva operacion.`;
+  }
+
   const delTipo = lead.tipoPropiedad ? base.filter((p) => coincideTexto(lead.tipoPropiedad, p.tipo)) : base;
   const zonas = contar(delTipo, "zona").map(([z, n]) => `${z} (${n})`).join(", ") || "ninguna";
   const tipos = contar(base, "tipo").map(([t, n]) => `${t} (${n})`).join(", ") || "ninguno";
@@ -569,6 +578,7 @@ REGLAS DE CONVERSACION:
 - Cada respuesta avanza UN solo paso del flujo (una decision por vez, no abrumes con varias preguntas distintas a la vez), pero "avanzar un paso" no significa "una sola linea seca": podes (y debes) acompañar ese avance con una reaccion humana a lo que el cliente dijo.
 - Si el cliente menciona algo fuera de orden (por ejemplo dice el presupuesto antes de tiempo), guardalo igual con actualizar_datos_lead, agradece el dato, y sigue conduciendo desde el siguiente paso que falte del flujo (no le exijas que repita el orden, pero tu mantente ordenado).
 - Si el cliente cambia de idea sobre un filtro (ej. "mejor en otra zona"), ajusta SOLO ese filtro, no reinicies toda la conversacion ni vuelvas a preguntar lo que no cambio.
+- MENUS NUMERADOS: cuando el cliente responde con un numero ("1", "2", "3") a un menu que TU ofreciste, eso equivale a que dijo la opcion completa. OBLIGATORIO: llama a actualizar_datos_lead con el valor real de esa opcion (ej. ofreciste "1) Zona Sur 2) Centro" y responde "2" -> guardar zonaInteres "Centro") ANTES de responder. Nunca sigas la conversacion con el dato solo "hablado" sin guardarlo.
 - REGLA CRITICA: cuando el cliente mencione una zona, operacion (venta/alquiler/anticretico), tipo de propiedad, dormitorios o presupuesto -aunque lo diga dentro de una pregunta, como "¿que departamentos en venta tienes?"- ESO es un dato a guardar. Llama a actualizar_datos_lead con ese valor nuevo ANTES de responder sobre disponibilidad, incluso si ya tenias guardado un valor distinto para ese mismo campo (el valor mas reciente que diga el cliente siempre reemplaza al anterior, asi haya cambiado de "casa en alquiler" a "departamento en venta" por ejemplo). Nunca respondas sobre que hay o no hay disponible usando un dato viejo cuando el cliente claramente acaba de cambiarlo.
 - Si no hay nada en la zona exacta pero el bloque de propiedades de abajo te da alternativas en otras zonas, MUESTRALAS de inmediato en tu respuesta (con sus datos reales). Nunca te quedes solo preguntando "¿quieres ver otra zona?" en bucle sin nunca entregar una opcion concreta: si tienes algo real que ofrecer, ofrecelo ya. Si el cliente insiste en la misma zona despues de que le mostraste que ahi no hay nada, no repitas la misma pregunta de ajuste: muestra de nuevo las alternativas reales que ya tienes, o pasa a ofrecer derivar_a_asesor si el cliente se frustra.
 - No muestres ninguna propiedad hasta tener al menos zona, operacion y tipo de propiedad confirmados. No muestres propiedades genericas ni fuera del filtro actual del cliente.
