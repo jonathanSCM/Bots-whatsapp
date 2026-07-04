@@ -129,12 +129,15 @@ select.estado-select option{background:var(--violet-700);color:var(--ink);}
 .form-propiedad input, .form-propiedad select, .form-propiedad textarea{
   background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:9px 10px;color:var(--ink);font-family:inherit;font-size:.85rem;
 }
-.btn-secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:var(--ink);padding:9px 12px;border-radius:8px;font-weight:700;font-size:.8rem;cursor:pointer;font-family:inherit;}
+.btn-secondary{background:linear-gradient(135deg,var(--mint),#16c992);border:1px solid rgba(34,227,166,.35);color:#0d2b22;padding:10px 16px;border-radius:12px;font-weight:700;font-size:.85rem;cursor:pointer;font-family:inherit;transition:filter .15s,transform .15s,box-shadow .15s;}
+.btn-secondary:hover{filter:brightness(1.05);transform:translateY(-1px);box-shadow:0 10px 24px rgba(34,227,166,.12);}
+.btn-secondary:active{transform:translateY(0);}
 .caracteristicas-editor{display:flex;flex-direction:column;gap:10px;}
 .caracteristicas-lista{display:flex;flex-wrap:wrap;gap:8px;min-height:40px;}
-.caracteristica-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(34,227,166,.14);color:var(--mint);border:1px solid rgba(34,227,166,.24);border-radius:999px;padding:7px 10px;font-size:.78rem;font-weight:700;}
-.btn-remove-caracteristica{background:none;border:none;color:inherit;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:.9rem;}
-.caracteristicas-add{display:flex;gap:8px;}
+.caracteristica-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);color:var(--ink);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:8px 12px;font-size:.82rem;font-weight:700;}
+.btn-remove-caracteristica{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:var(--ink);cursor:pointer;padding:0 8px;border-radius:999px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;}
+.btn-remove-caracteristica:hover{background:rgba(255,255,255,.16);}
+.caracteristicas-add{display:flex;gap:8px;align-items:center;}
 .caracteristicas-add input{flex:1;min-width:0;}
 .form-propiedad select{
   appearance:none;-webkit-appearance:none;

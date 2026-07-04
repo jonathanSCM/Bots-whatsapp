@@ -1,3 +1,4 @@
+console.log("Backoffice admin app.js cargado");
 let leads = [];
 let propiedadesCache = [];
 let categoriasCache = [];
@@ -190,57 +191,72 @@ function abrirModalPropiedad(id) {
   modal.classList.remove("hidden");
 }
 
-const btnNuevaProp = document.getElementById("btn-nueva-propiedad");
-if (btnNuevaProp) btnNuevaProp.addEventListener("click", () => abrirModalPropiedad(null));
-const modalPropClose = document.getElementById("modal-propiedad-close");
-if (modalPropClose) modalPropClose.addEventListener("click", () => {
-  const modal = document.getElementById("modal-propiedad");
-  if (modal) modal.classList.add("hidden");
-});
+function inicializarBackoffice() {
+  const btnNuevaProp = document.getElementById("btn-nueva-propiedad");
+  if (btnNuevaProp) btnNuevaProp.addEventListener("click", () => abrirModalPropiedad(null));
 
-const btnAgregarCar = document.getElementById("btn-agregar-caracteristica");
-if (btnAgregarCar) btnAgregarCar.addEventListener("click", agregarCaracteristicaDesdeInput);
-const inputCar = document.getElementById("prop-caracteristicas-input");
-if (inputCar) inputCar.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    agregarCaracteristicaDesdeInput();
-  }
-});
-const listaCar = document.getElementById("prop-caracteristicas-lista");
-if (listaCar) listaCar.addEventListener("click", (e) => {
-  const btn = e.target.closest(".btn-remove-caracteristica");
-  if (!btn) return;
-  const index = Number(btn.dataset.index);
-  caracteristicasActuales.splice(index, 1);
-  renderCaracteristicasVista();
-});
-
-document.getElementById("form-propiedad").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const id = document.getElementById("prop-id").value;
-  const fd = new FormData();
-  fd.append("tipo", document.getElementById("prop-tipo").value);
-  fd.append("operacion", document.getElementById("prop-operacion").value);
-  fd.append("zona", document.getElementById("prop-zona").value);
-  fd.append("ubicacionMaps", document.getElementById("prop-ubicacion").value);
-  fd.append("caracteristicas", obtenerCaracteristicasTexto());
-  fd.append("precio", document.getElementById("prop-precio").value);
-  fd.append("dormitorios", document.getElementById("prop-dormitorios").value);
-  fd.append("descripcion", document.getElementById("prop-descripcion").value);
-  fd.append("estado", document.getElementById("prop-estado").value);
-  fd.append("fotosExistentes", document.getElementById("prop-fotos-existentes").dataset.fotos || "[]");
-
-  const archivos = document.getElementById("prop-fotos").files;
-  for (const archivo of archivos) fd.append("fotos", archivo);
-
-  await fetch(id ? `api/propiedades/${id}` : "api/propiedades", {
-    method: id ? "PUT" : "POST",
-    body: fd,
+  const modalPropClose = document.getElementById("modal-propiedad-close");
+  if (modalPropClose) modalPropClose.addEventListener("click", () => {
+    const modal = document.getElementById("modal-propiedad");
+    if (modal) modal.classList.add("hidden");
   });
 
-  document.getElementById("modal-propiedad").classList.add("hidden");
+  const btnAgregarCar = document.getElementById("btn-agregar-caracteristica");
+  if (btnAgregarCar) btnAgregarCar.addEventListener("click", agregarCaracteristicaDesdeInput);
+
+  const inputCar = document.getElementById("prop-caracteristicas-input");
+  if (inputCar) inputCar.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      agregarCaracteristicaDesdeInput();
+    }
+  });
+
+  const listaCar = document.getElementById("prop-caracteristicas-lista");
+  if (listaCar) listaCar.addEventListener("click", (e) => {
+    const btn = e.target.closest(".btn-remove-caracteristica");
+    if (!btn) return;
+    const index = Number(btn.dataset.index);
+    caracteristicasActuales.splice(index, 1);
+    renderCaracteristicasVista();
+  });
+
+  const formProp = document.getElementById("form-propiedad");
+  if (formProp) {
+    formProp.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("prop-id").value;
+      const fd = new FormData();
+      fd.append("tipo", document.getElementById("prop-tipo").value);
+      fd.append("operacion", document.getElementById("prop-operacion").value);
+      fd.append("zona", document.getElementById("prop-zona").value);
+      fd.append("ubicacionMaps", document.getElementById("prop-ubicacion").value);
+      fd.append("caracteristicas", obtenerCaracteristicasTexto());
+      fd.append("precio", document.getElementById("prop-precio").value);
+      fd.append("dormitorios", document.getElementById("prop-dormitorios").value);
+      fd.append("descripcion", document.getElementById("prop-descripcion").value);
+      fd.append("estado", document.getElementById("prop-estado").value);
+      fd.append("fotosExistentes", document.getElementById("prop-fotos-existentes").dataset.fotos || "[]");
+
+      const archivos = document.getElementById("prop-fotos").files;
+      for (const archivo of archivos) fd.append("fotos", archivo);
+
+      await fetch(id ? `api/propiedades/${id}` : "api/propiedades", {
+        method: id ? "PUT" : "POST",
+        body: fd,
+      });
+
+      document.getElementById("modal-propiedad").classList.add("hidden");
+      cargarTodo();
+    });
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOMContentLoaded inicializado");
+  inicializarBackoffice();
   cargarTodo();
+  setInterval(cargarTodo, 15000);
 });
 
 // ---------- Citas ----------
