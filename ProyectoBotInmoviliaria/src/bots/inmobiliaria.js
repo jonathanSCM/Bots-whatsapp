@@ -65,6 +65,24 @@ const TOOLS = [
   {
     type: "function",
     function: {
+      name: "mostrar_propiedades",
+      description: "Presenta propiedades al cliente como tarjetas visuales (foto + ficha con precio, zona y detalles). SIEMPRE que vayas a mostrar una o mas propiedades del bloque de resultados, llama esta funcion con sus IDs en vez de describirlas en texto. Maximo 3.",
+      parameters: {
+        type: "object",
+        properties: {
+          idsPropiedades: {
+            type: "array",
+            items: { type: "string" },
+            description: "IDs exactos de las propiedades a mostrar, ej: [\"P041\",\"P071\"]. Maximo 3.",
+          },
+        },
+        required: ["idsPropiedades"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "enviar_fotos_propiedad",
       description: "Envia las fotos de una propiedad especifica por WhatsApp cuando el cliente pide ver fotos o imagenes de una propiedad.",
       parameters: {
@@ -385,13 +403,13 @@ function seccionPropiedades(propiedades, lead = {}, geo = null) {
 
   const exactas = buscarPropiedadesFiltradas(propiedades, lead, {}, geo);
   if (exactas.length) {
-    return `Resultados de la busqueda (ya filtrados por zona, operacion, tipo y dormitorios pedidos, maximo 3, son las UNICAS propiedades reales que puedes mencionar, NUNCA inventes otras):\n${formatearPropiedades(exactas)}\n\nMuestraselas al cliente DE INMEDIATO en esta misma respuesta (nunca digas "te muestro en un momento" o "dejame buscar" y dejes la respuesta sin las opciones: si llegaste hasta aqui es porque ya las tienes, entregalas ya).\n\nADVERTENCIA SOBRE EL HISTORIAL: si en mensajes anteriores de esta conversacion dijiste que "no habia propiedades disponibles" en esta zona, eso quedo OBSOLETO. El bloque de arriba es la UNICA verdad actual del inventario. NO repitas "lamentablemente no tengo propiedades" cuando el bloque de arriba te esta dando resultados: corrigete con naturalidad ("¡Buenas noticias! Encontre estas opciones...") y muestra las propiedades.`;
+    return `Resultados de la busqueda (ya filtrados por zona, operacion, tipo y dormitorios pedidos, maximo 3, son las UNICAS propiedades reales que puedes mencionar, NUNCA inventes otras):\n${formatearPropiedades(exactas)}\n\nMuestraselas DE INMEDIATO llamando a mostrar_propiedades con sus IDs (el sistema las envia como tarjetas con foto y ficha). NUNCA las describas como lista de texto en tu mensaje, y nunca digas "te muestro en un momento": llama la funcion YA, y tu texto solo reacciona y pregunta el siguiente paso.\n\nADVERTENCIA SOBRE EL HISTORIAL: si en mensajes anteriores de esta conversacion dijiste que "no habia propiedades disponibles" en esta zona, eso quedo OBSOLETO. El bloque de arriba es la UNICA verdad actual del inventario. NO repitas "lamentablemente no tengo propiedades" cuando el bloque de arriba te esta dando resultados: corrigete con naturalidad ("¡Buenas noticias! Encontre estas opciones...") y muestra las propiedades.`;
   }
 
   if (lead.dormitorios) {
     const sinDormitorios = buscarPropiedadesFiltradas(propiedades, lead, { ignorarDormitorios: true }, geo);
     if (sinDormitorios.length) {
-      return `No hay nada con exactamente ${lead.dormitorios} dormitorio(s) en esa zona, PERO si hay estas opciones reales que calzan en zona, operacion y tipo (solo cambia la cantidad de dormitorios, maximo 3, no inventes otras):\n${formatearPropiedades(sinDormitorios)}\n\nMuestraselas DE INMEDIATO en esta misma respuesta, aclarando la diferencia de dormitorios, no le preguntes primero si quiere verlas.`;
+      return `No hay nada con exactamente ${lead.dormitorios} dormitorio(s) en esa zona, PERO si hay estas opciones reales que calzan en zona, operacion y tipo (solo cambia la cantidad de dormitorios, maximo 3, no inventes otras):\n${formatearPropiedades(sinDormitorios)}\n\nMuestraselas DE INMEDIATO llamando a mostrar_propiedades con sus IDs (tarjetas con foto, nunca lista de texto), y en tu texto aclara la diferencia de dormitorios; no le preguntes primero si quiere verlas.`;
     }
   }
 
@@ -400,7 +418,7 @@ function seccionPropiedades(propiedades, lead = {}, geo = null) {
   if (lead.presupuesto) {
     const sinPresupuesto = buscarPropiedadesFiltradas(propiedades, lead, { ignorarDormitorios: true, ignorarPresupuesto: true }, geo);
     if (sinPresupuesto.length) {
-      return `No hay nada dentro del presupuesto (${lead.presupuesto}) con esos filtros, PERO si hay estas opciones reales apenas por encima del presupuesto (misma zona, operacion y tipo, maximo 3, no inventes otras):\n${formatearPropiedades(sinPresupuesto)}\n\nMuestraselas DE INMEDIATO en esta misma respuesta, siendo transparente en que estan un poco por encima de su presupuesto, y pregunta si tiene flexibilidad o prefiere ajustar otro criterio (zona/tipo).`;
+      return `No hay nada dentro del presupuesto (${lead.presupuesto}) con esos filtros, PERO si hay estas opciones reales apenas por encima del presupuesto (misma zona, operacion y tipo, maximo 3, no inventes otras):\n${formatearPropiedades(sinPresupuesto)}\n\nMuestraselas DE INMEDIATO llamando a mostrar_propiedades con sus IDs (tarjetas con foto, nunca lista de texto), y en tu texto se transparente en que estan un poco por encima de su presupuesto; pregunta si tiene flexibilidad o prefiere ajustar otro criterio (zona/tipo).`;
     }
   }
 
@@ -409,7 +427,7 @@ function seccionPropiedades(propiedades, lead = {}, geo = null) {
   // realmente define que quiere el cliente.
   const sinZona = buscarPropiedadesFiltradas(propiedades, lead, { ignorarZona: true, ignorarDormitorios: true }, geo);
   if (sinZona.length) {
-    return `No hay ninguna propiedad que calce en la zona "${lead.zonaInteres}" con esa operacion y tipo. PERO si hay estas opciones reales en otras zonas (mismo tipo y operacion que pidio el cliente, maximo 3, no inventes otras):\n${formatearPropiedades(sinZona)}\n\nMUESTRA estas opciones DE INMEDIATO en esta misma respuesta (aclarando que son de otra zona), NUNCA le preguntes primero si quiere ver otras zonas y te quedes esperando: dale la informacion concreta ya, eso es lo que el cliente esta pidiendo.`;
+    return `No hay ninguna propiedad que calce en la zona "${lead.zonaInteres}" con esa operacion y tipo. PERO si hay estas opciones reales en otras zonas (mismo tipo y operacion que pidio el cliente, maximo 3, no inventes otras):\n${formatearPropiedades(sinZona)}\n\nMUESTRALAS DE INMEDIATO llamando a mostrar_propiedades con sus IDs (tarjetas con foto, nunca lista de texto), y en tu texto aclara que son de otra zona. NUNCA le preguntes primero si quiere ver otras zonas y te quedes esperando: dale las opciones concretas ya.`;
   }
 
   return "NINGUNA propiedad calza ni siquiera relajando zona y dormitorios (no hay ese tipo de propiedad con esa operacion en ningun lado). No digas simplemente que no hay nada: reencuadra ofreciendo cambiar el tipo de propiedad o la operacion (venta/alquiler/anticretico).";
@@ -482,7 +500,7 @@ REGLAS DE CONVERSACION:
 - REGLA CRITICA: cuando el cliente mencione una zona, operacion (venta/alquiler/anticretico), tipo de propiedad, dormitorios o presupuesto -aunque lo diga dentro de una pregunta, como "¿que departamentos en venta tienes?"- ESO es un dato a guardar. Llama a actualizar_datos_lead con ese valor nuevo ANTES de responder sobre disponibilidad, incluso si ya tenias guardado un valor distinto para ese mismo campo (el valor mas reciente que diga el cliente siempre reemplaza al anterior, asi haya cambiado de "casa en alquiler" a "departamento en venta" por ejemplo). Nunca respondas sobre que hay o no hay disponible usando un dato viejo cuando el cliente claramente acaba de cambiarlo.
 - Si no hay nada en la zona exacta pero el bloque de propiedades de abajo te da alternativas en otras zonas, MUESTRALAS de inmediato en tu respuesta (con sus datos reales). Nunca te quedes solo preguntando "¿quieres ver otra zona?" en bucle sin nunca entregar una opcion concreta: si tienes algo real que ofrecer, ofrecelo ya. Si el cliente insiste en la misma zona despues de que le mostraste que ahi no hay nada, no repitas la misma pregunta de ajuste: muestra de nuevo las alternativas reales que ya tienes, o pasa a ofrecer derivar_a_asesor si el cliente se frustra.
 - No muestres ninguna propiedad hasta tener al menos zona, operacion y tipo de propiedad confirmados. No muestres propiedades genericas ni fuera del filtro actual del cliente.
-- Cuando muestres opciones, nunca mas de 3 a la vez, y siempre filtradas por lo que el cliente ya indico.
+- Cuando muestres opciones, nunca mas de 3 a la vez, siempre filtradas por lo que el cliente ya indico, y SIEMPRE como tarjetas via mostrar_propiedades: esta PROHIBIDO listar propiedades en texto plano (nada de "1. Departamento en... Precio:..." en tus mensajes).
 - No pidas datos sensibles innecesarios (solo nombre, contacto y preferencias de busqueda).
 
 Fecha y hora actual en Bolivia (zona horaria America/La_Paz): hoy es ${fechaHoyTexto}, son las ${horaActualTexto} (${fechaHoyISO}). Usa esta fecha como referencia para calcular "mañana", "el lunes que viene", "este fin de semana", etc. Siempre que el usuario de una fecha relativa, calcula la fecha real en formato YYYY-MM-DD antes de llamar a agendar_visita.
@@ -507,7 +525,7 @@ REGLAS SOBRE EL INVENTARIO Y LA VENTA:
 - SUGERENCIAS SIMILARES AUTOMATICAS: si el cliente no muestra entusiasmo por las opciones (dice "no me convence", "muy caro", "quiero mas dormitorios", etc.), automaticamente busca y sugiere 1-2 propiedades similares (misma zona/tipo/operacion, solo varia dormitorios o presupuesto segun lo que pide) y directamente llama enviar_fotos_propiedad de esas para que las vea. Di algo como "Tengo estas otras que creo te van a gustar mas 😊 Miralas" — no preguntes si quiere ver, simplemente muestra.
 - ETAPAS DE CONVERSION (respeta el orden, no te saltes etapas): despues de enviar fotos, tu siguiente mensaje pregunta QUE LE PARECIERON, no ofrezcas agendar visita todavia. Solo cuando el cliente reaccione positivo a las fotos ("me gusta", "esta linda") ofreces agendar la visita. Si pide fotos, manda fotos (no le respondas con "agenda una visita"); si ya las tiene y reacciona bien, ahi si cierras con la visita.
 - ENTIENDE LAS NECESIDADES REALES: no solo completes los datos del flujo mecanicamente. Si el cliente menciona algo importante ("quiero con patio", "que sea seguro", "cerca del metro", "para vivir con mi familia"), GUARDA ESO en observaciones con actualizar_datos_lead y luego EXPLICA en cada propiedad por que cumple o no eso que pidio. No es solo "Precio X, Dormitorios Y" — es "Esta tiene patio grande que pediste, zona tranquila, y esta a 10 min del metro 📍".
-- Cuando presentes propiedades, redacta en prosa natural (2-3 frases) que explique POR QUE esa propiedad le conviene AL CLIENTE, no una lista de datos. Usa lo que ya te dijo: si busca familia, resalta espacios; si busca inversion, resalta ubicacion; si busca economico, resalta que es el mas accesible del grupo. Cuando muestres varias, numeralas (1, 2, 3) para que el cliente pueda nombrarlas despues sin necesidad de codigos.
+- Las tarjetas (mostrar_propiedades) ya llevan los datos duros; tu texto que las acompaña va en prosa natural corta (2-3 frases) explicando POR QUE le convienen AL CLIENTE, sin repetir precio/dormitorios que ya estan en la tarjeta. Usa lo que ya te dijo: si busca familia, resalta espacios; si busca inversion, resalta ubicacion; si busca economico, resalta que es el mas accesible del grupo. Cuando muestres varias, numeralas (1, 2, 3) para que el cliente pueda nombrarlas despues sin necesidad de codigos.
 - EMOJIS EN CADA OPCION: cuando listes propiedades (sea 1 o 3), cada una debe tener 1 emoji que ayude a diferenciarla o resaltar su mejor caracteristica (🏡 para casas, 🏢 para depa lujoso, 💰 para barato, 🌳 para con verde, etc.).
 - Si con los filtros del cliente no hay ninguna propiedad que calce, NUNCA digas simplemente "no hay propiedades". Ofrece ajustar: "No encontre exactamente con esos requisitos, pero veamos... ¿Te abres a ver con 2 dormitorios en vez de 3? 🔍 Tengo unas interesantes en esa zona."
 - No cierres ventas directamente, tu rol es calificar al prospecto y agendar visitas reales o derivar a un asesor.
@@ -610,6 +628,25 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
     }
 
     return `Listo, movi tu visita para el ${args.fecha} a las ${args.hora}. La fecha anterior quedo liberada.`;
+  }
+
+  if (toolCall.function.name === "mostrar_propiedades") {
+    const ids = (args.idsPropiedades || []).slice(0, 3);
+    const enviadas = [];
+    for (const id of ids) {
+      const propiedad = contexto.find((p) => p.id === id) || (await obtenerPropiedad(id));
+      if (!propiedad) continue;
+      if (propiedad.fotos?.length) {
+        await enviarImagenes(numero, propiedad.fotos.slice(0, 1), fichaPropiedad(propiedad));
+      } else {
+        // Sin foto cargada: al menos la ficha como texto, nunca en lista plana
+        const { enviarMensaje } = require("../services/whatsapp");
+        await enviarMensaje(numero, fichaPropiedad(propiedad));
+      }
+      enviadas.push(`${propiedad.tipo} en ${propiedad.zona} (${propiedad.precio})`);
+    }
+    if (!enviadas.length) return "No encontre esas propiedades para mostrartelas.";
+    return `Ya le mostre al cliente ${enviadas.length} propiedad(es) como tarjetas con foto y ficha: ${enviadas.join("; ")}. NO repitas sus datos en texto, solo reacciona brevemente y pregunta cual le interesa o el siguiente paso.`;
   }
 
   if (toolCall.function.name === "enviar_fotos_propiedad") {
