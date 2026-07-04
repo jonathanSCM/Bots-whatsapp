@@ -188,6 +188,9 @@ function abrirModalPropiedad(id) {
     document.getElementById("prop-fotos-existentes").dataset.fotos = "[]";
   }
 
+  // Eliminar solo tiene sentido al editar una propiedad existente
+  document.getElementById("btn-eliminar-propiedad")?.classList.toggle("hidden", !id);
+
   modal.classList.remove("hidden");
 }
 
@@ -219,6 +222,16 @@ function inicializarBackoffice() {
     const index = Number(btn.dataset.index);
     caracteristicasActuales.splice(index, 1);
     renderCaracteristicasVista();
+  });
+
+  const btnEliminarProp = document.getElementById("btn-eliminar-propiedad");
+  if (btnEliminarProp) btnEliminarProp.addEventListener("click", async () => {
+    const id = document.getElementById("prop-id").value;
+    if (!id) return;
+    if (!confirm(`¿Eliminar la propiedad ${id}? Esta accion no se puede deshacer.`)) return;
+    await fetch(`api/propiedades/${id}`, { method: "DELETE" });
+    document.getElementById("modal-propiedad").classList.add("hidden");
+    cargarTodo();
   });
 
   const formProp = document.getElementById("form-propiedad");

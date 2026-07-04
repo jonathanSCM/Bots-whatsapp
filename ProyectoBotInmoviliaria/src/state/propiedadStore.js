@@ -15,10 +15,12 @@ function filaToPropiedad(fila) {
 }
 
 async function generarId() {
-  const { rows } = await query(`SELECT "id" FROM propiedades ORDER BY "fechaCreacion" DESC LIMIT 1`);
-  const ultimo = rows[0];
-  const n = ultimo ? parseInt(ultimo.id.replace(/\D/g, ""), 10) + 1 : 1;
-  return `P${String(n).padStart(3, "0")}`;
+  // Usa el numero MAS ALTO existente (no el "ultimo creado"): con propiedades
+  // seed que comparten fechaCreacion, ordenar por fecha devolvia un id viejo
+  // y el nuevo id chocaba con uno existente (UNIQUE constraint).
+  const { rows } = await query(`SELECT "id" FROM propiedades`);
+  const maximo = rows.reduce((max, r) => Math.max(max, parseInt(r.id.replace(/\D/g, ""), 10) || 0), 0);
+  return `P${String(maximo + 1).padStart(3, "0")}`;
 }
 
 async function listarPropiedades() {
