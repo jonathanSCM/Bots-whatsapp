@@ -316,12 +316,12 @@ function buscarPropiedadesFiltradas(propiedades, lead = {}, { ignorarZona = fals
 // operacion / dormitorios directamente del texto y actualiza el lead ANTES
 // de armar el prompt, para que el catalogo que ve el modelo ya este bien.
 const SINONIMOS_TIPO = [
-  ["departamento", ["departamento", "departamentos", "depa", "depas", "dpto", "dptos", "depto", "deptos"]],
+  ["departamento", ["departamento", "departamentos", "depa", "depas", "dpto", "dptos", "depto", "deptos", "aparta", "apartamento", "apartamentos"]],
   ["casa", ["casa", "casas", "chalet"]],
   ["terreno", ["terreno", "terrenos", "lote", "lotes"]],
   ["oficina", ["oficina", "oficinas"]],
-  ["local", ["local", "locales"]],
-  ["duplex", ["duplex"]],
+  ["local comercial", ["local comercial", "locales comerciales", "local comercial", "locales comercial", "local", "locales"]],
+  ["duplex", ["duplex", "dúplex", "duples"]],
 ];
 
 function extraerFiltros(texto, propiedades = []) {
@@ -361,9 +361,11 @@ function extraerFiltros(texto, propiedades = []) {
   }
   if (mejorZona) cambios.zonaInteres = mejorZona;
   else {
-    // Zona macro dicha en el mensaje ("en el centro", "zona norte")
+    // Zona macro dicha en el mensaje ("en el centro", "zona norte", "al norte").
     const macro = norm.match(/\b(centro|norte|sur|este|oeste)\b/);
-    if (macro && /\b(zona|centro)\b/.test(norm)) cambios.zonaInteres = macro[1] === "centro" ? "Centro" : `Zona ${macro[1][0].toUpperCase()}${macro[1].slice(1)}`;
+    if (macro) {
+      cambios.zonaInteres = macro[1] === "centro" ? "Centro" : `Zona ${macro[1][0].toUpperCase()}${macro[1].slice(1)}`;
+    }
   }
 
   const dorm = norm.match(/\b(\d+)\s*(dormitorios?|habitacion(?:es)?|cuartos?|dorms?)\b/);
@@ -580,10 +582,12 @@ Horario de atencion: ${await formatearHorarioAtencion()}.
 PROXIMOS HORARIOS REALES LIBRES PARA VISITAS (ya validados contra la agenda, usalos para proponer cierres concretos): ${(await proximosHorariosDisponibles(3)).map((s) => s.texto).join(", ") || "consultar disponibilidad"}.
 
 Informacion comercial disponible:
-- Zonas atendidas: ${business.zonas.join(", ")}
-- Tipos de propiedad: ${business.tiposPropiedad.join(", ")}
+- Zonas atendidas: ${business.zonas.join(", ")}.
+- Tipos de propiedad: ${business.tiposPropiedad.join(", ")}.
 - Requisitos para alquiler: ${business.requisitosAlquiler}
 - Requisitos para compra: ${business.requisitosCompra}
+
+IMPORTANTE: estas listas son una referencia general. Para elegir que opciones mostrar, confia SIEMPRE en el INVENTARIO REAL calculado por el sistema y en los resultados del bloque de propiedades. Si el inventario muestra zonas o tipos que no estan en la lista comercial, igual debes ofrecerlas si son reales.
 
 ${resumenInventario(propiedades, lead)}
 

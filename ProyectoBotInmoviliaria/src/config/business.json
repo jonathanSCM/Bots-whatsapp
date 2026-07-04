@@ -1,7 +1,7 @@
 {
   "nombreNegocio": "Habitad",
-  "zonas": ["Zona Norte", "Zona Sur", "Centro"],
-  "tiposPropiedad": ["casa", "departamento", "terreno", "local", "oficina"],
+  "zonas": ["Zona Norte", "Zona Sur", "Centro", "Av. Banzer", "Cuarto Anillo", "Equipetrol", "Las Palmas", "Urubo"],
+  "tiposPropiedad": ["casa", "departamento", "duplex", "local comercial", "oficina", "terreno"],
   "requisitosAlquiler": "DNI, recibo de sueldo o constancia de ingresos, garantia propietaria o seguro de caucion",
   "requisitosCompra": "DNI, demostracion de capacidad de pago o pre-aprobacion bancaria",
   "comisiones": "A definir segun operacion",
