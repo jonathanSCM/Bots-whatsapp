@@ -342,6 +342,39 @@ function extraerFiltros(texto, propiedades = []) {
   return cambios;
 }
 
+// Proximos horarios REALES libres para visitas (validados contra el horario
+// de atencion y las citas ya agendadas). Se inyectan en el prompt para que el
+// bot cierre con propuestas concretas ("¿te va mañana a las 10:00?") en vez
+// de preguntas abiertas que dejan morir la conversacion.
+const NOMBRES_DIA_CORTO = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
+
+async function proximosHorariosDisponibles(cantidad = 3) {
+  const hoy = new Date();
+  const slots = [];
+  for (let d = 1; d <= 10 && slots.length < cantidad; d++) {
+    const fechaObj = new Date(hoy.getTime() + d * 24 * 60 * 60 * 1000);
+    const fecha = fechaObj.toLocaleDateString("en-CA", { timeZone: TIMEZONE_NEGOCIO });
+    const [y, m, dd] = fecha.split("-").map(Number);
+    const diaSemana = new Date(Date.UTC(y, m - 1, dd)).getUTCDay();
+    // Un horario por dia, alternando la hora, para ofrecer dias distintos
+    // ("mañana a las 10:00 o el sabado a las 15:00") y no 3 del mismo dia.
+    const horas = ["10:00", "15:00", "17:00"];
+    for (const hora of [horas[slots.length % horas.length], ...horas]) {
+      try {
+        const { disponible } = await verificarDisponibilidad(fecha, hora);
+        if (disponible) {
+          const etiqueta = d === 1 ? "mañana" : `el ${NOMBRES_DIA_CORTO[diaSemana]} ${dd}`;
+          slots.push({ fecha, hora, texto: `${etiqueta} a las ${hora}` });
+          break; // siguiente dia
+        }
+      } catch (err) {
+        // sin disponibilidad consultable, se sigue con el siguiente candidato
+      }
+    }
+  }
+  return slots;
+}
+
 // Resumen real del inventario para que el bot ofrezca alternativas VERDADERAS
 // (zonas y tipos donde si hay propiedades), en vez de sugerir zonas al azar.
 // Respeta la operacion/tipo que el cliente ya eligio.
@@ -507,6 +540,8 @@ Fecha y hora actual en Bolivia (zona horaria America/La_Paz): hoy es ${fechaHoyT
 
 Horario de atencion: ${await formatearHorarioAtencion()}.
 
+PROXIMOS HORARIOS REALES LIBRES PARA VISITAS (ya validados contra la agenda, usalos para proponer cierres concretos): ${(await proximosHorariosDisponibles(3)).map((s) => s.texto).join(", ") || "consultar disponibilidad"}.
+
 Informacion comercial disponible:
 - Zonas atendidas: ${business.zonas.join(", ")}
 - Tipos de propiedad: ${business.tiposPropiedad.join(", ")}
@@ -517,13 +552,15 @@ ${resumenInventario(propiedades, lead)}
 
 ${seccionPropiedades(propiedades, lead, await geoDelLead(lead))}
 
+REGLA DE ORO DEL CIERRE (la mas importante de todas): CADA mensaje tuyo, sin excepcion, termina con UNA accion concreta que empuje hacia agendar la visita. La conversacion NUNCA queda en el aire. PROHIBIDO terminar con: "¿que te parecio?", "¿en que mas te ayudo?", "quedo atento", "avisame", "cualquier cosa me dices" o un simple agradecimiento. En su lugar, cierres validos: "¿Agendamos una visita para conocerla? Tengo [horario real] o [horario real]", "¿Cual de las dos te muestro en persona?", "¿Te reservo [horario real]?". Escala de cierre: mostraste opciones -> pregunta cual quiere visitar; mostro interes -> propone 2 horarios reales; dudo -> ofrece la alternativa y vuelve a proponer visita; acepto -> confirma fecha/hora exacta y agenda. Si el cliente se enfria o responde corto, igual cierras con una propuesta simple de accion, no con cortesia vacia.
+
 REGLAS SOBRE EL INVENTARIO Y LA VENTA:
 - El bloque de propiedades de arriba ya viene filtrado por codigo segun zona, operacion y tipo del cliente (maximo 3). Es la UNICA fuente real, no existen otras. No inventes propiedades, precios, zonas, fotos o disponibilidad que no esten ahi.
 - CODIGOS INTERNOS (P001, P041, etc.): NUNCA los menciones al cliente en tus mensajes. Son solo para uso interno tuyo: usalos unicamente como idPropiedad al llamar las funciones (enviar_fotos_propiedad, agendar_visita). Al cliente describele las propiedades por tipo, zona y precio ("el departamento en Av. Banzer de USD 119,500"), y cuando le des a elegir entre varias usa un menu numerado (1, 2, 3) — tu internamente sabes a que codigo corresponde cada numero.
 - REGLA ANTI-INVENTO (LA MAS IMPORTANTE DE TODAS): cada propiedad que muestres DEBE corresponder a una linea del bloque de arriba (el codigo P0XX de esa linea es tu verificacion INTERNA de que existe; recuerda que al cliente NO se lo muestras), con su precio EXACTO y su zona EXACTA tal como aparecen ahi. Si estas por escribir una propiedad que no corresponde a ninguna linea del bloque, esa propiedad NO EXISTE: mostrarla seria mentirle a un cliente real y hacerle perder el tiempo. Nunca cambies ni redondees un precio, y nunca agregues caracteristicas que la descripcion no menciona (piscina, gimnasio, etc.). Si el bloque tiene 1 sola propiedad, muestra 1 sola; NUNCA "completes" la lista hasta 3 con opciones inventadas.
 - PROACTIVIDAD CON FOTOS: cuando el cliente muestre interes claro en una propiedad especifica ("me gusta", "esa", "me interesa", "que precio tiene", o cualquier cosa positiva sobre esa propiedad en particular), AUTOMATICAMENTE llama a enviar_fotos_propiedad sin que lo pida. Las fotos son el cierre, no esperes a que pregunte. Luego en tu siguiente respuesta comenta sobre las fotos y por que esa propiedad le conviene.
 - SUGERENCIAS SIMILARES AUTOMATICAS: si el cliente no muestra entusiasmo por las opciones (dice "no me convence", "muy caro", "quiero mas dormitorios", etc.), automaticamente busca y sugiere 1-2 propiedades similares (misma zona/tipo/operacion, solo varia dormitorios o presupuesto segun lo que pide) y directamente llama enviar_fotos_propiedad de esas para que las vea. Di algo como "Tengo estas otras que creo te van a gustar mas 😊 Miralas" — no preguntes si quiere ver, simplemente muestra.
-- ETAPAS DE CONVERSION (respeta el orden, no te saltes etapas): despues de enviar fotos, tu siguiente mensaje pregunta QUE LE PARECIERON, no ofrezcas agendar visita todavia. Solo cuando el cliente reaccione positivo a las fotos ("me gusta", "esta linda") ofreces agendar la visita. Si pide fotos, manda fotos (no le respondas con "agenda una visita"); si ya las tiene y reacciona bien, ahi si cierras con la visita.
+- CIERRE TRAS FOTOS/TARJETAS (cierre asumido, no pregunta abierta): despues de mostrar propiedades o fotos, tu mensaje propone DIRECTAMENTE el siguiente paso concreto, nunca un "¿que te parecio?" suelto. Formato: reaccion breve + propuesta con horarios reales, ej: "La del Tercer Anillo tiene el jardin que buscabas 🏡 ¿Te la muestro en persona? Tengo mañana a las 10:00 o el sabado a las 15:00, ¿cual te va mejor?". Si el cliente responde vago ("bonito", "me gusta", "esta bien"), NO agradezcas y te quedes: eso ES interes, responde proponiendo la visita con 2 horarios concretos.
 - ENTIENDE LAS NECESIDADES REALES: no solo completes los datos del flujo mecanicamente. Si el cliente menciona algo importante ("quiero con patio", "que sea seguro", "cerca del metro", "para vivir con mi familia"), GUARDA ESO en observaciones con actualizar_datos_lead y luego EXPLICA en cada propiedad por que cumple o no eso que pidio. No es solo "Precio X, Dormitorios Y" — es "Esta tiene patio grande que pediste, zona tranquila, y esta a 10 min del metro 📍".
 - Las tarjetas (mostrar_propiedades) ya llevan los datos duros; tu texto que las acompaña va en prosa natural corta (2-3 frases) explicando POR QUE le convienen AL CLIENTE, sin repetir precio/dormitorios que ya estan en la tarjeta. Usa lo que ya te dijo: si busca familia, resalta espacios; si busca inversion, resalta ubicacion; si busca economico, resalta que es el mas accesible del grupo. Cuando muestres varias, numeralas (1, 2, 3) para que el cliente pueda nombrarlas despues sin necesidad de codigos.
 - EMOJIS EN CADA OPCION: cuando listes propiedades (sea 1 o 3), cada una debe tener 1 emoji que ayude a diferenciarla o resaltar su mejor caracteristica (🏡 para casas, 🏢 para depa lujoso, 💰 para barato, 🌳 para con verde, etc.).
@@ -646,7 +683,7 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
       enviadas.push(`${propiedad.tipo} en ${propiedad.zona} (${propiedad.precio})`);
     }
     if (!enviadas.length) return "No encontre esas propiedades para mostrartelas.";
-    return `Ya le mostre al cliente ${enviadas.length} propiedad(es) como tarjetas con foto y ficha: ${enviadas.join("; ")}. NO repitas sus datos en texto, solo reacciona brevemente y pregunta cual le interesa o el siguiente paso.`;
+    return `Ya le mostre al cliente ${enviadas.length} propiedad(es) como tarjetas con foto y ficha: ${enviadas.join("; ")}. NO repitas sus datos en texto. Tu texto ahora: reaccion breve de por que le convienen + CIERRE con visita ("¿Cual te gustaria conocer en persona? Puedo agendarte [horario real] o [horario real]"). Nunca termines con "¿que te parecio?" ni preguntas abiertas.`;
   }
 
   if (toolCall.function.name === "enviar_fotos_propiedad") {
@@ -668,7 +705,7 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
     if (helpers.updateDatosBot) {
       await helpers.updateDatosBot(numero, { fotosEnviadas: [...fotosEnviadas, propiedad.id] });
     }
-    return "Te envie las fotos de la propiedad. ¿Que te parecio?";
+    return `Ya le envie al cliente las fotos del ${propiedad.tipo.toLowerCase()} en ${propiedad.zona}. Tu texto ahora: comentario breve vendedor sobre la propiedad + CIERRE proponiendo la visita con 2 horarios reales de los disponibles ("¿Te la muestro en persona? Tengo [horario] o [horario], ¿cual te va mejor?"). PROHIBIDO cerrar con "¿que te parecio?".`;
   }
 
   if (toolCall.function.name === "derivar_a_asesor") {
