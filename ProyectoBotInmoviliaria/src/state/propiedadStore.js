@@ -1,9 +1,17 @@
 const { query } = require("./db");
 const { ahoraLaPaz } = require("../utils/fecha");
 
+// Acepta lista o texto separado por comas (como llega del formulario del
+// panel) y devuelve siempre un array limpio de caracteristicas.
+function normalizarCaracteristicas(valor) {
+  if (Array.isArray(valor)) return valor.map((c) => String(c).trim()).filter(Boolean);
+  if (typeof valor === "string") return valor.split(",").map((c) => c.trim()).filter(Boolean);
+  return [];
+}
+
 function filaToPropiedad(fila) {
   if (!fila) return null;
-  return { ...fila, fotos: JSON.parse(fila.fotos || "[]") };
+  return { ...fila, fotos: JSON.parse(fila.fotos || "[]"), caracteristicas: JSON.parse(fila.caracteristicas || "[]") };
 }
 
 async function generarId() {
@@ -32,8 +40,8 @@ async function crearPropiedad(datos) {
   const id = await generarId();
   const ahora = ahoraLaPaz();
   await query(
-    `INSERT INTO propiedades ("id","tipo","operacion","zona","precio","dormitorios","descripcion","estado","fotos","ubicacionMaps","lat","lng","fechaCreacion","fechaActualizacion")
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+    `INSERT INTO propiedades ("id","tipo","operacion","zona","precio","dormitorios","descripcion","estado","fotos","caracteristicas","ubicacionMaps","lat","lng","fechaCreacion","fechaActualizacion")
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
     [
       id,
       datos.tipo || "",
@@ -44,6 +52,7 @@ async function crearPropiedad(datos) {
       datos.descripcion || "",
       datos.estado || "disponible",
       JSON.stringify(datos.fotos || []),
+      JSON.stringify(normalizarCaracteristicas(datos.caracteristicas)),
       datos.ubicacionMaps || null,
       datos.lat ?? null,
       datos.lng ?? null,
@@ -59,8 +68,8 @@ async function actualizarPropiedad(id, datos) {
   if (!actual) return null;
   const fusionado = { ...actual, ...datos };
   await query(
-    `UPDATE propiedades SET "tipo"=$1,"operacion"=$2,"zona"=$3,"precio"=$4,"dormitorios"=$5,"descripcion"=$6,"estado"=$7,"fotos"=$8,"ubicacionMaps"=$9,"lat"=$10,"lng"=$11,"fechaActualizacion"=$12
-     WHERE "id"=$13`,
+    `UPDATE propiedades SET "tipo"=$1,"operacion"=$2,"zona"=$3,"precio"=$4,"dormitorios"=$5,"descripcion"=$6,"estado"=$7,"fotos"=$8,"caracteristicas"=$9,"ubicacionMaps"=$10,"lat"=$11,"lng"=$12,"fechaActualizacion"=$13
+     WHERE "id"=$14`,
     [
       fusionado.tipo,
       fusionado.operacion,
@@ -70,6 +79,7 @@ async function actualizarPropiedad(id, datos) {
       fusionado.descripcion,
       fusionado.estado,
       JSON.stringify(fusionado.fotos || []),
+      JSON.stringify(normalizarCaracteristicas(fusionado.caracteristicas)),
       fusionado.ubicacionMaps || null,
       fusionado.lat ?? null,
       fusionado.lng ?? null,

@@ -85,6 +85,7 @@ async function init() {
       "descripcion" TEXT,
       "estado" TEXT DEFAULT 'disponible',
       "fotos" TEXT DEFAULT '[]',
+      "caracteristicas" TEXT DEFAULT '[]',
       "ubicacionMaps" TEXT,
       "lat" REAL,
       "lng" REAL,
@@ -144,7 +145,7 @@ async function init() {
     }
   }
 
-  const columnasPropiedades = [`"ubicacionMaps" TEXT`, `"lat" REAL`, `"lng" REAL`];
+  const columnasPropiedades = [`"ubicacionMaps" TEXT`, `"lat" REAL`, `"lng" REAL`, `"caracteristicas" TEXT DEFAULT '[]'`];
   for (const definicion of columnasPropiedades) {
     try {
       db.exec(`ALTER TABLE propiedades ADD COLUMN ${definicion}`);

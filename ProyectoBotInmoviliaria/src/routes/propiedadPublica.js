@@ -37,6 +37,7 @@ router.get("/:id", async (req, res) => {
       ${p.dormitorios ? `<span>🛏 ${esc(p.dormitorios)} dormitorios</span>` : ""}
       <span>📍 ${esc(p.zona)}</span>
       <span>${p.operacion === "venta" ? "🔑 Venta" : p.operacion === "anticretico" ? "🤝 Anticretico" : "📄 Alquiler"}</span>
+      ${(p.caracteristicas || []).map((c) => `<span>${esc(c)}</span>`).join("")}
     </div>
 
     ${p.descripcion ? `<p class="descripcion">${esc(p.descripcion)}</p>` : ""}

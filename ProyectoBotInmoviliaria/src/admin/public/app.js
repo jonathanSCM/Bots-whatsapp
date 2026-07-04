@@ -126,6 +126,7 @@ function abrirModalPropiedad(id) {
     document.getElementById("prop-operacion").value = p.operacion;
     document.getElementById("prop-zona").value = p.zona;
     document.getElementById("prop-ubicacion").value = p.ubicacionMaps || "";
+    document.getElementById("prop-caracteristicas").value = (p.caracteristicas || []).join(", ");
     document.getElementById("prop-precio").value = p.precio;
     document.getElementById("prop-dormitorios").value = p.dormitorios || "";
     document.getElementById("prop-descripcion").value = p.descripcion || "";
@@ -161,6 +162,7 @@ document.getElementById("form-propiedad").addEventListener("submit", async (e) =
   fd.append("operacion", document.getElementById("prop-operacion").value);
   fd.append("zona", document.getElementById("prop-zona").value);
   fd.append("ubicacionMaps", document.getElementById("prop-ubicacion").value);
+  fd.append("caracteristicas", document.getElementById("prop-caracteristicas").value);
   fd.append("precio", document.getElementById("prop-precio").value);
   fd.append("dormitorios", document.getElementById("prop-dormitorios").value);
   fd.append("descripcion", document.getElementById("prop-descripcion").value);

@@ -202,6 +202,14 @@ async function procesarMensaje(numero, texto) {
   // el bot responda "no hay nada en X" mirando el filtro viejo del lead.
   if (bot.extraerFiltros) {
     const detectados = bot.extraerFiltros(textoParaIA, contexto);
+    // Las observaciones (necesidades: piscina, jardin...) se acumulan, no se
+    // reemplazan: se agregan solo los terminos que aun no estaban guardados.
+    if (detectados.observaciones && lead.observaciones) {
+      const actuales = lead.observaciones.toLowerCase();
+      const nuevas = detectados.observaciones.split(", ").filter((t) => !actuales.includes(t));
+      if (nuevas.length) detectados.observaciones = `${lead.observaciones}, ${nuevas.join(", ")}`;
+      else delete detectados.observaciones;
+    }
     const nuevos = Object.fromEntries(Object.entries(detectados).filter(([campo, valor]) => valor && lead[campo] !== valor));
     if (Object.keys(nuevos).length) {
       console.log(`--- [${bot.id}] filtros detectados por codigo:`, JSON.stringify(nuevos));

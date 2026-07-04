@@ -117,6 +117,22 @@ function urlBasePublica(p) {
   return null;
 }
 
+// Emoji acorde a cada caracteristica, para que la ficha venda visualmente.
+const EMOJIS_CARACTERISTICA = [
+  [/piscina|picina/i, "🏊"], [/baño/i, "🚿"], [/balcon/i, "🌇"], [/amoblado|amueblado/i, "🛋️"],
+  [/patio/i, "🌳"], [/jardin/i, "🌿"], [/garaje|parqueo|estacionamiento/i, "🚗"], [/m2|m²|metros/i, "📐"],
+  [/parrillero|churrasquera/i, "🍖"], [/terraza/i, "☀️"], [/ascensor/i, "🛗"], [/seguridad|vigilancia/i, "🔒"],
+  [/cocina/i, "🍳"], [/deposito|baulera/i, "📦"], [/gimnasio|gym/i, "🏋️"], [/lavanderia/i, "🧺"],
+];
+
+function conEmoji(caracteristica) {
+  const sinAcentos = caracteristica.normalize("NFD").replace(/[̀-ͯ]/g, "");
+  for (const [re, emoji] of EMOJIS_CARACTERISTICA) {
+    if (re.test(sinAcentos)) return `${emoji} ${caracteristica}`;
+  }
+  return `✔️ ${caracteristica}`;
+}
+
 function nombreOperacion(op) {
   return { venta: "Venta", alquiler: "Alquiler", anticretico: "Anticretico" }[op] || op;
 }
@@ -129,6 +145,7 @@ function fichaPropiedad(p) {
   if (p.dormitorios) lineas.push(`· *Dormitorios*: ${p.dormitorios}`);
   lineas.push(`· *Zona*: ${p.zona}`);
   if (p.ubicacionMaps) lineas.push(`· *Ubicacion*: ${p.ubicacionMaps}`);
+  if (p.caracteristicas?.length) lineas.push(`\n${p.caracteristicas.map(conEmoji).join("\n")}`);
   if (p.descripcion) lineas.push(`\n${p.descripcion}`);
   const base = urlBasePublica(p);
   if (base) lineas.push(`\n📸 *Todas las fotos*: ${base}/p/${p.id}`);
@@ -137,7 +154,10 @@ function fichaPropiedad(p) {
 
 function formatearPropiedades(propiedades) {
   return propiedades
-    .map((p) => `- [${p.id}] ${p.tipo} en ${p.operacion} - Zona: ${p.zona} - Precio: ${p.precio} - Dormitorios: ${p.dormitorios || "N/A"} - ${p.descripcion}`)
+    .map((p) => {
+      const caract = p.caracteristicas?.length ? ` - Caracteristicas: ${p.caracteristicas.join(", ")}` : "";
+      return `- [${p.id}] ${p.tipo} en ${p.operacion} - Zona: ${p.zona} - Precio: ${p.precio} - Dormitorios: ${p.dormitorios || "N/A"}${caract} - ${p.descripcion}`;
+    })
     .join("\n");
 }
 
@@ -217,6 +237,16 @@ function scorePropiedad(p, lead = {}) {
   if (lead.tipoPropiedad && coincideTexto(lead.tipoPropiedad, p.tipo)) score += 3;
   if (lead.dormitorios && coincideDormitorios(lead.dormitorios, p.dormitorios) && p.dormitorios) score += 2;
   if (lead.presupuesto && estadoPresupuesto(lead.presupuesto, p.precio) === "dentro") score += 2;
+  // Necesidades especiales del cliente (guardadas en observaciones, ej.
+  // "quiere piscina y jardin"): +1 por cada palabra clave que la propiedad
+  // cumpla en sus caracteristicas o descripcion.
+  if (lead.observaciones) {
+    const textoProp = `${(p.caracteristicas || []).join(" ")} ${p.descripcion || ""}`;
+    const clavesProp = new Set(palabrasClave(textoProp));
+    for (const clave of palabrasClave(lead.observaciones)) {
+      if ([...clavesProp].some((c) => c.includes(clave) || clave.includes(c))) score += 1;
+    }
+  }
   return score;
 }
 
@@ -338,6 +368,13 @@ function extraerFiltros(texto, propiedades = []) {
 
   const dorm = norm.match(/\b(\d+)\s*(dormitorios?|habitacion(?:es)?|cuartos?|dorms?)\b/);
   if (dorm) cambios.dormitorios = dorm[1];
+
+  // Necesidades/amenidades mencionadas ("con piscina", "que tenga jardin"):
+  // se guardan en observaciones para que el ranking priorice las propiedades
+  // que las cumplen y el bot las use al argumentar.
+  const AMENIDADES = ["piscina", "jardin", "patio", "balcon", "amoblado", "amueblado", "garaje", "parqueo", "parrillero", "churrasquera", "terraza", "ascensor", "seguridad", "baulera", "deposito", "gimnasio", "lavanderia"];
+  const pedidas = AMENIDADES.filter((a) => norm.includes(` ${a} `) || norm.includes(` ${a}s `));
+  if (pedidas.length) cambios.observaciones = pedidas.join(", ");
 
   return cambios;
 }
