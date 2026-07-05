@@ -1,22 +1,23 @@
 const business = require("../config/restaurante.json");
 const { obtenerMenuDisponible } = require("../services/sheets");
 
-const TIMEZONE_NEGOCIO = "America/La_Paz";
+const TIMEZONE = "America/La_Paz";
+const NOMBRE_BOT = "Ramón";
 
 const TOOLS = [
   {
     type: "function",
     function: {
       name: "actualizar_datos_cliente",
-      description: "Guarda o actualiza los datos del cliente a medida que se obtienen en la conversacion.",
+      description: "Guarda o actualiza los datos del cliente a medida que se obtienen. Llamar cada vez que el cliente dé un dato nuevo.",
       parameters: {
         type: "object",
         properties: {
           nombre: { type: "string" },
           personas: { type: "string", description: "Cantidad de personas para la reserva" },
           tipoPedido: { type: "string", enum: ["reserva", "delivery", "consulta"] },
-          zonaDelivery: { type: "string" },
-          observaciones: { type: "string" },
+          zonaDelivery: { type: "string", description: "Zona o dirección de delivery" },
+          observaciones: { type: "string", description: "Preferencias alimentarias, alergias o pedidos especiales" },
         },
       },
     },
@@ -25,13 +26,13 @@ const TOOLS = [
     type: "function",
     function: {
       name: "agendar_reserva",
-      description: "Agenda una reserva de mesa cuando el cliente confirmo fecha, hora y cantidad de personas.",
+      description: "Agenda una reserva de mesa cuando el cliente confirmó fecha, hora y cantidad de personas.",
       parameters: {
         type: "object",
         properties: {
           fecha: { type: "string", description: "Formato YYYY-MM-DD" },
-          hora: { type: "string", description: "Formato HH:MM 24hs" },
-          personas: { type: "string" },
+          hora: { type: "string", description: "Formato HH:MM (24hs)" },
+          personas: { type: "string", description: "Cantidad de personas" },
         },
         required: ["fecha", "hora", "personas"],
       },
@@ -41,14 +42,14 @@ const TOOLS = [
     type: "function",
     function: {
       name: "derivar_a_asesor",
-      description: "Deriva la conversacion a un encargado humano cuando el cliente lo pide, esta molesto, o la consulta esta fuera de alcance (ej. reclamos, pedidos grandes/eventos).",
+      description: "Deriva a un encargado SOLO si el cliente lo pide, está molesto, o tiene requerimientos fuera de alcance (eventos grandes, grupos corporativos, reclamos).",
       parameters: { type: "object", properties: { motivo: { type: "string" } } },
     },
   },
 ];
 
 function formatearMenu(menu) {
-  if (!menu.length) return "No hay platos cargados actualmente en el sistema.";
+  if (!menu.length) return "No hay platos disponibles en este momento.";
   const porCategoria = {};
   for (const item of menu) {
     porCategoria[item.categoria] = porCategoria[item.categoria] || [];
@@ -56,73 +57,94 @@ function formatearMenu(menu) {
   }
   return Object.entries(porCategoria)
     .map(
-      ([categoria, items]) =>
-        `${categoria}:\n` + items.map((i) => `  - [${i.idPlato}] ${i.nombre} - ${i.precio} - ${i.descripcion}`).join("\n")
+      ([cat, items]) =>
+        `*${cat}:*\n` +
+        items.map((i) => `  • [${i.idPlato}] *${i.nombre}* — ${i.precio}\n    ${i.descripcion}`).join("\n")
     )
-    .join("\n");
+    .join("\n\n");
 }
 
-function systemPrompt(menu = []) {
+function datosConocidos(lead = {}) {
+  const campos = [];
+  if (lead.nombre) campos.push(`• Nombre: ${lead.nombre}`);
+  if (lead.personas) campos.push(`• Personas: ${lead.personas}`);
+  if (lead.tipoPedido) campos.push(`• Tipo de pedido: ${lead.tipoPedido}`);
+  if (lead.zonaDelivery) campos.push(`• Zona de delivery: ${lead.zonaDelivery}`);
+  if (lead.observaciones) campos.push(`• Observaciones: ${lead.observaciones}`);
+  if (!campos.length) return "Primera interacción — aún no hay datos del cliente.";
+  return campos.join("\n");
+}
+
+function systemPrompt(menu = [], lead = {}) {
   const hoy = new Date();
-  const fechaHoyTexto = hoy.toLocaleDateString("es-BO", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: TIMEZONE_NEGOCIO });
-  const horaActualTexto = hoy.toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit", timeZone: TIMEZONE_NEGOCIO });
-  const fechaHoyISO = hoy.toLocaleDateString("en-CA", { timeZone: TIMEZONE_NEGOCIO });
+  const fechaTexto = hoy.toLocaleDateString("es-BO", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: TIMEZONE });
+  const horaTexto = hoy.toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit", timeZone: TIMEZONE });
+  const fechaISO = hoy.toLocaleDateString("en-CA", { timeZone: TIMEZONE });
 
-  return `Eres el asistente virtual de "${business.nombreNegocio}", un restaurante.
+  return `Eres ${NOMBRE_BOT}, el asistente de *${business.nombreNegocio}*.
 
-IMPORTANTE: esta es una DEMOSTRACIÓN de ProShop (empresa que crea agentes de WhatsApp con IA). "${business.nombreNegocio}" y su menú son ficticios, solo existen para mostrar cómo se comportaría un bot real. Conversa con normalidad como si fueras el bot de un restaurante real (recomendando platos, tomando reservas, etc.) — el sistema se encarga de aclarar que es una demo en el momento en que el cliente confirma una reserva, tú no necesitas mencionarlo antes de eso. Si el cliente pregunta directamente si esto es real, sé honesto: dile que es una demostración de ProShop y que si quiere un bot así para su propio negocio puede pedir una cotización.
+CONTEXTO DE DEMO: esta conversación es una *demostración de ProShop*, empresa que crea agentes de WhatsApp con IA. *${business.nombreNegocio}* es un restaurante ficticio para mostrar cómo funciona el bot en un restaurante real. Actúa con naturalidad — el aviso de demo se muestra automáticamente cuando el cliente confirma una reserva, no lo menciones antes. Si preguntan si es real, explica que es una demo de ProShop.
 
-Fecha y hora actual en Bolivia (zona horaria America/La_Paz): hoy es ${fechaHoyTexto}, son las ${horaActualTexto} (${fechaHoyISO}). Usa esta fecha como referencia para calcular fechas relativas ("mañana", "este viernes", etc). Siempre calcula la fecha real en formato YYYY-MM-DD antes de llamar a agendar_reserva.
+Fecha y hora actual (Bolivia): *${fechaTexto}, ${horaTexto}* (${fechaISO}). Úsala para calcular fechas relativas antes de llamar a agendar_reserva.
 
-Informacion del negocio:
-- Horarios de atencion: ${business.horarios}
-- Direccion: ${business.direccion}
-- Zonas con delivery: ${business.zonasDelivery.join(", ")}
-- Metodos de pago: ${business.metodosPago}
-- Estilo de comunicacion: ${business.estiloComunicacion}
+*Datos del negocio:*
+• Horarios de atención: ${business.horarios}
+• Dirección: ${business.direccion}
+• Zonas con delivery: ${business.zonasDelivery.join(", ")}
+• Métodos de pago: ${business.metodosPago}
+• Comunicación: ${business.estiloComunicacion}
 
-Menu disponible ahora mismo (esta es la UNICA fuente real del menu, no existen otros platos):
+*Lo que ya sabes de este cliente (NO lo vuelvas a preguntar):*
+${datosConocidos(lead)}
+
+*Menú disponible* (únicos y reales, no inventes platos ni precios):
 ${formatearMenu(menu)}
 
-Reglas obligatorias:
-- Solo puedes mencionar, describir u ofrecer los platos listados arriba, con sus precios exactos. No inventes platos ni precios.
-- Si el cliente pide algo que no esta en el menu, dilo honestamente y sugiere alternativas del menu real.
-- No pidas datos sensibles innecesarios (solo nombre, cantidad de personas y preferencias).
-- Usa derivar_a_asesor SOLO si: el cliente lo pide explicitamente, esta molesto, o la consulta esta fuera de alcance (eventos grandes, reclamos).
-- derivar_a_asesor es la excepcion, no la regla.
-- Cuando obtengas un dato nuevo del cliente llama a actualizar_datos_cliente.
-- Para agendar una reserva, primero confirma fecha, hora y cantidad de personas en lenguaje natural, y luego llama a agendar_reserva.
-- Mantén las respuestas breves, cálidas y con buena onda.`;
+*Cómo atiendes al cliente:*
+1. Si quiere hacer una reserva: confirma fecha, hora y cantidad de personas, luego llama a agendar_reserva.
+2. Si quiere pedir delivery: verifica que su zona tenga cobertura y guía el pedido.
+3. Si tiene dudas del menú: recomienda con entusiasmo según sus preferencias.
+
+*Reglas importantes:*
+• Usa *un solo asterisco pegado al texto* para negrita en WhatsApp.
+• Solo menciona los platos del menú con sus precios exactos. No inventes especiales del día ni platos que no estén en la lista.
+• Llama a actualizar_datos_cliente cada vez que obtengas nombre, cantidad de personas, tipo de pedido u observaciones.
+• Si menciona alergias o preferencias dietéticas: regístralas en observaciones y confirma cuáles de los platos aplica.
+• Respuestas cálidas, con buena onda y entusiastas con los platos. 2–3 emojis por mensaje (🍽️ 😊 ✅ 🥘 👨‍🍳).
+• Termina SIEMPRE con una acción concreta ("¿Reservamos para esa fecha?", "¿Qué más te gustaría pedir?").`;
 }
 
 async function obtenerContexto() {
   return obtenerMenuDisponible();
 }
 
-// helpers: { numero, getOrCreateLead, updateLead, ESTADOS_LEAD, notificarInteresNegocio }
 async function ejecutarFuncion(toolCall, _contexto, helpers) {
   const args = JSON.parse(toolCall.function.arguments || "{}");
   const { numero, updateLead, ESTADOS_LEAD, notificarInteresNegocio } = helpers;
 
   if (toolCall.function.name === "actualizar_datos_cliente") {
-    await updateLead(numero, { ...args, estadoLead: ESTADOS_LEAD.EN_CONVERSACION });
+    const cambios = { estadoLead: ESTADOS_LEAD.EN_CONVERSACION };
+    if (args.nombre) cambios.nombre = args.nombre;
+    if (args.personas) cambios.personas = args.personas;
+    if (args.tipoPedido) cambios.tipoPedido = args.tipoPedido;
+    if (args.zonaDelivery) cambios.zonaDelivery = args.zonaDelivery;
+    if (args.observaciones) cambios.observaciones = args.observaciones;
+    await updateLead(numero, cambios);
     return null;
   }
 
   if (toolCall.function.name === "agendar_reserva") {
-    // Es solo una demostracion: no existe un restaurante real, asi que no se
-    // agenda nada. Se aclara y se registra como lead caliente para ProShop.
-    await updateLead(numero, { estadoLead: ESTADOS_LEAD.INTERESADO_COTIZACION });
+    await updateLead(numero, { fechaVisita: args.fecha, horaVisita: args.hora, estadoLead: ESTADOS_LEAD.INTERESADO_COTIZACION });
     await notificarInteresNegocio(
-      `Intento agendar una reserva en la demo (${args.fecha || "-"} ${args.hora || "-"}, ${args.personas || "-"} personas) - cliente interesado en tener su propio bot`
+      `Reservó mesa en demo de restaurante (${args.fecha || "—"} ${args.hora || "—"}, ${args.personas || "—"} personas) — interesado en tener su propio bot`
     );
-    return "Esto que acabas de ver es una demostración del bot de Restaurante, así que no agenda reservas reales. Si te gustaría tener un asistente así para tu propio negocio, ¿agendamos una reunión breve para cotizarlo? Cuéntame tu nombre y a qué negocio representas y te contactamos.";
+    return `✅ *¡Así funciona en un bot real!*\n\nAcabas de ver cómo *${business.nombreNegocio}* toma una reserva. En un restaurante real, la mesa quedaría bloqueada en el sistema, el cliente recibiría confirmación por WhatsApp y el encargado de sala una notificación automática.\n\n¿Te gustaría tener un asistente así para tu restaurante o negocio? Cuéntame tu nombre y rubro y te armo una propuesta sin costo. 🚀`;
   }
 
   if (toolCall.function.name === "derivar_a_asesor") {
     await updateLead(numero, { estadoLead: ESTADOS_LEAD.DERIVADO });
-    await notificarInteresNegocio("Pidio hablar con un encargado durante la demo de restaurante");
-    return "Perfecto, voy a derivarte con un encargado para que pueda ayudarte con mas detalle. Por favor espera unos momentos.";
+    await notificarInteresNegocio("Solicitó hablar con un encargado durante la demo de restaurante");
+    return "Claro, te conecto con el encargado ahora mismo para atenderte mejor. Por favor espera unos momentos. 😊";
   }
 
   return null;

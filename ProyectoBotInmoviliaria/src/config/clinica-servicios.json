@@ -1,7 +1,12 @@
 [
-  { "idServicio": "S001", "especialidad": "Medicina General", "nombre": "Consulta general", "precio": "Bs 80", "duracion": "30 min", "descripcion": "Evaluación general y orientación médica.", "disponible": "si" },
-  { "idServicio": "S002", "especialidad": "Pediatría", "nombre": "Consulta pediátrica", "precio": "Bs 100", "duracion": "30 min", "descripcion": "Control y atención para niños y adolescentes.", "disponible": "si" },
-  { "idServicio": "S003", "especialidad": "Odontología", "nombre": "Limpieza dental", "precio": "Bs 150", "duracion": "45 min", "descripcion": "Limpieza y revisión dental completa.", "disponible": "si" },
-  { "idServicio": "S004", "especialidad": "Dermatología", "nombre": "Consulta dermatológica", "precio": "Bs 120", "duracion": "30 min", "descripcion": "Evaluación de piel, manchas o alergias.", "disponible": "si" },
-  { "idServicio": "S005", "especialidad": "Laboratorio", "nombre": "Análisis de sangre básico", "precio": "Bs 90", "duracion": "15 min", "descripcion": "Hemograma completo con resultados en 24h.", "disponible": "si" }
+  { "idServicio": "S001", "especialidad": "Medicina General", "nombre": "Consulta general", "precio": "Bs 80", "duracion": "30 min", "descripcion": "Evaluación integral, diagnóstico y orientación médica.", "disponible": "si" },
+  { "idServicio": "S002", "especialidad": "Pediatría", "nombre": "Consulta pediátrica", "precio": "Bs 100", "duracion": "30 min", "descripcion": "Control y atención especializada para niños y adolescentes.", "disponible": "si" },
+  { "idServicio": "S003", "especialidad": "Odontología", "nombre": "Limpieza dental profesional", "precio": "Bs 150", "duracion": "45 min", "descripcion": "Profilaxis completa, eliminación de sarro y pulido.", "disponible": "si" },
+  { "idServicio": "S004", "especialidad": "Odontología", "nombre": "Consulta y revisión dental", "precio": "Bs 80", "duracion": "30 min", "descripcion": "Diagnóstico bucodental y plan de tratamiento.", "disponible": "si" },
+  { "idServicio": "S005", "especialidad": "Dermatología", "nombre": "Consulta dermatológica", "precio": "Bs 130", "duracion": "30 min", "descripcion": "Evaluación de piel, manchas, acné, alergias y afecciones.", "disponible": "si" },
+  { "idServicio": "S006", "especialidad": "Laboratorio", "nombre": "Hemograma completo", "precio": "Bs 90", "duracion": "15 min", "descripcion": "Análisis de sangre completo con resultados en 24h.", "disponible": "si" },
+  { "idServicio": "S007", "especialidad": "Laboratorio", "nombre": "Panel metabólico (glucosa, colesterol, triglicéridos)", "precio": "Bs 140", "duracion": "15 min", "descripcion": "Control metabólico completo con resultados en 24h.", "disponible": "si" },
+  { "idServicio": "S008", "especialidad": "Nutrición", "nombre": "Consulta nutricional", "precio": "Bs 110", "duracion": "45 min", "descripcion": "Evaluación nutricional y plan alimentario personalizado.", "disponible": "si" },
+  { "idServicio": "S009", "especialidad": "Psicología", "nombre": "Consulta psicológica", "precio": "Bs 150", "duracion": "50 min", "descripcion": "Evaluación y acompañamiento emocional, manejo del estrés y ansiedad.", "disponible": "si" },
+  { "idServicio": "S010", "especialidad": "Traumatología", "nombre": "Consulta traumatológica", "precio": "Bs 150", "duracion": "30 min", "descripcion": "Evaluación de huesos, articulaciones y lesiones musculares.", "disponible": "si" }
 ]

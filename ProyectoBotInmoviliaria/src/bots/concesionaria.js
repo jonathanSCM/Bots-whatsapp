@@ -1,17 +1,21 @@
 const business = require("../config/concesionaria.json");
 const vehiculos = require("../config/concesionaria-vehiculos.json");
 
+const TIMEZONE = "America/La_Paz";
+const NOMBRE_BOT = "Carlos";
+
 const TOOLS = [
   {
     type: "function",
     function: {
       name: "actualizar_datos_cliente",
-      description: "Guarda o actualiza los datos del cliente a medida que se obtienen en la conversacion.",
+      description: "Guarda o actualiza los datos del cliente a medida que se obtienen. Llamar cada vez que el cliente dé un dato nuevo.",
       parameters: {
         type: "object",
         properties: {
           nombre: { type: "string" },
-          tipoVehiculoInteres: { type: "string" },
+          tipoVehiculoInteres: { type: "string", description: "Tipo de vehículo que busca: sedán, SUV, pickup, eléctrico, etc." },
+          usoVehiculo: { type: "string", description: "Para qué usará el vehículo: ciudad, familia, trabajo, off-road, etc." },
           observaciones: { type: "string" },
         },
       },
@@ -21,13 +25,13 @@ const TOOLS = [
     type: "function",
     function: {
       name: "agendar_test_drive",
-      description: "Agenda un test drive cuando el cliente confirmo el vehiculo, la fecha y la hora.",
+      description: "Agenda un test drive cuando el cliente confirmó el vehículo de interés, la fecha y la hora.",
       parameters: {
         type: "object",
         properties: {
-          idVehiculo: { type: "string", description: "ID exacto del vehiculo, ej: V001" },
+          idVehiculo: { type: "string", description: "ID exacto del vehículo, ej: V002" },
           fecha: { type: "string", description: "Formato YYYY-MM-DD" },
-          hora: { type: "string", description: "Formato HH:MM 24hs" },
+          hora: { type: "string", description: "Formato HH:MM (24hs)" },
         },
         required: ["idVehiculo", "fecha", "hora"],
       },
@@ -37,77 +41,109 @@ const TOOLS = [
     type: "function",
     function: {
       name: "derivar_a_asesor",
-      description: "Deriva la conversacion a un encargado humano cuando el cliente lo pide, esta molesto, o la consulta esta fuera de alcance (ej. financiamiento detallado, trade-in).",
+      description: "Deriva a un asesor humano SOLO si el cliente lo pide, está molesto, o necesita evaluación de financiamiento/trade-in que requiere criterio humano.",
       parameters: { type: "object", properties: { motivo: { type: "string" } } },
     },
   },
 ];
 
 function formatearVehiculos(lista) {
-  if (!lista.length) return "No hay vehiculos cargados actualmente en el sistema.";
-  return lista.map((v) => `  - [${v.idVehiculo}] ${v.tipo}: ${v.nombre} - ${v.precio} - ${v.descripcion}`).join("\n");
+  if (!lista.length) return "No hay vehículos disponibles en este momento.";
+  const porTipo = {};
+  for (const v of lista) {
+    porTipo[v.tipo] = porTipo[v.tipo] || [];
+    porTipo[v.tipo].push(v);
+  }
+  return Object.entries(porTipo)
+    .map(
+      ([tipo, items]) =>
+        `*${tipo}:*\n` +
+        items.map((v) => `  • [${v.idVehiculo}] *${v.nombre}* — ${v.precio}\n    ${v.descripcion}`).join("\n")
+    )
+    .join("\n\n");
 }
 
-function systemPrompt(catalogo = []) {
+function datosConocidos(lead = {}) {
+  const campos = [];
+  if (lead.nombre) campos.push(`• Nombre: ${lead.nombre}`);
+  const datosBot = lead.datosBot || {};
+  if (datosBot.tipoVehiculoInteres) campos.push(`• Tipo buscado: ${datosBot.tipoVehiculoInteres}`);
+  if (datosBot.usoVehiculo) campos.push(`• Uso principal: ${datosBot.usoVehiculo}`);
+  if (datosBot.observaciones) campos.push(`• Preferencias: ${datosBot.observaciones}`);
+  if (!campos.length) return "Primera interacción — aún no hay datos del cliente.";
+  return campos.join("\n");
+}
+
+function systemPrompt(catalogo = [], lead = {}) {
   const hoy = new Date();
-  const fechaHoyTexto = hoy.toLocaleDateString("es-BO", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "America/La_Paz" });
-  const fechaHoyISO = hoy.toLocaleDateString("en-CA", { timeZone: "America/La_Paz" });
+  const fechaTexto = hoy.toLocaleDateString("es-BO", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: TIMEZONE });
+  const horaTexto = hoy.toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit", timeZone: TIMEZONE });
+  const fechaISO = hoy.toLocaleDateString("en-CA", { timeZone: TIMEZONE });
 
-  return `Eres el asistente virtual de "${business.nombreNegocio}", una concesionaria de vehículos.
+  return `Eres ${NOMBRE_BOT}, asesor de ventas de *${business.nombreNegocio}*, concesionaria de vehículos.
 
-IMPORTANTE: esta es una DEMOSTRACIÓN de ProShop (empresa que crea agentes de WhatsApp con IA). "${business.nombreNegocio}" y sus vehículos son ficticios, solo existen para mostrar cómo se comportaría un bot real. Conversa con normalidad como si fueras el bot de una concesionaria real (recomendando modelos, agendando test drives, etc.) — el sistema se encarga de aclarar que es una demo en el momento en que el cliente confirma un test drive, tú no necesitas mencionarlo antes de eso. Si el cliente pregunta directamente si esto es real, sé honesto: dile que es una demostración de ProShop y que si quiere un bot así para su propio negocio puede pedir una cotización.
+CONTEXTO DE DEMO: esta conversación es una *demostración de ProShop*, empresa que crea agentes de WhatsApp con IA. *${business.nombreNegocio}* es ficticio y existe para mostrar cómo funciona el bot en una concesionaria real. Actúa con naturalidad — el aviso de demo se muestra automáticamente cuando el cliente agenda un test drive, no lo menciones antes. Si preguntan si es real, explica que es una demo de ProShop.
 
-Hoy es ${fechaHoyTexto} (${fechaHoyISO}). Usa esta fecha como referencia para calcular fechas relativas y siempre calcula la fecha real en formato YYYY-MM-DD antes de llamar a agendar_test_drive.
+Fecha y hora actual (Bolivia): *${fechaTexto}, ${horaTexto}* (${fechaISO}). Úsala para calcular fechas relativas antes de llamar a agendar_test_drive.
 
-Informacion del negocio:
-- Horarios: ${business.horarios}
-- Direccion: ${business.direccion}
-- Financiamiento: ${business.financiamiento}
-- Estilo de comunicacion: ${business.estiloComunicacion}
+*Datos del negocio:*
+• Horarios: ${business.horarios}
+• Dirección: ${business.direccion}
+• Financiamiento: ${business.financiamiento}
+• Comunicación: ${business.estiloComunicacion}
 
-Vehículos disponibles ahora mismo (esta es la UNICA fuente real, no inventes modelos ni precios):
+*Lo que ya sabes de este cliente (NO lo vuelvas a preguntar):*
+${datosConocidos(lead)}
+
+*Vehículos disponibles* (únicos y reales, no inventes modelos ni precios):
 ${formatearVehiculos(catalogo)}
 
-Reglas obligatorias:
-- Solo puedes mencionar, describir u ofrecer los vehículos listados arriba, con sus precios exactos.
-- No pidas datos sensibles innecesarios (solo nombre y tipo de vehículo de interés).
-- Usa derivar_a_asesor SOLO si: el cliente lo pide explicitamente, esta molesto, o pide detalles de financiamiento/trade-in que requieren evaluacion humana.
-- derivar_a_asesor es la excepcion, no la regla.
-- Cuando obtengas un dato nuevo del cliente llama a actualizar_datos_cliente.
-- Para agendar un test drive, confirma vehículo, fecha y hora, y luego llama a agendar_test_drive.
-- Mantén las respuestas breves, profesionales y cercanas, sin presionar la venta.`;
+*Cómo asesoras al cliente:*
+1. Pregunta para qué usará el vehículo (ciudad, familia, trabajo, off-road) y cuántas personas lo usarán habitualmente.
+2. Con ese contexto, recomienda el modelo más conveniente y explica POR QUÉ le conviene a su caso concreto.
+3. Da detalles técnicos si los pide (consumo, garantía, financiamiento disponible).
+4. Cuando muestre interés claro, propone agendar el test drive: "¿Quieres conocerlo en persona? Te lo reservo para que lo manejes."
+5. Confirma vehículo, fecha y hora, y llama a agendar_test_drive.
+
+*Reglas importantes:*
+• Usa *un solo asterisco pegado al texto* para negrita en WhatsApp.
+• Solo menciona los vehículos de la lista con sus precios exactos. No inventes modelos, versiones ni precios.
+• Llama a actualizar_datos_cliente cuando obtengas nombre, tipo de vehículo buscado, uso o preferencias.
+• Para financiamiento y trade-in: da la información general disponible. Si el cliente necesita evaluación detallada, usa derivar_a_asesor.
+• No presiones la venta; sé consultor/a, no vendedor/a insistente.
+• Respuestas profesionales y cercanas. 2–3 emojis por mensaje (🚗 🔑 ✅ 🏁 💡).
+• Termina SIEMPRE con una acción concreta ("¿Agendamos el test drive?", "¿Qué modelo te gustaría conocer en persona?").`;
 }
 
 async function obtenerContexto() {
   return vehiculos.filter((v) => v.disponible === "si");
 }
 
-// helpers: { numero, updateLead, updateDatosBot, ESTADOS_LEAD, notificarInteresNegocio }
 async function ejecutarFuncion(toolCall, contexto, helpers) {
   const args = JSON.parse(toolCall.function.arguments || "{}");
   const { numero, updateLead, updateDatosBot, ESTADOS_LEAD, notificarInteresNegocio } = helpers;
 
   if (toolCall.function.name === "actualizar_datos_cliente") {
-    await updateDatosBot(numero, args);
-    await updateLead(numero, { nombre: args.nombre, estadoLead: ESTADOS_LEAD.EN_CONVERSACION });
+    const cambios = { estadoLead: ESTADOS_LEAD.EN_CONVERSACION };
+    if (args.nombre) cambios.nombre = args.nombre;
+    await updateDatosBot(numero, { tipoVehiculoInteres: args.tipoVehiculoInteres, usoVehiculo: args.usoVehiculo, observaciones: args.observaciones });
+    await updateLead(numero, cambios);
     return null;
   }
 
   if (toolCall.function.name === "agendar_test_drive") {
     const vehiculo = contexto.find((v) => v.idVehiculo === args.idVehiculo);
-    // Es solo una demostracion: no existe una concesionaria real, asi que no
-    // se agenda nada real. Se aclara y se registra como lead caliente.
-    await updateLead(numero, { estadoLead: ESTADOS_LEAD.INTERESADO_COTIZACION });
+    await updateLead(numero, { fechaVisita: args.fecha, horaVisita: args.hora, estadoLead: ESTADOS_LEAD.INTERESADO_COTIZACION });
     await notificarInteresNegocio(
-      `Intento agendar un test drive en la demo (${vehiculo ? vehiculo.nombre : args.idVehiculo}, ${args.fecha || "-"} ${args.hora || "-"}) - cliente interesado en tener su propio bot`
+      `Agendó test drive en demo (${vehiculo ? vehiculo.nombre : args.idVehiculo}, ${args.fecha || "—"} ${args.hora || "—"}) — interesado en tener su propio bot`
     );
-    return "Esto que acabas de ver es una demostración del bot de Concesionaria, así que no agenda test drives reales. Si te gustaría tener un asistente así para tu propio negocio, ¿agendamos una reunión breve para cotizarlo? Cuéntame tu nombre y a qué negocio representas y te contactamos.";
+    return `✅ *¡Así funciona en un bot real!*\n\nAcabas de ver cómo *${business.nombreNegocio}* agenda un test drive. En una concesionaria real, el cliente recibiría la confirmación, se bloquearía el vehículo en el calendario y el asesor de sala recibiría una notificación automática.\n\n¿Te gustaría tener un asistente de ventas así para tu negocio? Cuéntame tu nombre y rubro y te armo una propuesta sin costo. 🚀`;
   }
 
   if (toolCall.function.name === "derivar_a_asesor") {
     await updateLead(numero, { estadoLead: ESTADOS_LEAD.DERIVADO });
-    await notificarInteresNegocio("Pidio hablar con un encargado durante la demo de concesionaria");
-    return "Perfecto, voy a derivarte con un encargado para que pueda ayudarte con mas detalle. Por favor espera unos momentos.";
+    await notificarInteresNegocio("Solicitó hablar con un asesor durante la demo de concesionaria");
+    return "¡Claro! Te conecto con uno de nuestros asesores comerciales para atenderte en detalle. Por favor espera unos momentos. 🚗";
   }
 
   return null;

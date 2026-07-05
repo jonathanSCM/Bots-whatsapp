@@ -1,17 +1,20 @@
 const business = require("../config/delivery.json");
 const pedidos = require("../config/delivery-pedidos.json");
 
+const TIMEZONE = "America/La_Paz";
+const NOMBRE_BOT = "Track";
+
 const TOOLS = [
   {
     type: "function",
     function: {
       name: "actualizar_datos_cliente",
-      description: "Guarda o actualiza los datos del cliente a medida que se obtienen en la conversacion.",
+      description: "Guarda o actualiza los datos del cliente a medida que se obtienen. Llamar cada vez que el cliente dé un dato nuevo.",
       parameters: {
         type: "object",
         properties: {
           nombre: { type: "string" },
-          observaciones: { type: "string" },
+          observaciones: { type: "string", description: "Detalles adicionales del problema o consulta" },
         },
       },
     },
@@ -20,10 +23,12 @@ const TOOLS = [
     type: "function",
     function: {
       name: "consultar_estado_pedido",
-      description: "Consulta el estado de un pedido cuando el cliente da su numero de pedido.",
+      description: "Consulta el estado de un pedido cuando el cliente proporciona su número de pedido (formato ND-####).",
       parameters: {
         type: "object",
-        properties: { numeroPedido: { type: "string", description: "Numero exacto del pedido, ej: ND-1001" } },
+        properties: {
+          numeroPedido: { type: "string", description: "Número exacto del pedido, ej: ND-1001" },
+        },
         required: ["numeroPedido"],
       },
     },
@@ -32,62 +37,89 @@ const TOOLS = [
     type: "function",
     function: {
       name: "derivar_a_asesor",
-      description: "Deriva la conversacion a un encargado humano cuando el cliente lo pide, esta molesto, o hay un reclamo (pedido perdido, dañado, muy demorado).",
+      description: "Deriva a un encargado SOLO si el cliente lo pide, está molesto, o reporta un problema grave (pedido perdido, dañado, muy demorado o incorrecto).",
       parameters: { type: "object", properties: { motivo: { type: "string" } } },
     },
   },
 ];
 
-function systemPrompt() {
-  return `Eres el asistente virtual de "${business.nombreNegocio}", un servicio de delivery y logística.
+function datosConocidos(lead = {}) {
+  const campos = [];
+  if (lead.nombre) campos.push(`• Nombre: ${lead.nombre}`);
+  const datosBot = lead.datosBot || {};
+  if (datosBot.ultimaConsulta) campos.push(`• Último pedido consultado: ${datosBot.ultimaConsulta}`);
+  if (!campos.length) return "Primera interacción — aún no hay datos del cliente.";
+  return campos.join("\n");
+}
 
-IMPORTANTE: esta es una DEMOSTRACIÓN de ProShop (empresa que crea agentes de WhatsApp con IA). "${business.nombreNegocio}" y sus pedidos son ficticios, solo existen para mostrar cómo se comportaría un bot real de rastreo de pedidos. Conversa con normalidad como si fueras el bot de logística de un negocio real. Si el cliente pregunta directamente si esto es real, sé honesto: dile que es una demostración de ProShop y que si quiere un bot así para su propio negocio puede pedir una cotización.
+function systemPrompt(_catalogo, lead = {}) {
+  const hoy = new Date();
+  const fechaTexto = hoy.toLocaleDateString("es-BO", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: TIMEZONE });
+  const horaTexto = hoy.toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit", timeZone: TIMEZONE });
 
-Informacion del negocio:
-- Horarios: ${business.horarios}
-- Zonas de cobertura: ${business.zonasCobertura.join(", ")}
-- Estilo de comunicacion: ${business.estiloComunicacion}
+  return `Eres ${NOMBRE_BOT}, el asistente de rastreo de *${business.nombreNegocio}*, servicio de delivery y logística.
 
-Reglas obligatorias:
-- Cuando el cliente de un numero de pedido (formato ND-####), llama a consultar_estado_pedido con ese numero exacto. NUNCA inventes el estado de un pedido por tu cuenta, el sistema te lo va a dar.
-- Si el cliente no sabe su numero de pedido, pideselo de forma directa (ej: "Claro, pásame tu número de pedido, empieza con ND- y lo tienes en tu comprobante de compra").
-- No pidas datos sensibles innecesarios (solo nombre y numero de pedido).
-- Usa derivar_a_asesor SOLO si: el cliente lo pide explicitamente, esta molesto, o reporta un problema real (pedido perdido, dañado, o muy demorado mas alla de lo informado).
-- derivar_a_asesor es la excepcion, no la regla.
-- Cuando obtengas un dato nuevo del cliente llama a actualizar_datos_cliente.
-- Mantén las respuestas breves, directas y tranquilizadoras.`;
+CONTEXTO DE DEMO: esta conversación es una *demostración de ProShop*, empresa que crea agentes de WhatsApp con IA. *${business.nombreNegocio}* es un servicio ficticio para mostrar cómo funciona el bot de rastreo en un negocio real de delivery. Actúa con naturalidad. Si preguntan si es real, explica que es una demo de ProShop y que los pedidos de ejemplo son ND-1001 a ND-1007.
+
+Fecha y hora actual (Bolivia): *${fechaTexto}, ${horaTexto}*.
+
+*Datos del negocio:*
+• Horarios de operación: ${business.horarios}
+• Zonas de cobertura: ${business.zonasCobertura.join(", ")}
+• Comunicación: ${business.estiloComunicacion}
+
+*Lo que ya sabes de este cliente (NO lo vuelvas a preguntar):*
+${datosConocidos(lead)}
+
+*Cómo atiendes al cliente:*
+1. Si consulta por un pedido: pídele el número (formato ND-####, que está en su comprobante de compra) y llama a consultar_estado_pedido.
+2. Si tiene un reclamo o problema grave (pedido perdido, dañado, muy demorado): usa derivar_a_asesor.
+3. Si tiene otras consultas (zonas de cobertura, horarios, costos): responde con la información del negocio.
+
+*Reglas importantes:*
+• Usa *un solo asterisco pegado al texto* para negrita en WhatsApp.
+• NUNCA inventes el estado de un pedido. Siempre llama a consultar_estado_pedido para obtener la información real.
+• Si el cliente no sabe su número de pedido, indícale cómo encontrarlo: "Tu número de pedido empieza con ND- y lo tienes en el comprobante que te llegó por correo o en la app."
+• Llama a actualizar_datos_cliente cuando obtengas el nombre del cliente.
+• Respuestas breves, directas y tranquilizadoras. 2–3 emojis por mensaje (🚚 📦 ✅ 📍 ⏱️).
+• Termina SIEMPRE con una acción concreta ("¿Tienes el número de pedido a mano?", "¿Hay algo más en lo que te pueda ayudar?").`;
 }
 
 async function obtenerContexto() {
   return [];
 }
 
-// helpers: { numero, updateLead, updateDatosBot, ESTADOS_LEAD, notificarInteresNegocio }
 async function ejecutarFuncion(toolCall, _contexto, helpers) {
   const args = JSON.parse(toolCall.function.arguments || "{}");
   const { numero, updateLead, updateDatosBot, ESTADOS_LEAD, notificarInteresNegocio } = helpers;
 
   if (toolCall.function.name === "actualizar_datos_cliente") {
-    await updateDatosBot(numero, args);
-    await updateLead(numero, { nombre: args.nombre, estadoLead: ESTADOS_LEAD.EN_CONVERSACION });
+    const cambios = { estadoLead: ESTADOS_LEAD.EN_CONVERSACION };
+    if (args.nombre) cambios.nombre = args.nombre;
+    if (args.observaciones) await updateDatosBot(numero, { observaciones: args.observaciones });
+    await updateLead(numero, cambios);
     return null;
   }
 
   if (toolCall.function.name === "consultar_estado_pedido") {
-    // Esta consulta SI es real dentro de la demo: busca en los pedidos de
-    // ejemplo cargados localmente (no requiere intervencion de ProShop).
-    const pedido = pedidos.find((p) => p.numeroPedido.toLowerCase() === String(args.numeroPedido || "").toLowerCase());
-    await updateDatosBot(numero, { ultimaConsulta: args.numeroPedido });
+    const numPedido = String(args.numeroPedido || "").trim();
+    const pedido = pedidos.find((p) => p.numeroPedido.toLowerCase() === numPedido.toLowerCase());
+    await updateDatosBot(numero, { ultimaConsulta: numPedido });
+
     if (!pedido) {
-      return `No encontré ningún pedido con el número ${args.numeroPedido}. Esta es una demostración de ProShop, así que solo existen los pedidos de ejemplo del catálogo de prueba (puedes probar con ND-1001, ND-1002, ND-1003 o ND-1004). Si quieres un bot así conectado a tu sistema real de pedidos, podemos cotizártelo.`;
+      await notificarInteresNegocio(
+        `Consultó pedido no encontrado (${numPedido}) en demo de delivery — interesado en tener su propio bot`
+      );
+      return `No encontré ningún pedido con el número *${numPedido}*. Esta es una demostración de ProShop — los pedidos de ejemplo son *ND-1001* al *ND-1007*. Prueba con alguno de esos.\n\n¿Te gustaría tener un bot de rastreo conectado al sistema real de tu negocio? 🚀`;
     }
-    return `Pedido ${pedido.numeroPedido}: *${pedido.estado}*. ${pedido.detalle} (actualizado ${pedido.ultimaActualizacion}).`;
+
+    return `*Pedido ${pedido.numeroPedido}* — ${pedido.estado}\n\n${pedido.detalle}\n\n_(Actualizado: ${pedido.ultimaActualizacion})_`;
   }
 
   if (toolCall.function.name === "derivar_a_asesor") {
     await updateLead(numero, { estadoLead: ESTADOS_LEAD.DERIVADO });
-    await notificarInteresNegocio("Pidio hablar con un encargado durante la demo de delivery");
-    return "Perfecto, voy a derivarte con un encargado para que pueda ayudarte con mas detalle. Por favor espera unos momentos.";
+    await notificarInteresNegocio("Solicitó hablar con un encargado durante la demo de delivery");
+    return "Entendido, te conecto con un encargado para resolver esto personalmente. Por favor espera unos momentos. 📦";
   }
 
   return null;

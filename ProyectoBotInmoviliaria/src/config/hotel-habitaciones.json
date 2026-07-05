@@ -1,5 +1,7 @@
 [
-  { "idHabitacion": "H001", "tipo": "Sencilla", "nombre": "Habitación Sencilla", "precio": "Bs 280/noche", "capacidad": "2 personas", "descripcion": "Cama matrimonial, vista al jardín, desayuno incluido.", "disponible": "si" },
-  { "idHabitacion": "H002", "tipo": "Doble", "nombre": "Habitación Doble Superior", "precio": "Bs 380/noche", "capacidad": "4 personas", "descripcion": "Dos camas queen, balcón, vista a la montaña.", "disponible": "si" },
-  { "idHabitacion": "H003", "tipo": "Suite", "nombre": "Suite Altavista", "precio": "Bs 650/noche", "capacidad": "4 personas", "descripcion": "Sala separada, jacuzzi, vista panorámica.", "disponible": "si" }
+  { "idHabitacion": "H001", "nombre": "Habitación Estándar", "capacidad": "1–2 personas", "precio": "Bs 280/noche", "descripcion": "Cama matrimonial o dos camas individuales, vista al jardín, desayuno buffet incluido, WiFi de alta velocidad.", "disponible": "si" },
+  { "idHabitacion": "H002", "nombre": "Habitación Superior Doble", "capacidad": "2–3 personas", "precio": "Bs 380/noche", "descripcion": "Dos camas queen, balcón privado con vista a la montaña, desayuno buffet incluido, caja fuerte y minibar.", "disponible": "si" },
+  { "idHabitacion": "H003", "nombre": "Suite Ejecutiva", "capacidad": "2–4 personas", "precio": "Bs 550/noche", "descripcion": "Sala de estar separada, escritorio de trabajo, cafetera Nespresso, bañera y ducha independiente, vista panorámica.", "disponible": "si" },
+  { "idHabitacion": "H004", "nombre": "Suite Altavista Premium", "capacidad": "2–4 personas", "precio": "Bs 750/noche", "descripcion": "La mejor habitación del hotel. Jacuzzi privado en terraza, sala VIP, champagne de bienvenida y vista panorámica 180°.", "disponible": "si" },
+  { "idHabitacion": "H005", "nombre": "Cabaña Familiar", "capacidad": "2–6 personas", "precio": "Bs 680/noche", "descripcion": "Cabaña independiente con 2 habitaciones, cocina equipada, terraza con parrilla y jardín privado. Ideal para familias.", "disponible": "si" }
 ]

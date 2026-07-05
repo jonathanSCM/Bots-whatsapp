@@ -32,16 +32,16 @@ function getBot(id) {
 // manda cuando alguien escribe sin especificar a que demo se refiere. Titulo
 // max 24 caracteres, descripcion max 72 (limites de WhatsApp Cloud API).
 const MENU_BOTS = [
-  { id: "inmobiliaria", nombre: "Inmobiliaria", descripcion: "Califica leads y agenda visitas" },
-  { id: "restaurante", nombre: "Restaurante", descripcion: "Reservas de mesa y delivery" },
-  { id: "clinica", nombre: "Clínica / Salud", descripcion: "Agenda citas medicas" },
-  { id: "ecommerce", nombre: "Tienda Online", descripcion: "Recomienda productos y guia la compra" },
-  { id: "soporte", nombre: "Soporte Técnico", descripcion: "Resuelve tickets y dudas" },
-  { id: "gimnasio", nombre: "Gimnasio", descripcion: "Vende membresias y agenda clases" },
-  { id: "concesionaria", nombre: "Concesionaria", descripcion: "Agenda test drives, cotiza autos" },
-  { id: "hotel", nombre: "Hotel / Turismo", descripcion: "Cotiza estadias y reservas" },
-  { id: "academia", nombre: "Academia / Cursos", descripcion: "Informa programas y matricula" },
-  { id: "delivery", nombre: "Delivery / Logística", descripcion: "Estado de pedidos y envios" },
+  { id: "inmobiliaria", nombre: "🏡 Inmobiliaria", descripcion: "Califica leads y agenda visitas a propiedades" },
+  { id: "restaurante", nombre: "🍽️ Restaurante", descripcion: "Reservas de mesa, delivery y menú" },
+  { id: "clinica", nombre: "🏥 Clínica / Salud", descripcion: "Agenda citas médicas por especialidad" },
+  { id: "ecommerce", nombre: "🛍️ Tienda Online", descripcion: "Recomienda productos y cierra ventas" },
+  { id: "soporte", nombre: "🔧 Soporte Técnico", descripcion: "Resuelve problemas y abre tickets" },
+  { id: "gimnasio", nombre: "💪 Gimnasio", descripcion: "Asesora planes y procesa membresías" },
+  { id: "concesionaria", nombre: "🚗 Concesionaria", descripcion: "Cotiza vehículos y agenda test drives" },
+  { id: "hotel", nombre: "🏨 Hotel / Turismo", descripcion: "Cotiza habitaciones y toma reservas" },
+  { id: "academia", nombre: "🎓 Academia / Cursos", descripcion: "Informa programas y matricula alumnos" },
+  { id: "delivery", nombre: "🚚 Delivery / Logística", descripcion: "Rastrea pedidos y atiende reclamos" },
 ];
 
 module.exports = { bots, getBot, DEFAULT_BOT_ID, MENU_BOTS };

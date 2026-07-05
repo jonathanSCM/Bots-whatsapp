@@ -1,18 +1,21 @@
 const business = require("../config/gimnasio.json");
 const planes = require("../config/gimnasio-planes.json");
 
+const TIMEZONE = "America/La_Paz";
+const NOMBRE_BOT = "Max";
+
 const TOOLS = [
   {
     type: "function",
     function: {
       name: "actualizar_datos_cliente",
-      description: "Guarda o actualiza los datos del cliente a medida que se obtienen en la conversacion.",
+      description: "Guarda o actualiza los datos del cliente a medida que se obtienen. Llamar cada vez que el cliente dé un dato nuevo.",
       parameters: {
         type: "object",
         properties: {
           nombre: { type: "string" },
-          objetivo: { type: "string", description: "Objetivo del cliente: bajar de peso, ganar masa, salud general, etc." },
-          observaciones: { type: "string" },
+          objetivo: { type: "string", description: "Objetivo del cliente: bajar de peso, ganar músculo, mantenerse activo, salud, etc." },
+          observaciones: { type: "string", description: "Condiciones físicas, horarios preferidos u otras preferencias" },
         },
       },
     },
@@ -21,10 +24,12 @@ const TOOLS = [
     type: "function",
     function: {
       name: "inscribir_plan",
-      description: "Inscribe al cliente cuando ya eligio el plan de membresia que quiere.",
+      description: "Inscribe al cliente cuando ya eligió el plan de membresía que quiere tomar.",
       parameters: {
         type: "object",
-        properties: { idPlan: { type: "string", description: "ID exacto del plan, ej: G001" } },
+        properties: {
+          idPlan: { type: "string", description: "ID exacto del plan, ej: G002" },
+        },
         required: ["idPlan"],
       },
     },
@@ -33,73 +38,96 @@ const TOOLS = [
     type: "function",
     function: {
       name: "derivar_a_asesor",
-      description: "Deriva la conversacion a un encargado humano cuando el cliente lo pide, esta molesto, o la consulta esta fuera de alcance.",
+      description: "Deriva a un encargado SOLO si el cliente lo pide, está molesto, o tiene condiciones médicas que requieren evaluación especializada.",
       parameters: { type: "object", properties: { motivo: { type: "string" } } },
     },
   },
 ];
 
 function formatearPlanes(lista) {
-  if (!lista.length) return "No hay planes cargados actualmente en el sistema.";
-  return lista.map((p) => `  - [${p.idPlan}] ${p.nombre} - ${p.precio} - ${p.descripcion}`).join("\n");
+  if (!lista.length) return "No hay planes disponibles en este momento.";
+  return lista.map((p) => `  • [${p.idPlan}] *${p.nombre}* — ${p.precio}\n    ${p.descripcion}`).join("\n\n");
 }
 
-function systemPrompt(catalogo = []) {
-  return `Eres el asistente virtual de "${business.nombreNegocio}", un gimnasio.
+function datosConocidos(lead = {}) {
+  const campos = [];
+  if (lead.nombre) campos.push(`• Nombre: ${lead.nombre}`);
+  const datosBot = lead.datosBot || {};
+  if (datosBot.objetivo) campos.push(`• Objetivo: ${datosBot.objetivo}`);
+  if (datosBot.planElegido) campos.push(`• Plan visto: ${datosBot.planElegido}`);
+  if (datosBot.observaciones) campos.push(`• Preferencias: ${datosBot.observaciones}`);
+  if (!campos.length) return "Primera interacción — aún no hay datos del cliente.";
+  return campos.join("\n");
+}
 
-IMPORTANTE: esta es una DEMOSTRACIÓN de ProShop (empresa que crea agentes de WhatsApp con IA). "${business.nombreNegocio}" y sus planes son ficticios, solo existen para mostrar cómo se comportaría un bot real. Conversa con normalidad como si fueras el bot de un gimnasio real (recomendando planes, motivando al cliente, etc.) — el sistema se encarga de aclarar que es una demo en el momento en que el cliente confirma una inscripción, tú no necesitas mencionarlo antes de eso. Si el cliente pregunta directamente si esto es real, sé honesto: dile que es una demostración de ProShop y que si quiere un bot así para su propio negocio puede pedir una cotización.
+function systemPrompt(catalogo = [], lead = {}) {
+  const hoy = new Date();
+  const fechaTexto = hoy.toLocaleDateString("es-BO", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: TIMEZONE });
+  const horaTexto = hoy.toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit", timeZone: TIMEZONE });
 
-Informacion del negocio:
-- Horarios: ${business.horarios}
-- Direccion: ${business.direccion}
-- Metodos de pago: ${business.metodosPago}
-- Estilo de comunicacion: ${business.estiloComunicacion}
+  return `Eres ${NOMBRE_BOT}, el asesor de membresías de *${business.nombreNegocio}*.
 
-Planes disponibles ahora mismo (esta es la UNICA fuente real de planes y precios, no existen otros):
+CONTEXTO DE DEMO: esta conversación es una *demostración de ProShop*, empresa que crea agentes de WhatsApp con IA. *${business.nombreNegocio}* es un gimnasio ficticio para mostrar cómo funciona el bot en un negocio real. Actúa con naturalidad — el aviso de demo se muestra automáticamente cuando el cliente confirma una inscripción, no lo menciones antes. Si preguntan si es real, explica que es una demo de ProShop.
+
+Fecha y hora actual (Bolivia): *${fechaTexto}, ${horaTexto}*.
+
+*Datos del negocio:*
+• Horarios: ${business.horarios}
+• Dirección: ${business.direccion}
+• Métodos de pago: ${business.metodosPago}
+• Comunicación: ${business.estiloComunicacion}
+
+*Lo que ya sabes de este cliente (NO lo vuelvas a preguntar):*
+${datosConocidos(lead)}
+
+*Planes disponibles* (únicos y reales, no inventes otros ni cambies precios):
 ${formatearPlanes(catalogo)}
 
-Reglas obligatorias:
-- Solo puedes mencionar, describir u ofrecer los planes listados arriba, con sus precios exactos. No inventes planes ni precios.
-- Pregunta el objetivo del cliente para recomendar el plan que mas le conviene.
-- No pidas datos sensibles innecesarios (solo nombre y objetivo).
-- Usa derivar_a_asesor SOLO si: el cliente lo pide explicitamente, esta molesto, o la consulta esta fuera de alcance (ej. lesiones, temas medicos).
-- derivar_a_asesor es la excepcion, no la regla.
-- Cuando obtengas un dato nuevo del cliente llama a actualizar_datos_cliente.
-- Cuando el cliente confirme que plan quiere, llama a inscribir_plan con el idPlan exacto.
-- Mantén las respuestas breves, motivadoras y con buena energía.`;
+*Cómo asesoras al cliente:*
+1. Pregunta su objetivo principal (bajar de peso, ganar músculo, salud general, deporte específico).
+2. Con el objetivo claro, recomienda el plan más conveniente y explica POR QUÉ le conviene a él/ella.
+3. Muestra el precio y lo que incluye. Si tiene dudas, resuelve con entusiasmo y energía.
+4. Cuando confirme el plan que quiere: llama a inscribir_plan con el idPlan exacto.
+
+*Reglas importantes:*
+• Usa *un solo asterisco pegado al texto* para negrita en WhatsApp.
+• Solo menciona los planes de la lista de arriba con sus precios exactos.
+• Llama a actualizar_datos_cliente cada vez que obtengas nombre, objetivo o preferencias.
+• No pidas datos médicos sensibles; si el cliente menciona condiciones (diabetes, lesiones graves), deriva a un asesor presencial.
+• Sé motivador/a, energético/a y cercano/a. 2–3 emojis por mensaje (💪 🏋️ 🔥 ✅ 🎯).
+• Termina SIEMPRE con una acción concreta ("¿Lo anotamos en el Plan Full?", "¿Empezamos esta semana?").`;
 }
 
 async function obtenerContexto() {
   return planes.filter((p) => p.disponible === "si");
 }
 
-// helpers: { numero, updateLead, updateDatosBot, ESTADOS_LEAD, notificarInteresNegocio }
 async function ejecutarFuncion(toolCall, contexto, helpers) {
   const args = JSON.parse(toolCall.function.arguments || "{}");
   const { numero, updateLead, updateDatosBot, ESTADOS_LEAD, notificarInteresNegocio } = helpers;
 
   if (toolCall.function.name === "actualizar_datos_cliente") {
-    await updateDatosBot(numero, args);
-    await updateLead(numero, { nombre: args.nombre, estadoLead: ESTADOS_LEAD.EN_CONVERSACION });
+    const cambios = { estadoLead: ESTADOS_LEAD.EN_CONVERSACION };
+    if (args.nombre) cambios.nombre = args.nombre;
+    await updateDatosBot(numero, { objetivo: args.objetivo, observaciones: args.observaciones });
+    await updateLead(numero, cambios);
     return null;
   }
 
   if (toolCall.function.name === "inscribir_plan") {
     const plan = contexto.find((p) => p.idPlan === args.idPlan);
-    // Es solo una demostracion: no existe un gimnasio real, asi que no se
-    // procesa ninguna inscripcion real. Se aclara y se registra como lead caliente.
     await updateDatosBot(numero, { planElegido: plan ? plan.nombre : args.idPlan });
     await updateLead(numero, { estadoLead: ESTADOS_LEAD.INTERESADO_COTIZACION });
     await notificarInteresNegocio(
-      `Intento inscribirse a un plan en la demo (${plan ? plan.nombre : args.idPlan}) - cliente interesado en tener su propio bot`
+      `Eligió plan en demo de gimnasio (${plan ? plan.nombre : args.idPlan}) — interesado en tener su propio bot`
     );
-    return "Esto que acabas de ver es una demostración del bot de Gimnasio, así que no procesa inscripciones reales. Si te gustaría tener un asistente así para tu propio negocio, ¿agendamos una reunión breve para cotizarlo? Cuéntame tu nombre y a qué negocio representas y te contactamos.";
+    return `✅ *¡Así funciona en un bot real!*\n\nAcabas de ver el flujo de inscripción de *${business.nombreNegocio}*. En un gimnasio real, el cliente quedaría registrado en el sistema, recibiría sus accesos y un bienvenida personalizada automáticamente.\n\n¿Te gustaría tener un asistente de ventas así para tu negocio? Cuéntame tu nombre y rubro y te armo una propuesta sin costo. 🚀`;
   }
 
   if (toolCall.function.name === "derivar_a_asesor") {
     await updateLead(numero, { estadoLead: ESTADOS_LEAD.DERIVADO });
-    await notificarInteresNegocio("Pidio hablar con un encargado durante la demo de gimnasio");
-    return "Perfecto, voy a derivarte con un encargado para que pueda ayudarte con mas detalle. Por favor espera unos momentos.";
+    await notificarInteresNegocio("Solicitó hablar con un encargado durante la demo de gimnasio");
+    return "¡Claro! Te conecto con uno de nuestros asesores para darte atención personalizada. Por favor espera unos momentos. 💪";
   }
 
   return null;
