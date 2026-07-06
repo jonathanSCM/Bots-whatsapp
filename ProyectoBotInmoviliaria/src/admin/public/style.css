@@ -229,3 +229,47 @@ select.estado-select option{background:var(--violet-700);color:var(--ink);}
 .table-wrap::-webkit-scrollbar{height:6px;}
 .table-wrap::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:999px;}
 .table-wrap::-webkit-scrollbar-track{background:transparent;}
+
+/* ============ MOBILE (<= 640px) ============ */
+@media (max-width:640px){
+  .container{padding:0 14px 40px;}
+  .topbar{padding:14px 16px;margin-bottom:20px;gap:10px;flex-wrap:wrap;}
+  .topbar-title{font-size:.8rem;}
+  .btn-logout{margin-left:auto;}
+
+  .stats{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px;}
+  .stat-card{padding:14px;}
+  .stat-card strong{font-size:1.35rem;}
+
+  /* Tabs: scroll horizontal en una fila, sin apretar */
+  .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{flex:0 0 auto;}
+
+  .panel-head{flex-wrap:wrap;gap:10px;}
+  .panel-head input{width:100%;}
+
+  /* Filtros apilados a lo ancho */
+  .filtros-propiedades,.filtros-citas{flex-direction:column;}
+  .filtros-propiedades input,.filtros-propiedades select,
+  .filtros-citas input,.filtros-citas select{width:100%;min-width:0;}
+
+  /* Tablas -> tarjetas apiladas */
+  .table-wrap{background:transparent;border:none;overflow:visible;}
+  table,thead,tbody,tr,td{display:block;width:100%;}
+  thead{display:none;}
+  tbody tr{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px 14px;margin-bottom:12px;}
+  tbody tr:hover{background:rgba(255,255,255,.05);}
+  #panel-citas td,#panel-leads td,td{border:none;padding:5px 0;white-space:normal;display:flex;justify-content:space-between;gap:14px;align-items:center;}
+  td[data-label]::before{content:attr(data-label);color:var(--ink-dim);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;flex:0 0 auto;}
+  td .subtexto{color:var(--ink-dim);font-size:.78rem;}
+  .acciones-celda{justify-content:flex-end;padding-top:10px !important;margin-top:6px;border-top:1px solid rgba(255,255,255,.07) !important;}
+  #panel-citas .estado-select{max-width:none;flex:1;}
+
+  /* Calendario mas compacto */
+  .calendario{padding:12px;}
+  .cal-dia{font-size:.8rem;}
+
+  .modal-box{padding:22px 18px;}
+  .modal-meta{grid-template-columns:1fr;}
+}

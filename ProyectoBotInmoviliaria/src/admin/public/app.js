@@ -405,17 +405,17 @@ function renderTablaCitas(lista) {
       const propiedad = propiedades.find((p) => p.id === c.propiedadId);
       return `
       <tr>
-        <td>${c.fecha}</td>
-        <td>${c.hora}</td>
-        <td>${c.nombre || "-"}</td>
-        <td>${propiedad ? `${propiedad.id} - ${propiedad.tipo}` : c.propiedadId || "-"}</td>
-        <td><span class="badge badge-${c.estado}">${c.estado}</span></td>
-        <td>
+        <td data-label="Fecha">${c.fecha}</td>
+        <td data-label="Hora">${c.hora}</td>
+        <td data-label="Cliente">${c.nombre || "-"}</td>
+        <td data-label="Propiedad">${propiedad ? `${propiedad.id} - ${propiedad.tipo}` : c.propiedadId || "-"}</td>
+        <td data-label="Estado"><span class="badge badge-${c.estado}">${c.estado}</span></td>
+        <td data-label="Cambiar estado">
           <select class="estado-select" data-id="${c.id}">
             ${["confirmada", "cancelada", "completada"].map((e) => `<option value="${e}" ${e === c.estado ? "selected" : ""}>${e}</option>`).join("")}
           </select>
         </td>
-        <td class="acciones-celda">
+        <td class="acciones-celda" data-label="Acciones">
           <button type="button" class="btn-icono btn-detalle-cita" data-id="${c.id}" title="Ver detalle">${iconoOjo()}</button>
         </td>
       </tr>`;
@@ -470,12 +470,12 @@ function renderLeads(lista) {
     .map(
       (l) => `
     <tr data-id="${l.idLead}">
-      <td>${l.nombre || "-"}<br><span class="subtexto">${l.whatsapp}</span></td>
-      <td>${detalleLead(l)}</td>
-      <td><span class="badge badge-${l.estadoLead}">${l.estadoLead.replace(/_/g, " ")}</span></td>
-      <td>${l.fuente || "-"}</td>
-      <td>${fmtFecha(l.fechaActualizacion)}</td>
-      <td class="acciones-celda">
+      <td data-label="Nombre">${l.nombre || "-"}<br><span class="subtexto">${l.whatsapp}</span></td>
+      <td data-label="Detalle">${detalleLead(l)}</td>
+      <td data-label="Estado"><span class="badge badge-${l.estadoLead}">${l.estadoLead.replace(/_/g, " ")}</span></td>
+      <td data-label="Fuente">${l.fuente || "-"}</td>
+      <td data-label="Actualizado">${fmtFecha(l.fechaActualizacion)}</td>
+      <td class="acciones-celda" data-label="Acciones">
         <button type="button" class="btn-icono btn-detalle-lead" data-id="${l.idLead}" title="Ver detalle">${iconoOjo()}</button>
         <a class="btn-icono btn-whatsapp" href="${linkWhatsapp(l.whatsapp)}" target="_blank" rel="noopener" title="Hablar por WhatsApp" onclick="event.stopPropagation()">${iconoWhatsapp()}</a>
       </td>
