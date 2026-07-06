@@ -201,7 +201,18 @@ async function procesarMensaje(numero, texto) {
   // sin depender de que el modelo llame a actualizar_datos_lead. Evita que
   // el bot responda "no hay nada en X" mirando el filtro viejo del lead.
   if (bot.extraerFiltros) {
-    const detectados = bot.extraerFiltros(textoParaIA, contexto);
+    // Si respondio con un numero a un menu del bot ("1"), se traduce a la
+    // opcion real ("Terreno") antes de extraer filtros, para no dejar el lead
+    // con el filtro viejo cuando el cliente eligio del menu.
+    let textoExtraccion = textoParaIA;
+    if (bot.resolverSeleccionMenu) {
+      const opcion = bot.resolverSeleccionMenu(textoParaIA, lead.historial);
+      if (opcion) {
+        console.log(`--- [${bot.id}] seleccion de menu "${textoParaIA}" -> "${opcion}"`);
+        textoExtraccion = opcion;
+      }
+    }
+    const detectados = bot.extraerFiltros(textoExtraccion, contexto);
     // Las observaciones (necesidades: piscina, jardin...) se acumulan, no se
     // reemplazan: se agregan solo los terminos que aun no estaban guardados.
     if (detectados.observaciones && lead.observaciones) {

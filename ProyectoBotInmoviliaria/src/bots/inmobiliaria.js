@@ -324,6 +324,26 @@ const SINONIMOS_TIPO = [
   ["duplex", ["duplex", "dúplex", "duples"]],
 ];
 
+// Cuando el cliente responde solo con un numero ("1", "opcion 2") a un menu
+// numerado que ofrecio el bot, el codigo no sabe que significa ese numero.
+// Aqui se lee el ULTIMO mensaje del bot, se parsean sus opciones numeradas
+// ("1) Terreno", "2. Duplex") y se devuelve el texto de la opcion elegida,
+// para poder correr la extraccion de filtros sobre ese texto real.
+function resolverSeleccionMenu(texto, historial = []) {
+  const m = String(texto || "").trim().match(/^(?:opcion\s+|la\s+|el\s+)?(\d{1,2})$/i);
+  if (!m) return null;
+  const numero = m[1];
+
+  const ultimoBot = [...historial].reverse().find((h) => h.rol === "assistant");
+  if (!ultimoBot) return null;
+
+  for (const linea of String(ultimoBot.mensaje || "").split("\n")) {
+    const opcion = linea.match(/^\s*(\d{1,2})\s*[\)\.\-]\s*(.+)$/);
+    if (opcion && opcion[1] === numero) return opcion[2].trim();
+  }
+  return null;
+}
+
 function extraerFiltros(texto, propiedades = []) {
   const norm = " " + (texto || "")
     .toLowerCase()
@@ -789,4 +809,5 @@ module.exports = {
   obtenerContexto,
   ejecutarFuncion,
   extraerFiltros,
+  resolverSeleccionMenu,
 };
