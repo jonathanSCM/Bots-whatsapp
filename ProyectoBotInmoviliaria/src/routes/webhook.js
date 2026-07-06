@@ -217,8 +217,6 @@ async function procesarMensaje(numero, texto) {
     }
   }
 
-  const respuestaIA = await generarRespuesta(historialParaIA, await bot.systemPrompt(contexto, lead), bot.tools);
-
   const helpers = {
     numero,
     getOrCreateLead,
@@ -228,35 +226,34 @@ async function procesarMensaje(numero, texto) {
     notificarInteresNegocio: (interes) => notificarInteresNegocio(numero, bot.id, interes),
   };
 
-  const mensajesDeFunciones = [];
-  if (respuestaIA.tool_calls?.length) {
+  // Bucle estandar de tool-calling: el modelo llama funciones, recibe sus
+  // resultados como mensajes "tool" y recien entonces redacta. Asi ve lo que
+  // realmente paso (tarjetas ya enviadas, lead actualizado, visita agendada)
+  // y no puede prometer a futuro ni contradecir sus propias acciones, que era
+  // lo que pasaba con la vieja "segunda pasada" sin herramientas (inventaba
+  // placeholders tipo "Mostrando propiedades..." porque no podia llamarlas).
+  const mensajesTurno = [];
+  let respuestaIA;
+  let leadTurno = lead;
+  const MAX_VUELTAS = 3;
+  for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
+    // El prompt se rearma en cada vuelta: si una funcion cambio el lead, el
+    // catalogo filtrado que ve el modelo ya queda recalculado.
+    const prompt = await bot.systemPrompt(contexto, leadTurno);
+    const esUltimaVuelta = vuelta === MAX_VUELTAS - 1;
+    respuestaIA = await generarRespuesta([...historialParaIA, ...mensajesTurno], prompt, esUltimaVuelta ? [] : bot.tools);
+    if (!respuestaIA.tool_calls?.length) break;
+
+    mensajesTurno.push({ role: "assistant", content: respuestaIA.content || null, tool_calls: respuestaIA.tool_calls });
     for (const toolCall of respuestaIA.tool_calls) {
       console.log(`--- [${bot.id}] function call:`, toolCall.function.name, toolCall.function.arguments);
       const resultado = await bot.ejecutarFuncion(toolCall, contexto, helpers);
-      if (resultado) mensajesDeFunciones.push(resultado);
+      mensajesTurno.push({ role: "tool", tool_call_id: toolCall.id, content: resultado || "Hecho." });
     }
+    leadTurno = await getOrCreateLead(numero);
   }
 
-  // Si el modelo ejecuto funciones en este turno (actualizo el lead, envio
-  // fotos, agendo, etc.), el texto que genero junto con esas llamadas fue
-  // redactado ANTES de conocer el resultado, y puede contradecirlas (ej.
-  // manda las fotos de una propiedad y en el texto dice "no tengo nada").
-  // Se regenera el texto final con el catalogo recalculado y contandole al
-  // modelo que acciones YA se ejecutaron, para que redacte coherente.
-  let contenidoFinal = respuestaIA.content;
-  let textoFinal;
-  if (respuestaIA.tool_calls?.length) {
-    const leadActualizado = await getOrCreateLead(numero);
-    let promptActualizado = await bot.systemPrompt(contexto, leadActualizado);
-    if (mensajesDeFunciones.length) {
-      promptActualizado += `\n\nACCIONES YA EJECUTADAS POR EL SISTEMA EN ESTE MISMO TURNO (ya ocurrieron de verdad, el cliente ya las recibio; tu respuesta debe asumirlas como hechas, sin prometerlas a futuro y sin contradecirlas):\n${[...new Set(mensajesDeFunciones)].map((m) => `- ${m}`).join("\n")}`;
-    }
-    const segundaPasada = await generarRespuesta(historialParaIA, promptActualizado, []);
-    textoFinal = segundaPasada.content || [contenidoFinal, ...new Set(mensajesDeFunciones)].filter(Boolean).join("\n\n");
-  } else {
-    textoFinal = contenidoFinal;
-  }
-  textoFinal = textoFinal || "Gracias por tu mensaje, lo estamos procesando.";
+  const textoFinal = respuestaIA.content || "Gracias por tu mensaje, lo estamos procesando.";
   await appendHistorial(numero, "assistant", textoFinal);
   console.log(`<<< [${bot.id}] BOT:`, textoFinal);
   await enviarMensaje(numero, textoFinal);
