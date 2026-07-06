@@ -417,7 +417,6 @@ function renderTablaCitas(lista) {
         </td>
         <td class="acciones-celda">
           <button type="button" class="btn-icono btn-detalle-cita" data-id="${c.id}" title="Ver detalle">${iconoOjo()}</button>
-          <a class="btn-icono btn-whatsapp" href="${linkWhatsapp(c.whatsapp)}" target="_blank" rel="noopener" title="Hablar por WhatsApp">${iconoWhatsapp()}</a>
         </td>
       </tr>`;
     })

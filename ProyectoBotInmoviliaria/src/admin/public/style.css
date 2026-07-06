@@ -219,3 +219,13 @@ select.estado-select option{background:var(--violet-700);color:var(--ink);}
 .filtros-citas select{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:10px 14px;color:var(--ink);font-family:inherit;font-size:.85rem;cursor:pointer;}
 .filtros-citas select option{background:var(--violet-700);color:var(--ink);}
 .tabla-vacia{text-align:center;color:var(--ink-dim);padding:26px 14px;}
+
+/* Tabla de citas: que entre sin scroll horizontal en su columna */
+#panel-citas table{font-size:.82rem;}
+#panel-citas th,#panel-citas td{padding:10px 7px;white-space:normal;}
+#panel-citas .estado-select{max-width:112px;}
+#panel-citas .acciones-celda{white-space:nowrap;}
+/* Scrollbar sutil (solo aparece en pantallas muy angostas) */
+.table-wrap::-webkit-scrollbar{height:6px;}
+.table-wrap::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:999px;}
+.table-wrap::-webkit-scrollbar-track{background:transparent;}
