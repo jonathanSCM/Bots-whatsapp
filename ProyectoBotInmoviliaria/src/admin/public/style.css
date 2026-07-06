@@ -188,3 +188,34 @@ select.estado-select option{background:var(--violet-700);color:var(--ink);}
 .btn-borrar-categoria:hover{background:rgba(255,90,90,.28);transform:scale(1.08);}
 
 @media (max-width:800px){.stats{grid-template-columns:repeat(2,1fr);}}
+
+/* ---------- Citas: calendario + filtros ---------- */
+.citas-layout{display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start;}
+@media(max-width:900px){.citas-layout{grid-template-columns:1fr;}}
+
+.calendario{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:16px;}
+.calendario-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.calendario-titulo{font-weight:800;font-size:1rem;}
+.btn-cal-nav{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:var(--ink);width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:1.1rem;line-height:1;transition:background .15s;}
+.btn-cal-nav:hover{background:rgba(34,227,166,.18);border-color:var(--mint);}
+.calendario-dias-semana{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;}
+.calendario-dias-semana span{text-align:center;font-size:.7rem;font-weight:700;color:var(--ink-dim);}
+.calendario-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-dia{aspect-ratio:1;border:1px solid transparent;background:transparent;color:var(--ink);border-radius:9px;cursor:pointer;font-family:inherit;font-size:.85rem;font-weight:600;position:relative;transition:background .12s,border-color .12s;}
+.cal-dia.vacio{cursor:default;}
+.cal-dia:not(.vacio):hover{background:rgba(255,255,255,.08);}
+.cal-dia.hoy{border-color:rgba(255,255,255,.35);}
+.cal-dia.con-citas{color:var(--mint);font-weight:800;}
+.cal-dia.con-citas::after{content:"";position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--mint);}
+.cal-dia.seleccionado{background:linear-gradient(135deg,var(--mint),#16c992);color:#0d2b22;border-color:transparent;}
+.cal-dia.seleccionado::after{background:#0d2b22;}
+.btn-cal-limpiar{margin-top:14px;width:100%;}
+
+.citas-lista-col{min-width:0;}
+.filtros-citas{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.filtros-citas input{flex:1;min-width:180px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:10px 14px;color:var(--ink);font-family:inherit;font-size:.85rem;transition:border-color .15s,box-shadow .15s;}
+.filtros-citas input::placeholder{color:var(--ink-dim);}
+.filtros-citas input:focus,.filtros-citas select:focus{outline:none;border-color:var(--mint);box-shadow:0 0 0 3px rgba(34,227,166,.18);}
+.filtros-citas select{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:10px 14px;color:var(--ink);font-family:inherit;font-size:.85rem;cursor:pointer;}
+.filtros-citas select option{background:var(--violet-700);color:var(--ink);}
+.tabla-vacia{text-align:center;color:var(--ink-dim);padding:26px 14px;}

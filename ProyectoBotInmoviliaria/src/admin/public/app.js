@@ -224,6 +224,18 @@ function inicializarBackoffice() {
     renderCaracteristicasVista();
   });
 
+  const calPrev = document.getElementById("cal-prev");
+  if (calPrev) calPrev.addEventListener("click", () => { calMes = new Date(calMes.getFullYear(), calMes.getMonth() - 1, 1); renderCalendario(); });
+  const calNext = document.getElementById("cal-next");
+  if (calNext) calNext.addEventListener("click", () => { calMes = new Date(calMes.getFullYear(), calMes.getMonth() + 1, 1); renderCalendario(); });
+  const calLimpiar = document.getElementById("cal-limpiar");
+  if (calLimpiar) calLimpiar.addEventListener("click", () => { filtroCitaFecha = null; renderCalendario(); aplicarFiltrosCitas(); });
+
+  ["filtro-citas-busqueda", "filtro-citas-estado", "filtro-citas-rango"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) ["input", "change"].forEach((ev) => el.addEventListener(ev, aplicarFiltrosCitas));
+  });
+
   const btnEliminarProp = document.getElementById("btn-eliminar-propiedad");
   if (btnEliminarProp) btnEliminarProp.addEventListener("click", async () => {
     const id = document.getElementById("prop-id").value;
@@ -274,6 +286,85 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ---------- Citas ----------
 let citasCache = [];
+let propiedadesParaCitas = [];
+let calMes = new Date(); // mes visible en el calendario
+let filtroCitaFecha = null; // "YYYY-MM-DD" si se clickeo un dia, o null
+
+const NOMBRES_MES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+function hoyISO() {
+  return new Date().toLocaleDateString("en-CA");
+}
+
+// Dias del mes visible que tienen al menos una cita no cancelada
+function diasConCitas() {
+  const set = new Set();
+  for (const c of citasCache) {
+    if (c.estado !== "cancelada" && c.fecha) set.add(c.fecha);
+  }
+  return set;
+}
+
+function renderCalendario() {
+  const titulo = document.getElementById("cal-titulo");
+  const grid = document.getElementById("cal-grid");
+  if (!titulo || !grid) return;
+
+  const anio = calMes.getFullYear();
+  const mes = calMes.getMonth();
+  titulo.textContent = `${NOMBRES_MES[mes]} ${anio}`;
+
+  const primero = new Date(anio, mes, 1);
+  // getDay: 0=domingo. Se corre para que la semana empiece en lunes.
+  const offset = (primero.getDay() + 6) % 7;
+  const diasEnMes = new Date(anio, mes + 1, 0).getDate();
+  const conCitas = diasConCitas();
+  const hoy = hoyISO();
+
+  let html = "";
+  for (let i = 0; i < offset; i++) html += `<span class="cal-dia vacio"></span>`;
+  for (let d = 1; d <= diasEnMes; d++) {
+    const iso = `${anio}-${String(mes + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const clases = ["cal-dia"];
+    if (conCitas.has(iso)) clases.push("con-citas");
+    if (iso === hoy) clases.push("hoy");
+    if (iso === filtroCitaFecha) clases.push("seleccionado");
+    html += `<button type="button" class="${clases.join(" ")}" data-fecha="${iso}">${d}</button>`;
+  }
+  grid.innerHTML = html;
+
+  grid.querySelectorAll(".cal-dia[data-fecha]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      filtroCitaFecha = filtroCitaFecha === btn.dataset.fecha ? null : btn.dataset.fecha;
+      renderCalendario();
+      aplicarFiltrosCitas();
+    });
+  });
+
+  document.getElementById("cal-limpiar").classList.toggle("hidden", !filtroCitaFecha);
+}
+
+function aplicarFiltrosCitas() {
+  const texto = (document.getElementById("filtro-citas-busqueda").value || "").toLowerCase().trim();
+  const estado = document.getElementById("filtro-citas-estado").value;
+  const rango = document.getElementById("filtro-citas-rango").value;
+  const hoy = hoyISO();
+
+  const filtradas = citasCache.filter((c) => {
+    if (filtroCitaFecha && c.fecha !== filtroCitaFecha) return false;
+    if (estado && c.estado !== estado) return false;
+    if (rango === "hoy" && c.fecha !== hoy) return false;
+    if (rango === "proximas" && c.fecha < hoy) return false;
+    if (rango === "pasadas" && c.fecha >= hoy) return false;
+    if (texto) {
+      const haystack = `${c.nombre || ""} ${c.whatsapp || ""}`.toLowerCase();
+      if (!haystack.includes(texto)) return false;
+    }
+    return true;
+  });
+
+  renderTablaCitas(filtradas);
+}
 
 function linkWhatsapp(numero) {
   const limpio = (numero || "").replace(/\D/g, "");
@@ -290,7 +381,26 @@ function iconoOjo() {
 
 function renderCitas(lista, propiedades) {
   citasCache = lista;
-  document.getElementById("tabla-citas").innerHTML = lista
+  propiedadesParaCitas = propiedades;
+  // El calendario arranca en el mes de la cita mas proxima futura (o el actual)
+  const hoy = hoyISO();
+  const proxima = [...lista].filter((c) => c.fecha >= hoy).sort((a, b) => a.fecha.localeCompare(b.fecha))[0];
+  if (proxima) {
+    const [y, m] = proxima.fecha.split("-").map(Number);
+    calMes = new Date(y, m - 1, 1);
+  }
+  renderCalendario();
+  aplicarFiltrosCitas();
+}
+
+function renderTablaCitas(lista) {
+  const propiedades = propiedadesParaCitas;
+  const tbody = document.getElementById("tabla-citas");
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="tabla-vacia">No hay citas que coincidan con el filtro.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = lista
     .map((c) => {
       const propiedad = propiedades.find((p) => p.id === c.propiedadId);
       return `

@@ -58,13 +58,46 @@
   <!-- CITAS -->
   <section id="panel-citas" class="panel hidden">
     <div class="panel-head"><h2>Citas agendadas</h2></div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Propiedad</th><th>Estado</th><th>Cambiar estado</th><th></th></tr>
-        </thead>
-        <tbody id="tabla-citas"></tbody>
-      </table>
+
+    <div class="citas-layout">
+      <div class="calendario" id="calendario">
+        <div class="calendario-head">
+          <button type="button" class="btn-cal-nav" id="cal-prev" aria-label="Mes anterior">‹</button>
+          <span class="calendario-titulo" id="cal-titulo"></span>
+          <button type="button" class="btn-cal-nav" id="cal-next" aria-label="Mes siguiente">›</button>
+        </div>
+        <div class="calendario-dias-semana">
+          <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sa</span><span>Do</span>
+        </div>
+        <div class="calendario-grid" id="cal-grid"></div>
+        <button type="button" class="btn-secondary btn-cal-limpiar hidden" id="cal-limpiar">Ver todas las fechas</button>
+      </div>
+
+      <div class="citas-lista-col">
+        <div class="filtros-citas">
+          <input type="text" id="filtro-citas-busqueda" placeholder="Buscar por cliente o WhatsApp...">
+          <select id="filtro-citas-estado">
+            <option value="">Todos los estados</option>
+            <option value="confirmada">Confirmada</option>
+            <option value="cancelada">Cancelada</option>
+            <option value="completada">Completada</option>
+          </select>
+          <select id="filtro-citas-rango">
+            <option value="">Todas las fechas</option>
+            <option value="hoy">Hoy</option>
+            <option value="proximas">Próximas</option>
+            <option value="pasadas">Pasadas</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Propiedad</th><th>Estado</th><th>Cambiar estado</th><th></th></tr>
+            </thead>
+            <tbody id="tabla-citas"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </section>
 
