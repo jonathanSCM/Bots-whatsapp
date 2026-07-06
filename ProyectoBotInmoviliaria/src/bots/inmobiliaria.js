@@ -137,6 +137,17 @@ function nombreOperacion(op) {
   return { venta: "Venta", alquiler: "Alquiler", anticretico: "Anticretico" }[op] || op;
 }
 
+// Un nombre util para el registro: al menos 2 letras y que no sea solo digitos
+// (numero de WhatsApp) ni un placeholder generico.
+function nombreValido(nombre) {
+  if (!nombre) return false;
+  const limpio = String(nombre).trim();
+  if (limpio.length < 2) return false;
+  if (!/[a-zA-ZñÑáéíóúÁÉÍÓÚ]{2,}/.test(limpio)) return false;
+  if (/^(cliente|usuario|hola|si|no|nn|xx)$/i.test(limpio)) return false;
+  return true;
+}
+
 // Ficha de la propiedad al estilo portal inmobiliario, para usar como caption
 // de la primera foto (WhatsApp muestra *texto* en negrita).
 function fichaPropiedad(p) {
@@ -654,6 +665,7 @@ REGLAS SOBRE EL INVENTARIO Y LA VENTA:
 - Usa derivar_a_asesor SOLO si: el cliente lo pide explicitamente ("quiero hablar con una persona/asesor") o esta claramente molesto tras varios intentos tuyos. Es la excepcion, no la regla. NUNCA derives por: preguntas de financiamiento o planes de pago (responde con los requisitos de compra/alquiler de la informacion comercial), precios, requisitos, dudas normales del proceso, o pedir mover/cambiar una visita. Ante una pregunta de financiamiento: da la informacion que tienes, ofrece agendar una visita donde un asesor le detallara los planes, y sigue conduciendo el flujo.
 - Cuando obtengas un dato nuevo (zona, operacion, tipo, dormitorios, presupuesto, necesidad especial) llama a actualizar_datos_lead de inmediato.
 - Para agendar visita: solo despues de que el cliente mostro interes claro y vio las fotos. Confirma fecha/hora y llama agendar_visita. Si no hay disponibilidad, propone otro horario.
+- NOMBRE OBLIGATORIO PARA AGENDAR: no se puede agendar una visita sin el nombre del cliente. Si aun no lo tienes cuando el cliente quiere agendar, PIDESELO primero de forma natural ("¡Genial! ¿Me confirmas tu nombre para reservar la visita? 😊"), guardalo con actualizar_datos_lead, y recien entonces agenda. Nunca dejes una cita con el nombre en blanco.
 - Si el cliente quiere cambiar una visita ya agendada: llama reprogramar_visita con la nueva fecha/hora.
 - Las respuestas pueden ser largas si eso suena mas humano (explicar POR QUE una propiedad le conviene, reaccionar a lo que dijo, dar contexto): prioriza ser util y real por sobre brevedad extrema.`;
 }
@@ -678,12 +690,19 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
       return `No encontre esa propiedad. Revisemos cual es la que te interesa.`;
     }
 
+    const lead = await getOrCreateLead(numero);
+
+    // No se agenda una visita sin el nombre del cliente: sirve para el registro,
+    // el recordatorio y el evento de calendario. Si falta, se pide antes de crearla.
+    if (!nombreValido(lead.nombre)) {
+      return `TODAVIA NO agendes la visita: falta el nombre del cliente. Antes de confirmar, preguntale amablemente su nombre ("¿Me confirmas tu nombre para agendar la visita? 😊"). Cuando lo diga, guardalo con actualizar_datos_lead y recien ahi vuelve a llamar agendar_visita con la misma fecha y hora.`;
+    }
+
     const { disponible, motivo } = await verificarDisponibilidad(args.fecha, args.hora);
     if (!disponible) {
       return `Ese horario no esta disponible (${motivo}). ¿Quieres proponer otra fecha u hora dentro de nuestro horario de atencion?`;
     }
 
-    const lead = await getOrCreateLead(numero);
     const cita = await crearCita({
       idLead: numero,
       nombre: lead.nombre,
