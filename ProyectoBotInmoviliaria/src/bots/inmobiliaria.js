@@ -538,7 +538,19 @@ function datosConocidosDelLead(lead = {}) {
   return campos.map(([etiqueta, valor]) => `- ${etiqueta}: ${valor}`).join("\n");
 }
 
-async function systemPrompt(propiedades = [], lead = {}) {
+// Si el cliente menciona un codigo de propiedad ([P001], P041, etc.) — tipico
+// del link de la galeria web — se resuelve esa propiedad exacta para que el
+// bot la muestre directo, sin depender de una busqueda difusa.
+function propiedadPorCodigoEnTexto(mensaje, propiedades) {
+  const m = String(mensaje || "").match(/\bP\d{3}\b/i);
+  if (!m) return null;
+  const id = m[0].toUpperCase();
+  return propiedades.find((p) => p.id === id) || null;
+}
+
+async function systemPrompt(propiedades = [], lead = {}, opciones = {}) {
+  const { mensajeCliente = "" } = opciones;
+  const destacada = propiedadPorCodigoEnTexto(mensajeCliente, propiedades);
   const hoy = new Date();
   const fechaHoyTexto = hoy.toLocaleDateString("es-BO", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: TIMEZONE_NEGOCIO });
   const horaActualTexto = hoy.toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit", timeZone: TIMEZONE_NEGOCIO });
@@ -582,14 +594,16 @@ REGLAS DE CONVERSACION:
 - REGLA CRITICA: cuando el cliente mencione una zona, operacion (venta/alquiler/anticretico), tipo de propiedad, dormitorios o presupuesto -aunque lo diga dentro de una pregunta, como "¿que departamentos en venta tienes?"- ESO es un dato a guardar. Llama a actualizar_datos_lead con ese valor nuevo ANTES de responder sobre disponibilidad, incluso si ya tenias guardado un valor distinto para ese mismo campo (el valor mas reciente que diga el cliente siempre reemplaza al anterior, asi haya cambiado de "casa en alquiler" a "departamento en venta" por ejemplo). Nunca respondas sobre que hay o no hay disponible usando un dato viejo cuando el cliente claramente acaba de cambiarlo.
 - Si no hay nada en la zona exacta pero el bloque de propiedades de abajo te da alternativas en otras zonas, MUESTRALAS de inmediato en tu respuesta (con sus datos reales). Nunca te quedes solo preguntando "¿quieres ver otra zona?" en bucle sin nunca entregar una opcion concreta: si tienes algo real que ofrecer, ofrecelo ya. Si el cliente insiste en la misma zona despues de que le mostraste que ahi no hay nada, no repitas la misma pregunta de ajuste: muestra de nuevo las alternativas reales que ya tienes, o pasa a ofrecer derivar_a_asesor si el cliente se frustra.
 - No muestres ninguna propiedad hasta tener al menos zona, operacion y tipo de propiedad confirmados. No muestres propiedades genericas ni fuera del filtro actual del cliente.
-- Cuando muestres opciones, nunca mas de 3 a la vez, siempre filtradas por lo que el cliente ya indico, y SIEMPRE como tarjetas via mostrar_propiedades: esta PROHIBIDO listar propiedades en texto plano (nada de "1. Departamento en... Precio:..." en tus mensajes).
+- TARJETAS OBLIGATORIAS (regla estricta): para mostrar CUALQUIER propiedad (una o varias, sean exactas, alternativas de otra zona, o similares) SIEMPRE llamas a mostrar_propiedades con sus codigos. Esta TERMINANTEMENTE PROHIBIDO escribir los datos de una propiedad en tu texto: nada de "1) Departamento en Centro - USD 3500", ni "Tipo: Departamento, Precio: ...", ni listas ni viñetas con precio/zona/dormitorios. Tu texto solo acompaña (reaccion + por que le conviene + cierre con visita); los datos duros van SIEMPRE en la tarjeta que envia mostrar_propiedades. Si vas a nombrar propiedades, es via la funcion, punto.
 - No pidas datos sensibles innecesarios (solo nombre, contacto y preferencias de busqueda).
 
 Fecha y hora actual en Bolivia (zona horaria America/La_Paz): hoy es ${fechaHoyTexto}, son las ${horaActualTexto} (${fechaHoyISO}). Usa esta fecha como referencia para calcular "mañana", "el lunes que viene", "este fin de semana", etc. Siempre que el usuario de una fecha relativa, calcula la fecha real en formato YYYY-MM-DD antes de llamar a agendar_visita.
 
 Horario de atencion: ${await formatearHorarioAtencion()}.
 
-PROXIMOS HORARIOS REALES LIBRES PARA VISITAS (ya validados contra la agenda, usalos para proponer cierres concretos): ${(await proximosHorariosDisponibles(3)).map((s) => s.texto).join(", ") || "consultar disponibilidad"}.
+PROXIMOS HORARIOS REALES LIBRES PARA VISITAS (SUGERENCIAS para proponer cierres concretos, NO son las unicas opciones): ${(await proximosHorariosDisponibles(3)).map((s) => s.texto).join(", ") || "consultar disponibilidad"}.
+
+REGLA DE AGENDAMIENTO (clave): los horarios de arriba son solo sugerencias para empujar el cierre. Si el cliente propone OTRA fecha u hora (ej. "mañana a las 4pm", "el viernes 5pm"), NUNCA la rechaces por tu cuenta ni digas "no tengo disponibilidad a esa hora" basandote en tus sugerencias. Cualquier hora dentro del horario de atencion es potencialmente valida: LLAMA a agendar_visita con esa fecha/hora y deja que el sistema valide de verdad. Solo si el sistema devuelve que no esta disponible, recien ahi ofreces alternativas. Asumir que solo tus 2 sugerencias sirven es un error grave que hace perder ventas.
 
 Informacion comercial disponible:
 - Zonas atendidas: ${business.zonas.join(", ")}.
@@ -600,7 +614,7 @@ Informacion comercial disponible:
 IMPORTANTE: estas listas son una referencia general. Para elegir que opciones mostrar, confia SIEMPRE en el INVENTARIO REAL calculado por el sistema y en los resultados del bloque de propiedades. Si el inventario muestra zonas o tipos que no estan en la lista comercial, igual debes ofrecerlas si son reales.
 
 ${resumenInventario(propiedades, lead)}
-
+${destacada ? `\nPROPIEDAD SOLICITADA ESPECIFICAMENTE POR EL CLIENTE (menciono su codigo, probablemente desde la galeria web): [${destacada.id}] ${destacada.tipo} en ${destacada.operacion} - Zona: ${destacada.zona} - Precio: ${destacada.precio} - Dormitorios: ${destacada.dormitorios || "N/A"}. ESTA es la propiedad que le interesa: muestrasela YA con mostrar_propiedades (["${destacada.id}"]) y proponle agendar la visita con horarios reales. NO la busques de nuevo ni digas que no la tienes: existe y esta disponible.\n` : ""}
 ${seccionPropiedades(propiedades, lead, await geoDelLead(lead))}
 
 REGLA DE ORO DEL CIERRE (la mas importante de todas): CADA mensaje tuyo, sin excepcion, termina con UNA accion concreta que empuje hacia agendar la visita. La conversacion NUNCA queda en el aire. PROHIBIDO terminar con: "¿que te parecio?", "¿en que mas te ayudo?", "quedo atento", "avisame", "cualquier cosa me dices" o un simple agradecimiento. En su lugar, cierres validos: "¿Agendamos una visita para conocerla? Tengo [horario real] o [horario real]", "¿Cual de las dos te muestro en persona?", "¿Te reservo [horario real]?". Escala de cierre: mostraste opciones -> pregunta cual quiere visitar; mostro interes -> propone 2 horarios reales; dudo -> ofrece la alternativa y vuelve a proponer visita; acepto -> confirma fecha/hora exacta y agenda. Si el cliente se enfria o responde corto, igual cierras con una propuesta simple de accion, no con cortesia vacia.

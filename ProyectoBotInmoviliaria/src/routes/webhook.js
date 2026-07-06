@@ -239,7 +239,7 @@ async function procesarMensaje(numero, texto) {
   for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
     // El prompt se rearma en cada vuelta: si una funcion cambio el lead, el
     // catalogo filtrado que ve el modelo ya queda recalculado.
-    const prompt = await bot.systemPrompt(contexto, leadTurno);
+    const prompt = await bot.systemPrompt(contexto, leadTurno, { mensajeCliente: textoParaIA });
     const esUltimaVuelta = vuelta === MAX_VUELTAS - 1;
     respuestaIA = await generarRespuesta([...historialParaIA, ...mensajesTurno], prompt, esUltimaVuelta ? [] : bot.tools);
     if (!respuestaIA.tool_calls?.length) break;

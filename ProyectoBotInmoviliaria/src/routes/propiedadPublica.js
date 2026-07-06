@@ -19,7 +19,9 @@ router.get("/:id", async (req, res) => {
   const NOMBRE_OPERACION = { venta: "Venta", alquiler: "Alquiler", anticretico: "Anticretico" };
   const titulo = `${p.tipo} en ${NOMBRE_OPERACION[p.operacion] || p.operacion} · ${p.zona}`;
   const numeroBot = (process.env.WHATSAPP_NUMERO_PUBLICO || "").replace(/\D/g, "");
-  const msgWa = encodeURIComponent(`Hola! Me interesa el ${p.tipo.toLowerCase()} en ${p.operacion} en ${p.zona} (${p.precio}) que vi en la galeria. Quiero agendar una visita.`);
+  // El codigo [${p.id}] permite al bot resolver EXACTAMENTE esta propiedad,
+  // sin depender de una busqueda difusa por zona/precio.
+  const msgWa = encodeURIComponent(`Hola! Me interesa esta propiedad [${p.id}]: ${p.tipo} en ${p.operacion} en ${p.zona} (${p.precio}). Quiero agendar una visita.`);
 
   const contenido = `
   <header>
