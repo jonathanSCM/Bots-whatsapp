@@ -562,6 +562,7 @@ function datosConocidosDelLead(lead = {}) {
     ["Tipo de propiedad", lead.tipoPropiedad],
     ["Dormitorios deseados", lead.dormitorios],
     ["Presupuesto", lead.presupuesto],
+    ["Visita agendada", lead.fechaVisita && lead.horaVisita ? `${lead.fechaVisita} a las ${lead.horaVisita}` : null],
     ["Otras observaciones", lead.observaciones],
   ].filter(([, valor]) => valor);
 
@@ -636,6 +637,8 @@ PROXIMOS HORARIOS REALES LIBRES PARA VISITAS (SUGERENCIAS para proponer cierres 
 
 REGLA DE AGENDAMIENTO (clave): los horarios de arriba son solo sugerencias para empujar el cierre. Si el cliente propone OTRA fecha u hora (ej. "mañana a las 4pm", "el viernes 5pm"), NUNCA la rechaces por tu cuenta ni digas "no tengo disponibilidad a esa hora" basandote en tus sugerencias. Cualquier hora dentro del horario de atencion es potencialmente valida: LLAMA a agendar_visita con esa fecha/hora y deja que el sistema valide de verdad. Solo si el sistema devuelve que no esta disponible, recien ahi ofreces alternativas. Asumir que solo tus 2 sugerencias sirven es un error grave que hace perder ventas.
 
+SI EL CLIENTE YA TIENE UNA VISITA AGENDADA (fecha/hora ya guardadas en el lead), NO INTENTES AGENDAR OTRA VEZ. Solo usa reprogramar_visita si el cliente pide cambiar el horario de la visita ya confirmada. No digas "voy a agendar otra visita" ni vuelvas a ofrecer la misma hora si ya fue confirmada.
+
 Informacion comercial disponible:
 - Zonas atendidas: ${business.zonas.join(", ")}.
 - Tipos de propiedad: ${business.tiposPropiedad.join(", ")}.
@@ -696,6 +699,10 @@ async function ejecutarFuncion(toolCall, contexto, helpers) {
     // el recordatorio y el evento de calendario. Si falta, se pide antes de crearla.
     if (!nombreValido(lead.nombre)) {
       return `TODAVIA NO agendes la visita: falta el nombre del cliente. Antes de confirmar, preguntale amablemente su nombre ("¿Me confirmas tu nombre para agendar la visita? 😊"). Cuando lo diga, guardalo con actualizar_datos_lead y recien ahi vuelve a llamar agendar_visita con la misma fecha y hora.`;
+    }
+
+    if (lead.fechaVisita === args.fecha && lead.horaVisita === args.hora && lead.estadoLead === ESTADOS_LEAD.VISITA_AGENDADA) {
+      return `Ya tienes esa visita confirmada para el ${args.fecha} a las ${args.hora}. No es necesario agendarla de nuevo.`;
     }
 
     const { disponible, motivo } = await verificarDisponibilidad(args.fecha, args.hora);
