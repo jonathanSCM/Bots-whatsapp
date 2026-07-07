@@ -15,7 +15,18 @@ const fs = require("fs");
   await init();
 
   const archivo = path.join(__dirname, "data", "propiedades_scz.json");
-  const datos = JSON.parse(fs.readFileSync(archivo, "utf8"));
+  const raw = JSON.parse(fs.readFileSync(archivo, "utf8"));
+
+  // Soporta dos formatos: (a) array plano de propiedades, o (b) agrupado por
+  // zonas -> calles -> propiedades. Se aplana a una lista unica.
+  let datos;
+  if (Array.isArray(raw)) {
+    datos = raw;
+  } else if (Array.isArray(raw.zonas)) {
+    datos = raw.zonas.flatMap((z) => (z.calles || []).flatMap((c) => c.propiedades || []));
+  } else {
+    throw new Error("Formato de JSON no reconocido (se esperaba un array o { zonas: [...] }).");
+  }
 
   // Normalizaciones al formato interno del bot
   const normalizarOperacion = (op) => {
@@ -57,7 +68,9 @@ const fs = require("fs");
       normalizarId(p.codigo, i),
       p.tipo || "",
       operacion,
-      u.referencia_zona || p.zona || "", // zona especifica (ej. "Av. Banzer"); el macro norte/sur sale por coordenadas
+      // Zona: "Zona Sur - Av. 4to Anillo Sur" (macro + calle) para que matchee
+      // tanto "zona sur" como "4to anillo"; el macro tambien sale por coordenadas.
+      p.direccion_visible || p.calle || u.referencia_zona || p.zona || "",
       formatearPrecio(p.precio_usd, operacion),
       p.dormitorios != null ? String(p.dormitorios) : "",
       p.detalle || "",
