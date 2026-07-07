@@ -1,0 +1,1502 @@
+[
+  {
+    "codigo": "PROP-001",
+    "operacion": "Alquiler",
+    "tipo": "Departamento",
+    "zona": "Centro",
+    "dormitorios": 1,
+    "precio_usd": 280,
+    "detalle": "Monoambiente cerca de avenidas principales",
+    "ubicacion": {
+      "referencia_zona": "Av. Cañoto",
+      "latitud": -17.791138,
+      "longitud": -63.173978,
+      "google_maps_url": "https://www.google.com/maps?q=-17.791138,-63.173978"
+    }
+  },
+  {
+    "codigo": "PROP-002",
+    "operacion": "Alquiler",
+    "tipo": "Casa",
+    "zona": "Norte",
+    "dormitorios": 3,
+    "precio_usd": 650,
+    "detalle": "Casa familiar con patio y garaje",
+    "ubicacion": {
+      "referencia_zona": "Los Tusequis",
+      "latitud": -17.738239,
+      "longitud": -63.179194,
+      "google_maps_url": "https://www.google.com/maps?q=-17.738239,-63.179194"
+    }
+  },
+  {
+    "codigo": "PROP-003",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Sur",
+    "dormitorios": 2,
+    "precio_usd": 68000,
+    "detalle": "Departamento cómodo en edificio residencial",
+    "ubicacion": {
+      "referencia_zona": "Av. San Aurelio",
+      "latitud": -17.833705,
+      "longitud": -63.200186,
+      "google_maps_url": "https://www.google.com/maps?q=-17.833705,-63.200186"
+    }
+  },
+  {
+    "codigo": "PROP-004",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Este",
+    "dormitorios": null,
+    "precio_usd": 140000,
+    "detalle": "Terreno urbano sobre calle secundaria",
+    "ubicacion": {
+      "referencia_zona": "Av. Virgen de Cotoca",
+      "latitud": -17.79684,
+      "longitud": -63.132464,
+      "google_maps_url": "https://www.google.com/maps?q=-17.79684,-63.132464"
+    }
+  },
+  {
+    "codigo": "PROP-005",
+    "operacion": "Anticrético",
+    "tipo": "Departamento",
+    "zona": "Oeste",
+    "dormitorios": 2,
+    "precio_usd": 35000,
+    "detalle": "Departamento funcional cerca de comercios",
+    "ubicacion": {
+      "referencia_zona": "Doble Vía La Guardia",
+      "latitud": -17.819581,
+      "longitud": -63.214059,
+      "google_maps_url": "https://www.google.com/maps?q=-17.819581,-63.214059"
+    }
+  },
+  {
+    "codigo": "PROP-006",
+    "operacion": "Alquiler",
+    "tipo": "Departamento",
+    "zona": "Norte",
+    "dormitorios": 2,
+    "precio_usd": 420,
+    "detalle": "Departamento con balcón y parqueo",
+    "ubicacion": {
+      "referencia_zona": "Av. Banzer",
+      "latitud": -17.754096,
+      "longitud": -63.201058,
+      "google_maps_url": "https://www.google.com/maps?q=-17.754096,-63.201058"
+    }
+  },
+  {
+    "codigo": "PROP-007",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Centro",
+    "dormitorios": null,
+    "precio_usd": 300000,
+    "detalle": "Terreno bien ubicado ideal para edificio",
+    "ubicacion": {
+      "referencia_zona": "Los Pozos",
+      "latitud": -17.797414,
+      "longitud": -63.180467,
+      "google_maps_url": "https://www.google.com/maps?q=-17.797414,-63.180467"
+    }
+  },
+  {
+    "codigo": "PROP-008",
+    "operacion": "Alquiler",
+    "tipo": "Casa",
+    "zona": "Este",
+    "dormitorios": 4,
+    "precio_usd": 780,
+    "detalle": "Casa amplia con jardín frontal",
+    "ubicacion": {
+      "referencia_zona": "Pampa de la Isla",
+      "latitud": -17.805952,
+      "longitud": -63.149792,
+      "google_maps_url": "https://www.google.com/maps?q=-17.805952,-63.149792"
+    }
+  },
+  {
+    "codigo": "PROP-009",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Oeste",
+    "dormitorios": 3,
+    "precio_usd": 115000,
+    "detalle": "Departamento amplio con suite principal",
+    "ubicacion": {
+      "referencia_zona": "Urbarí",
+      "latitud": -17.812834,
+      "longitud": -63.195186,
+      "google_maps_url": "https://www.google.com/maps?q=-17.812834,-63.195186"
+    }
+  },
+  {
+    "codigo": "PROP-010",
+    "operacion": "Anticrético",
+    "tipo": "Casa",
+    "zona": "Sur",
+    "dormitorios": 3,
+    "precio_usd": 55000,
+    "detalle": "Casa independiente con patio trasero",
+    "ubicacion": {
+      "referencia_zona": "Zona La Barranca",
+      "latitud": -17.822803,
+      "longitud": -63.193326,
+      "google_maps_url": "https://www.google.com/maps?q=-17.822803,-63.193326"
+    }
+  },
+  {
+    "codigo": "PROP-011",
+    "operacion": "Alquiler",
+    "tipo": "Departamento",
+    "zona": "Sur",
+    "dormitorios": 1,
+    "precio_usd": 250,
+    "detalle": "Departamento pequeño para pareja o estudiante",
+    "ubicacion": {
+      "referencia_zona": "Av. Santos Dumont",
+      "latitud": -17.823166,
+      "longitud": -63.188581,
+      "google_maps_url": "https://www.google.com/maps?q=-17.823166,-63.188581"
+    }
+  },
+  {
+    "codigo": "PROP-012",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Norte",
+    "dormitorios": null,
+    "precio_usd": 220000,
+    "detalle": "Terreno en zona de crecimiento comercial",
+    "ubicacion": {
+      "referencia_zona": "Av. Banzer",
+      "latitud": -17.720493,
+      "longitud": -63.203419,
+      "google_maps_url": "https://www.google.com/maps?q=-17.720493,-63.203419"
+    }
+  },
+  {
+    "codigo": "PROP-013",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Centro",
+    "dormitorios": 2,
+    "precio_usd": 92000,
+    "detalle": "Departamento céntrico con ascensor",
+    "ubicacion": {
+      "referencia_zona": "Av. Monseñor Rivero",
+      "latitud": -17.780554,
+      "longitud": -63.188672,
+      "google_maps_url": "https://www.google.com/maps?q=-17.780554,-63.188672"
+    }
+  },
+  {
+    "codigo": "PROP-014",
+    "operacion": "Anticrético",
+    "tipo": "Departamento",
+    "zona": "Este",
+    "dormitorios": 3,
+    "precio_usd": 48000,
+    "detalle": "Departamento familiar en zona tranquila",
+    "ubicacion": {
+      "referencia_zona": "Pampa de la Isla",
+      "latitud": -17.787103,
+      "longitud": -63.126061,
+      "google_maps_url": "https://www.google.com/maps?q=-17.787103,-63.126061"
+    }
+  },
+  {
+    "codigo": "PROP-015",
+    "operacion": "Alquiler",
+    "tipo": "Casa",
+    "zona": "Oeste",
+    "dormitorios": 2,
+    "precio_usd": 500,
+    "detalle": "Casa cómoda con garaje techado",
+    "ubicacion": {
+      "referencia_zona": "Doble Vía La Guardia",
+      "latitud": -17.82032,
+      "longitud": -63.203391,
+      "google_maps_url": "https://www.google.com/maps?q=-17.82032,-63.203391"
+    }
+  },
+  {
+    "codigo": "PROP-016",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Sur",
+    "dormitorios": null,
+    "precio_usd": 180000,
+    "detalle": "Terreno plano con acceso por avenida",
+    "ubicacion": {
+      "referencia_zona": "Zona La Barranca",
+      "latitud": -17.812915,
+      "longitud": -63.174815,
+      "google_maps_url": "https://www.google.com/maps?q=-17.812915,-63.174815"
+    }
+  },
+  {
+    "codigo": "PROP-017",
+    "operacion": "Alquiler",
+    "tipo": "Departamento",
+    "zona": "Este",
+    "dormitorios": 2,
+    "precio_usd": 360,
+    "detalle": "Departamento cerca de colegios y mercados",
+    "ubicacion": {
+      "referencia_zona": "Av. Paraguá",
+      "latitud": -17.802767,
+      "longitud": -63.135906,
+      "google_maps_url": "https://www.google.com/maps?q=-17.802767,-63.135906"
+    }
+  },
+  {
+    "codigo": "PROP-018",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Norte",
+    "dormitorios": 1,
+    "precio_usd": 58000,
+    "detalle": "Departamento nuevo ideal para inversión",
+    "ubicacion": {
+      "referencia_zona": "4to Anillo Norte",
+      "latitud": -17.74362,
+      "longitud": -63.172492,
+      "google_maps_url": "https://www.google.com/maps?q=-17.74362,-63.172492"
+    }
+  },
+  {
+    "codigo": "PROP-019",
+    "operacion": "Anticrético",
+    "tipo": "Casa",
+    "zona": "Centro",
+    "dormitorios": 3,
+    "precio_usd": 70000,
+    "detalle": "Casa antigua remodelada en zona céntrica",
+    "ubicacion": {
+      "referencia_zona": "Av. Monseñor Rivero",
+      "latitud": -17.797198,
+      "longitud": -63.175493,
+      "google_maps_url": "https://www.google.com/maps?q=-17.797198,-63.175493"
+    }
+  },
+  {
+    "codigo": "PROP-020",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Oeste",
+    "dormitorios": null,
+    "precio_usd": 125000,
+    "detalle": "Terreno residencial con papeles al día",
+    "ubicacion": {
+      "referencia_zona": "Urbarí",
+      "latitud": -17.773732,
+      "longitud": -63.198833,
+      "google_maps_url": "https://www.google.com/maps?q=-17.773732,-63.198833"
+    }
+  },
+  {
+    "codigo": "PROP-021",
+    "operacion": "Alquiler",
+    "tipo": "Casa",
+    "zona": "Sur",
+    "dormitorios": 3,
+    "precio_usd": 600,
+    "detalle": "Casa con living comedor amplio",
+    "ubicacion": {
+      "referencia_zona": "Av. San Aurelio",
+      "latitud": -17.844357,
+      "longitud": -63.19504,
+      "google_maps_url": "https://www.google.com/maps?q=-17.844357,-63.19504"
+    }
+  },
+  {
+    "codigo": "PROP-022",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Este",
+    "dormitorios": 2,
+    "precio_usd": 75000,
+    "detalle": "Departamento con buena iluminación natural",
+    "ubicacion": {
+      "referencia_zona": "Av. Virgen de Cotoca",
+      "latitud": -17.758159,
+      "longitud": -63.154439,
+      "google_maps_url": "https://www.google.com/maps?q=-17.758159,-63.154439"
+    }
+  },
+  {
+    "codigo": "PROP-023",
+    "operacion": "Anticrético",
+    "tipo": "Departamento",
+    "zona": "Norte",
+    "dormitorios": 2,
+    "precio_usd": 40000,
+    "detalle": "Departamento en condominio cerrado",
+    "ubicacion": {
+      "referencia_zona": "Av. Banzer",
+      "latitud": -17.763976,
+      "longitud": -63.193652,
+      "google_maps_url": "https://www.google.com/maps?q=-17.763976,-63.193652"
+    }
+  },
+  {
+    "codigo": "PROP-024",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Centro",
+    "dormitorios": null,
+    "precio_usd": 450000,
+    "detalle": "Terreno estratégico para proyecto comercial",
+    "ubicacion": {
+      "referencia_zona": "Av. Monseñor Rivero",
+      "latitud": -17.796893,
+      "longitud": -63.185878,
+      "google_maps_url": "https://www.google.com/maps?q=-17.796893,-63.185878"
+    }
+  },
+  {
+    "codigo": "PROP-025",
+    "operacion": "Alquiler",
+    "tipo": "Departamento",
+    "zona": "Oeste",
+    "dormitorios": 3,
+    "precio_usd": 520,
+    "detalle": "Departamento amplio con área de servicio",
+    "ubicacion": {
+      "referencia_zona": "Urbarí",
+      "latitud": -17.794971,
+      "longitud": -63.219962,
+      "google_maps_url": "https://www.google.com/maps?q=-17.794971,-63.219962"
+    }
+  },
+  {
+    "codigo": "PROP-026",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Sur",
+    "dormitorios": 3,
+    "precio_usd": 105000,
+    "detalle": "Departamento moderno con parqueo incluido",
+    "ubicacion": {
+      "referencia_zona": "Plan Tres Mil",
+      "latitud": -17.854328,
+      "longitud": -63.173222,
+      "google_maps_url": "https://www.google.com/maps?q=-17.854328,-63.173222"
+    }
+  },
+  {
+    "codigo": "PROP-027",
+    "operacion": "Anticrético",
+    "tipo": "Casa",
+    "zona": "Este",
+    "dormitorios": 4,
+    "precio_usd": 85000,
+    "detalle": "Casa grande con patio y churrasquera",
+    "ubicacion": {
+      "referencia_zona": "Pampa de la Isla",
+      "latitud": -17.788646,
+      "longitud": -63.115828,
+      "google_maps_url": "https://www.google.com/maps?q=-17.788646,-63.115828"
+    }
+  },
+  {
+    "codigo": "PROP-028",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Norte",
+    "dormitorios": null,
+    "precio_usd": 380000,
+    "detalle": "Terreno grande cerca de avenida principal",
+    "ubicacion": {
+      "referencia_zona": "Av. Beni",
+      "latitud": -17.757651,
+      "longitud": -63.178665,
+      "google_maps_url": "https://www.google.com/maps?q=-17.757651,-63.178665"
+    }
+  },
+  {
+    "codigo": "PROP-029",
+    "operacion": "Alquiler",
+    "tipo": "Departamento",
+    "zona": "Centro",
+    "dormitorios": 2,
+    "precio_usd": 390,
+    "detalle": "Departamento céntrico semiamoblado",
+    "ubicacion": {
+      "referencia_zona": "Los Pozos",
+      "latitud": -17.778061,
+      "longitud": -63.188703,
+      "google_maps_url": "https://www.google.com/maps?q=-17.778061,-63.188703"
+    }
+  },
+  {
+    "codigo": "PROP-030",
+    "operacion": "Alquiler",
+    "tipo": "Casa",
+    "zona": "Norte",
+    "dormitorios": 2,
+    "precio_usd": 480,
+    "detalle": "Casa sencilla en zona residencial",
+    "ubicacion": {
+      "referencia_zona": "Los Tusequis",
+      "latitud": -17.762153,
+      "longitud": -63.184519,
+      "google_maps_url": "https://www.google.com/maps?q=-17.762153,-63.184519"
+    }
+  },
+  {
+    "codigo": "PROP-031",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Oeste",
+    "dormitorios": 1,
+    "precio_usd": 52000,
+    "detalle": "Departamento económico para inversión",
+    "ubicacion": {
+      "referencia_zona": "Equipetrol",
+      "latitud": -17.774069,
+      "longitud": -63.216497,
+      "google_maps_url": "https://www.google.com/maps?q=-17.774069,-63.216497"
+    }
+  },
+  {
+    "codigo": "PROP-032",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Este",
+    "dormitorios": null,
+    "precio_usd": 165000,
+    "detalle": "Terreno con frente amplio",
+    "ubicacion": {
+      "referencia_zona": "Villa 1ro de Mayo",
+      "latitud": -17.78895,
+      "longitud": -63.139612,
+      "google_maps_url": "https://www.google.com/maps?q=-17.78895,-63.139612"
+    }
+  },
+  {
+    "codigo": "PROP-033",
+    "operacion": "Anticrético",
+    "tipo": "Departamento",
+    "zona": "Sur",
+    "dormitorios": 1,
+    "precio_usd": 22000,
+    "detalle": "Monoambiente en edificio tranquilo",
+    "ubicacion": {
+      "referencia_zona": "Plan Tres Mil",
+      "latitud": -17.842657,
+      "longitud": -63.161514,
+      "google_maps_url": "https://www.google.com/maps?q=-17.842657,-63.161514"
+    }
+  },
+  {
+    "codigo": "PROP-034",
+    "operacion": "Alquiler",
+    "tipo": "Casa",
+    "zona": "Centro",
+    "dormitorios": 3,
+    "precio_usd": 700,
+    "detalle": "Casa céntrica apta para vivienda u oficina",
+    "ubicacion": {
+      "referencia_zona": "Los Pozos",
+      "latitud": -17.792311,
+      "longitud": -63.17242,
+      "google_maps_url": "https://www.google.com/maps?q=-17.792311,-63.17242"
+    }
+  },
+  {
+    "codigo": "PROP-035",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Norte",
+    "dormitorios": 3,
+    "precio_usd": 145000,
+    "detalle": "Departamento premium en zona norte",
+    "ubicacion": {
+      "referencia_zona": "Av. Banzer",
+      "latitud": -17.763293,
+      "longitud": -63.160696,
+      "google_maps_url": "https://www.google.com/maps?q=-17.763293,-63.160696"
+    }
+  },
+  {
+    "codigo": "PROP-036",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Oeste",
+    "dormitorios": null,
+    "precio_usd": 240000,
+    "detalle": "Terreno ideal para vivienda familiar",
+    "ubicacion": {
+      "referencia_zona": "Av. Roca y Coronado",
+      "latitud": -17.797846,
+      "longitud": -63.214968,
+      "google_maps_url": "https://www.google.com/maps?q=-17.797846,-63.214968"
+    }
+  },
+  {
+    "codigo": "PROP-037",
+    "operacion": "Anticrético",
+    "tipo": "Casa",
+    "zona": "Oeste",
+    "dormitorios": 2,
+    "precio_usd": 45000,
+    "detalle": "Casa cómoda con patio lateral",
+    "ubicacion": {
+      "referencia_zona": "Doble Vía La Guardia",
+      "latitud": -17.773851,
+      "longitud": -63.235862,
+      "google_maps_url": "https://www.google.com/maps?q=-17.773851,-63.235862"
+    }
+  },
+  {
+    "codigo": "PROP-038",
+    "operacion": "Alquiler",
+    "tipo": "Departamento",
+    "zona": "Este",
+    "dormitorios": 1,
+    "precio_usd": 230,
+    "detalle": "Monoambiente cerca de transporte público",
+    "ubicacion": {
+      "referencia_zona": "Villa 1ro de Mayo",
+      "latitud": -17.786358,
+      "longitud": -63.14053,
+      "google_maps_url": "https://www.google.com/maps?q=-17.786358,-63.14053"
+    }
+  },
+  {
+    "codigo": "PROP-039",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Centro",
+    "dormitorios": 3,
+    "precio_usd": 180000,
+    "detalle": "Departamento amplio en edificio consolidado",
+    "ubicacion": {
+      "referencia_zona": "Av. Cañoto",
+      "latitud": -17.793584,
+      "longitud": -63.181362,
+      "google_maps_url": "https://www.google.com/maps?q=-17.793584,-63.181362"
+    }
+  },
+  {
+    "codigo": "PROP-040",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Sur",
+    "dormitorios": null,
+    "precio_usd": 110000,
+    "detalle": "Terreno accesible en zona sur",
+    "ubicacion": {
+      "referencia_zona": "Doble Vía La Guardia Sur",
+      "latitud": -17.845652,
+      "longitud": -63.173573,
+      "google_maps_url": "https://www.google.com/maps?q=-17.845652,-63.173573"
+    }
+  },
+  {
+    "codigo": "PROP-041",
+    "operacion": "Alquiler",
+    "tipo": "Casa",
+    "zona": "Este",
+    "dormitorios": 3,
+    "precio_usd": 620,
+    "detalle": "Casa familiar con dependencias completas",
+    "ubicacion": {
+      "referencia_zona": "Mutualista Este",
+      "latitud": -17.765817,
+      "longitud": -63.127171,
+      "google_maps_url": "https://www.google.com/maps?q=-17.765817,-63.127171"
+    }
+  },
+  {
+    "codigo": "PROP-042",
+    "operacion": "Anticrético",
+    "tipo": "Departamento",
+    "zona": "Centro",
+    "dormitorios": 2,
+    "precio_usd": 50000,
+    "detalle": "Departamento céntrico con parqueo",
+    "ubicacion": {
+      "referencia_zona": "Los Pozos",
+      "latitud": -17.78099,
+      "longitud": -63.168808,
+      "google_maps_url": "https://www.google.com/maps?q=-17.78099,-63.168808"
+    }
+  },
+  {
+    "codigo": "PROP-043",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Norte",
+    "dormitorios": null,
+    "precio_usd": 490000,
+    "detalle": "Terreno grande para desarrollo inmobiliario",
+    "ubicacion": {
+      "referencia_zona": "Av. Banzer",
+      "latitud": -17.724371,
+      "longitud": -63.19859,
+      "google_maps_url": "https://www.google.com/maps?q=-17.724371,-63.19859"
+    }
+  },
+  {
+    "codigo": "PROP-044",
+    "operacion": "Alquiler",
+    "tipo": "Departamento",
+    "zona": "Norte",
+    "dormitorios": 3,
+    "precio_usd": 580,
+    "detalle": "Departamento en condominio con seguridad",
+    "ubicacion": {
+      "referencia_zona": "Av. Banzer",
+      "latitud": -17.764272,
+      "longitud": -63.179744,
+      "google_maps_url": "https://www.google.com/maps?q=-17.764272,-63.179744"
+    }
+  },
+  {
+    "codigo": "PROP-045",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Sur",
+    "dormitorios": 2,
+    "precio_usd": 82000,
+    "detalle": "Departamento nuevo con buena distribución",
+    "ubicacion": {
+      "referencia_zona": "Plan Tres Mil",
+      "latitud": -17.830112,
+      "longitud": -63.169379,
+      "google_maps_url": "https://www.google.com/maps?q=-17.830112,-63.169379"
+    }
+  },
+  {
+    "codigo": "PROP-046",
+    "operacion": "Anticrético",
+    "tipo": "Casa",
+    "zona": "Norte",
+    "dormitorios": 3,
+    "precio_usd": 65000,
+    "detalle": "Casa en zona residencial tranquila",
+    "ubicacion": {
+      "referencia_zona": "Los Tusequis",
+      "latitud": -17.750432,
+      "longitud": -63.191825,
+      "google_maps_url": "https://www.google.com/maps?q=-17.750432,-63.191825"
+    }
+  },
+  {
+    "codigo": "PROP-047",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Este",
+    "dormitorios": null,
+    "precio_usd": 210000,
+    "detalle": "Terreno regular cerca de avenida",
+    "ubicacion": {
+      "referencia_zona": "Pampa de la Isla",
+      "latitud": -17.798011,
+      "longitud": -63.15487,
+      "google_maps_url": "https://www.google.com/maps?q=-17.798011,-63.15487"
+    }
+  },
+  {
+    "codigo": "PROP-048",
+    "operacion": "Alquiler",
+    "tipo": "Departamento",
+    "zona": "Oeste",
+    "dormitorios": 1,
+    "precio_usd": 260,
+    "detalle": "Departamento compacto con cocina integrada",
+    "ubicacion": {
+      "referencia_zona": "Av. Roca y Coronado",
+      "latitud": -17.797061,
+      "longitud": -63.23008,
+      "google_maps_url": "https://www.google.com/maps?q=-17.797061,-63.23008"
+    }
+  },
+  {
+    "codigo": "PROP-049",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Este",
+    "dormitorios": 3,
+    "precio_usd": 128000,
+    "detalle": "Departamento con suite y área social",
+    "ubicacion": {
+      "referencia_zona": "Pampa de la Isla",
+      "latitud": -17.758354,
+      "longitud": -63.123831,
+      "google_maps_url": "https://www.google.com/maps?q=-17.758354,-63.123831"
+    }
+  },
+  {
+    "codigo": "PROP-050",
+    "operacion": "Alquiler",
+    "tipo": "Casa",
+    "zona": "Sur",
+    "dormitorios": 4,
+    "precio_usd": 800,
+    "detalle": "Casa amplia con garaje para dos vehículos",
+    "ubicacion": {
+      "referencia_zona": "Av. San Aurelio",
+      "latitud": -17.83101,
+      "longitud": -63.191497,
+      "google_maps_url": "https://www.google.com/maps?q=-17.83101,-63.191497"
+    }
+  },
+  {
+    "codigo": "PROP-051",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Centro",
+    "dormitorios": null,
+    "precio_usd": 360000,
+    "detalle": "Terreno céntrico para proyecto mixto",
+    "ubicacion": {
+      "referencia_zona": "Av. Cañoto",
+      "latitud": -17.785242,
+      "longitud": -63.189302,
+      "google_maps_url": "https://www.google.com/maps?q=-17.785242,-63.189302"
+    }
+  },
+  {
+    "codigo": "PROP-052",
+    "operacion": "Anticrético",
+    "tipo": "Departamento",
+    "zona": "Oeste",
+    "dormitorios": 3,
+    "precio_usd": 60000,
+    "detalle": "Departamento amplio para familia",
+    "ubicacion": {
+      "referencia_zona": "Av. Roca y Coronado",
+      "latitud": -17.770206,
+      "longitud": -63.216825,
+      "google_maps_url": "https://www.google.com/maps?q=-17.770206,-63.216825"
+    }
+  },
+  {
+    "codigo": "PROP-053",
+    "operacion": "Alquiler",
+    "tipo": "Departamento",
+    "zona": "Sur",
+    "dormitorios": 2,
+    "precio_usd": 340,
+    "detalle": "Departamento cerca de avenida principal",
+    "ubicacion": {
+      "referencia_zona": "Zona La Barranca",
+      "latitud": -17.837967,
+      "longitud": -63.175928,
+      "google_maps_url": "https://www.google.com/maps?q=-17.837967,-63.175928"
+    }
+  },
+  {
+    "codigo": "PROP-054",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Norte",
+    "dormitorios": 2,
+    "precio_usd": 98000,
+    "detalle": "Departamento moderno con balcón",
+    "ubicacion": {
+      "referencia_zona": "Las Brisas",
+      "latitud": -17.733825,
+      "longitud": -63.156033,
+      "google_maps_url": "https://www.google.com/maps?q=-17.733825,-63.156033"
+    }
+  },
+  {
+    "codigo": "PROP-055",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Oeste",
+    "dormitorios": null,
+    "precio_usd": 175000,
+    "detalle": "Terreno residencial con servicios básicos",
+    "ubicacion": {
+      "referencia_zona": "Av. Roca y Coronado",
+      "latitud": -17.811345,
+      "longitud": -63.236439,
+      "google_maps_url": "https://www.google.com/maps?q=-17.811345,-63.236439"
+    }
+  },
+  {
+    "codigo": "PROP-056",
+    "operacion": "Anticrético",
+    "tipo": "Casa",
+    "zona": "Este",
+    "dormitorios": 2,
+    "precio_usd": 38000,
+    "detalle": "Casa pequeña con garaje",
+    "ubicacion": {
+      "referencia_zona": "Pampa de la Isla",
+      "latitud": -17.815486,
+      "longitud": -63.113323,
+      "google_maps_url": "https://www.google.com/maps?q=-17.815486,-63.113323"
+    }
+  },
+  {
+    "codigo": "PROP-057",
+    "operacion": "Alquiler",
+    "tipo": "Casa",
+    "zona": "Norte",
+    "dormitorios": 4,
+    "precio_usd": 750,
+    "detalle": "Casa en condominio con seguridad",
+    "ubicacion": {
+      "referencia_zona": "Las Brisas",
+      "latitud": -17.749267,
+      "longitud": -63.187521,
+      "google_maps_url": "https://www.google.com/maps?q=-17.749267,-63.187521"
+    }
+  },
+  {
+    "codigo": "PROP-058",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Centro",
+    "dormitorios": 1,
+    "precio_usd": 62000,
+    "detalle": "Departamento ideal para renta temporal",
+    "ubicacion": {
+      "referencia_zona": "Casco Viejo",
+      "latitud": -17.792214,
+      "longitud": -63.168216,
+      "google_maps_url": "https://www.google.com/maps?q=-17.792214,-63.168216"
+    }
+  },
+  {
+    "codigo": "PROP-059",
+    "operacion": "Anticrético",
+    "tipo": "Departamento",
+    "zona": "Norte",
+    "dormitorios": 3,
+    "precio_usd": 72000,
+    "detalle": "Departamento grande con parqueo",
+    "ubicacion": {
+      "referencia_zona": "4to Anillo Norte",
+      "latitud": -17.715278,
+      "longitud": -63.145728,
+      "google_maps_url": "https://www.google.com/maps?q=-17.715278,-63.145728"
+    }
+  },
+  {
+    "codigo": "PROP-060",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Sur",
+    "dormitorios": null,
+    "precio_usd": 260000,
+    "detalle": "Terreno amplio para construcción",
+    "ubicacion": {
+      "referencia_zona": "Zona La Barranca",
+      "latitud": -17.818945,
+      "longitud": -63.178037,
+      "google_maps_url": "https://www.google.com/maps?q=-17.818945,-63.178037"
+    }
+  },
+  {
+    "codigo": "PROP-061",
+    "operacion": "Alquiler",
+    "tipo": "Departamento",
+    "zona": "Este",
+    "dormitorios": 2,
+    "precio_usd": 400,
+    "detalle": "Departamento seminuevo con parqueo",
+    "ubicacion": {
+      "referencia_zona": "Av. Paraguá",
+      "latitud": -17.822243,
+      "longitud": -63.132956,
+      "google_maps_url": "https://www.google.com/maps?q=-17.822243,-63.132956"
+    }
+  },
+  {
+    "codigo": "PROP-062",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Oeste",
+    "dormitorios": 2,
+    "precio_usd": 88000,
+    "detalle": "Departamento cerca de supermercados",
+    "ubicacion": {
+      "referencia_zona": "Doble Vía La Guardia",
+      "latitud": -17.791698,
+      "longitud": -63.218461,
+      "google_maps_url": "https://www.google.com/maps?q=-17.791698,-63.218461"
+    }
+  },
+  {
+    "codigo": "PROP-063",
+    "operacion": "Anticrético",
+    "tipo": "Casa",
+    "zona": "Centro",
+    "dormitorios": 4,
+    "precio_usd": 90000,
+    "detalle": "Casa amplia en zona céntrica",
+    "ubicacion": {
+      "referencia_zona": "Los Pozos",
+      "latitud": -17.78556,
+      "longitud": -63.189523,
+      "google_maps_url": "https://www.google.com/maps?q=-17.78556,-63.189523"
+    }
+  },
+  {
+    "codigo": "PROP-064",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Norte",
+    "dormitorios": null,
+    "precio_usd": 320000,
+    "detalle": "Terreno con ubicación comercial",
+    "ubicacion": {
+      "referencia_zona": "4to Anillo Norte",
+      "latitud": -17.746103,
+      "longitud": -63.184023,
+      "google_maps_url": "https://www.google.com/maps?q=-17.746103,-63.184023"
+    }
+  },
+  {
+    "codigo": "PROP-065",
+    "operacion": "Alquiler",
+    "tipo": "Casa",
+    "zona": "Oeste",
+    "dormitorios": 3,
+    "precio_usd": 580,
+    "detalle": "Casa con patio y lavandería",
+    "ubicacion": {
+      "referencia_zona": "Urbarí",
+      "latitud": -17.787887,
+      "longitud": -63.216594,
+      "google_maps_url": "https://www.google.com/maps?q=-17.787887,-63.216594"
+    }
+  },
+  {
+    "codigo": "PROP-066",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Sur",
+    "dormitorios": 1,
+    "precio_usd": 49000,
+    "detalle": "Departamento económico para inversión",
+    "ubicacion": {
+      "referencia_zona": "Av. San Aurelio",
+      "latitud": -17.853521,
+      "longitud": -63.198601,
+      "google_maps_url": "https://www.google.com/maps?q=-17.853521,-63.198601"
+    }
+  },
+  {
+    "codigo": "PROP-067",
+    "operacion": "Anticrético",
+    "tipo": "Departamento",
+    "zona": "Este",
+    "dormitorios": 2,
+    "precio_usd": 32000,
+    "detalle": "Departamento sencillo en zona este",
+    "ubicacion": {
+      "referencia_zona": "Av. Virgen de Cotoca",
+      "latitud": -17.772678,
+      "longitud": -63.142508,
+      "google_maps_url": "https://www.google.com/maps?q=-17.772678,-63.142508"
+    }
+  },
+  {
+    "codigo": "PROP-068",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Este",
+    "dormitorios": null,
+    "precio_usd": 135000,
+    "detalle": "Terreno plano con acceso fácil",
+    "ubicacion": {
+      "referencia_zona": "Av. Paraguá",
+      "latitud": -17.786133,
+      "longitud": -63.127378,
+      "google_maps_url": "https://www.google.com/maps?q=-17.786133,-63.127378"
+    }
+  },
+  {
+    "codigo": "PROP-069",
+    "operacion": "Alquiler",
+    "tipo": "Departamento",
+    "zona": "Centro",
+    "dormitorios": 3,
+    "precio_usd": 620,
+    "detalle": "Departamento grande en zona céntrica",
+    "ubicacion": {
+      "referencia_zona": "Av. Cañoto",
+      "latitud": -17.793777,
+      "longitud": -63.188447,
+      "google_maps_url": "https://www.google.com/maps?q=-17.793777,-63.188447"
+    }
+  },
+  {
+    "codigo": "PROP-070",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Norte",
+    "dormitorios": 3,
+    "precio_usd": 210000,
+    "detalle": "Departamento de lujo con amenidades",
+    "ubicacion": {
+      "referencia_zona": "Av. Beni",
+      "latitud": -17.752642,
+      "longitud": -63.185041,
+      "google_maps_url": "https://www.google.com/maps?q=-17.752642,-63.185041"
+    }
+  },
+  {
+    "codigo": "PROP-071",
+    "operacion": "Anticrético",
+    "tipo": "Casa",
+    "zona": "Sur",
+    "dormitorios": 2,
+    "precio_usd": 42000,
+    "detalle": "Casa cómoda en barrio residencial",
+    "ubicacion": {
+      "referencia_zona": "Av. Santos Dumont",
+      "latitud": -17.839626,
+      "longitud": -63.181471,
+      "google_maps_url": "https://www.google.com/maps?q=-17.839626,-63.181471"
+    }
+  },
+  {
+    "codigo": "PROP-072",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Oeste",
+    "dormitorios": null,
+    "precio_usd": 410000,
+    "detalle": "Terreno grande apto para condominio",
+    "ubicacion": {
+      "referencia_zona": "Las Palmas",
+      "latitud": -17.784356,
+      "longitud": -63.203912,
+      "google_maps_url": "https://www.google.com/maps?q=-17.784356,-63.203912"
+    }
+  },
+  {
+    "codigo": "PROP-073",
+    "operacion": "Alquiler",
+    "tipo": "Casa",
+    "zona": "Este",
+    "dormitorios": 2,
+    "precio_usd": 450,
+    "detalle": "Casa sencilla con garaje",
+    "ubicacion": {
+      "referencia_zona": "Mutualista Este",
+      "latitud": -17.812447,
+      "longitud": -63.132431,
+      "google_maps_url": "https://www.google.com/maps?q=-17.812447,-63.132431"
+    }
+  },
+  {
+    "codigo": "PROP-074",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Este",
+    "dormitorios": 1,
+    "precio_usd": 55000,
+    "detalle": "Departamento compacto en edificio nuevo",
+    "ubicacion": {
+      "referencia_zona": "Pampa de la Isla",
+      "latitud": -17.765962,
+      "longitud": -63.106992,
+      "google_maps_url": "https://www.google.com/maps?q=-17.765962,-63.106992"
+    }
+  },
+  {
+    "codigo": "PROP-075",
+    "operacion": "Anticrético",
+    "tipo": "Departamento",
+    "zona": "Centro",
+    "dormitorios": 1,
+    "precio_usd": 25000,
+    "detalle": "Monoambiente céntrico",
+    "ubicacion": {
+      "referencia_zona": "Casco Viejo",
+      "latitud": -17.788708,
+      "longitud": -63.179236,
+      "google_maps_url": "https://www.google.com/maps?q=-17.788708,-63.179236"
+    }
+  },
+  {
+    "codigo": "PROP-076",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Sur",
+    "dormitorios": null,
+    "precio_usd": 150000,
+    "detalle": "Terreno sobre calle asfaltada",
+    "ubicacion": {
+      "referencia_zona": "Zona La Barranca",
+      "latitud": -17.827017,
+      "longitud": -63.18787,
+      "google_maps_url": "https://www.google.com/maps?q=-17.827017,-63.18787"
+    }
+  },
+  {
+    "codigo": "PROP-077",
+    "operacion": "Alquiler",
+    "tipo": "Departamento",
+    "zona": "Norte",
+    "dormitorios": 2,
+    "precio_usd": 480,
+    "detalle": "Departamento con áreas comunes",
+    "ubicacion": {
+      "referencia_zona": "Av. Beni",
+      "latitud": -17.728467,
+      "longitud": -63.165041,
+      "google_maps_url": "https://www.google.com/maps?q=-17.728467,-63.165041"
+    }
+  },
+  {
+    "codigo": "PROP-078",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Oeste",
+    "dormitorios": 3,
+    "precio_usd": 135000,
+    "detalle": "Departamento con excelente distribución",
+    "ubicacion": {
+      "referencia_zona": "Urbarí",
+      "latitud": -17.788182,
+      "longitud": -63.212499,
+      "google_maps_url": "https://www.google.com/maps?q=-17.788182,-63.212499"
+    }
+  },
+  {
+    "codigo": "PROP-079",
+    "operacion": "Anticrético",
+    "tipo": "Casa",
+    "zona": "Norte",
+    "dormitorios": 4,
+    "precio_usd": 88000,
+    "detalle": "Casa amplia con jardín",
+    "ubicacion": {
+      "referencia_zona": "Av. Beni",
+      "latitud": -17.72021,
+      "longitud": -63.199475,
+      "google_maps_url": "https://www.google.com/maps?q=-17.72021,-63.199475"
+    }
+  },
+  {
+    "codigo": "PROP-080",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Centro",
+    "dormitorios": null,
+    "precio_usd": 500000,
+    "detalle": "Terreno premium en zona estratégica",
+    "ubicacion": {
+      "referencia_zona": "Los Pozos",
+      "latitud": -17.784249,
+      "longitud": -63.184768,
+      "google_maps_url": "https://www.google.com/maps?q=-17.784249,-63.184768"
+    }
+  },
+  {
+    "codigo": "PROP-081",
+    "operacion": "Alquiler",
+    "tipo": "Casa",
+    "zona": "Sur",
+    "dormitorios": 2,
+    "precio_usd": 430,
+    "detalle": "Casa económica con patio",
+    "ubicacion": {
+      "referencia_zona": "Av. Santos Dumont",
+      "latitud": -17.826115,
+      "longitud": -63.152303,
+      "google_maps_url": "https://www.google.com/maps?q=-17.826115,-63.152303"
+    }
+  },
+  {
+    "codigo": "PROP-082",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Centro",
+    "dormitorios": 2,
+    "precio_usd": 120000,
+    "detalle": "Departamento céntrico con parqueo",
+    "ubicacion": {
+      "referencia_zona": "Los Pozos",
+      "latitud": -17.78634,
+      "longitud": -63.190283,
+      "google_maps_url": "https://www.google.com/maps?q=-17.78634,-63.190283"
+    }
+  },
+  {
+    "codigo": "PROP-083",
+    "operacion": "Anticrético",
+    "tipo": "Departamento",
+    "zona": "Oeste",
+    "dormitorios": 2,
+    "precio_usd": 36000,
+    "detalle": "Departamento cómodo cerca de colegios",
+    "ubicacion": {
+      "referencia_zona": "Equipetrol",
+      "latitud": -17.776357,
+      "longitud": -63.216002,
+      "google_maps_url": "https://www.google.com/maps?q=-17.776357,-63.216002"
+    }
+  },
+  {
+    "codigo": "PROP-084",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Este",
+    "dormitorios": null,
+    "precio_usd": 290000,
+    "detalle": "Terreno ideal para desarrollo comercial",
+    "ubicacion": {
+      "referencia_zona": "Av. Virgen de Cotoca",
+      "latitud": -17.809151,
+      "longitud": -63.129968,
+      "google_maps_url": "https://www.google.com/maps?q=-17.809151,-63.129968"
+    }
+  },
+  {
+    "codigo": "PROP-085",
+    "operacion": "Alquiler",
+    "tipo": "Departamento",
+    "zona": "Oeste",
+    "dormitorios": 2,
+    "precio_usd": 370,
+    "detalle": "Departamento funcional con buena ubicación",
+    "ubicacion": {
+      "referencia_zona": "Doble Vía La Guardia",
+      "latitud": -17.797033,
+      "longitud": -63.232069,
+      "google_maps_url": "https://www.google.com/maps?q=-17.797033,-63.232069"
+    }
+  },
+  {
+    "codigo": "PROP-086",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Norte",
+    "dormitorios": 2,
+    "precio_usd": 155000,
+    "detalle": "Departamento en edificio moderno",
+    "ubicacion": {
+      "referencia_zona": "Las Brisas",
+      "latitud": -17.760093,
+      "longitud": -63.158151,
+      "google_maps_url": "https://www.google.com/maps?q=-17.760093,-63.158151"
+    }
+  },
+  {
+    "codigo": "PROP-087",
+    "operacion": "Anticrético",
+    "tipo": "Casa",
+    "zona": "Este",
+    "dormitorios": 3,
+    "precio_usd": 58000,
+    "detalle": "Casa familiar con patio trasero",
+    "ubicacion": {
+      "referencia_zona": "Villa 1ro de Mayo",
+      "latitud": -17.79874,
+      "longitud": -63.15076,
+      "google_maps_url": "https://www.google.com/maps?q=-17.79874,-63.15076"
+    }
+  },
+  {
+    "codigo": "PROP-088",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Norte",
+    "dormitorios": null,
+    "precio_usd": 115000,
+    "detalle": "Terreno residencial económico",
+    "ubicacion": {
+      "referencia_zona": "4to Anillo Norte",
+      "latitud": -17.738854,
+      "longitud": -63.14943,
+      "google_maps_url": "https://www.google.com/maps?q=-17.738854,-63.14943"
+    }
+  },
+  {
+    "codigo": "PROP-089",
+    "operacion": "Alquiler",
+    "tipo": "Casa",
+    "zona": "Centro",
+    "dormitorios": 3,
+    "precio_usd": 720,
+    "detalle": "Casa ideal para vivienda u oficina",
+    "ubicacion": {
+      "referencia_zona": "Plaza 24 de Septiembre",
+      "latitud": -17.779461,
+      "longitud": -63.178089,
+      "google_maps_url": "https://www.google.com/maps?q=-17.779461,-63.178089"
+    }
+  },
+  {
+    "codigo": "PROP-090",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Sur",
+    "dormitorios": 3,
+    "precio_usd": 112000,
+    "detalle": "Departamento familiar con parqueo",
+    "ubicacion": {
+      "referencia_zona": "Zona La Barranca",
+      "latitud": -17.837449,
+      "longitud": -63.153507,
+      "google_maps_url": "https://www.google.com/maps?q=-17.837449,-63.153507"
+    }
+  },
+  {
+    "codigo": "PROP-091",
+    "operacion": "Anticrético",
+    "tipo": "Departamento",
+    "zona": "Sur",
+    "dormitorios": 2,
+    "precio_usd": 30000,
+    "detalle": "Departamento cerca de avenida",
+    "ubicacion": {
+      "referencia_zona": "Av. Santos Dumont",
+      "latitud": -17.855266,
+      "longitud": -63.166892,
+      "google_maps_url": "https://www.google.com/maps?q=-17.855266,-63.166892"
+    }
+  },
+  {
+    "codigo": "PROP-092",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Oeste",
+    "dormitorios": null,
+    "precio_usd": 275000,
+    "detalle": "Terreno grande con servicios instalados",
+    "ubicacion": {
+      "referencia_zona": "Doble Vía La Guardia",
+      "latitud": -17.819939,
+      "longitud": -63.209734,
+      "google_maps_url": "https://www.google.com/maps?q=-17.819939,-63.209734"
+    }
+  },
+  {
+    "codigo": "PROP-093",
+    "operacion": "Alquiler",
+    "tipo": "Departamento",
+    "zona": "Este",
+    "dormitorios": 3,
+    "precio_usd": 550,
+    "detalle": "Departamento amplio con suite",
+    "ubicacion": {
+      "referencia_zona": "Pampa de la Isla",
+      "latitud": -17.795864,
+      "longitud": -63.139288,
+      "google_maps_url": "https://www.google.com/maps?q=-17.795864,-63.139288"
+    }
+  },
+  {
+    "codigo": "PROP-094",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Este",
+    "dormitorios": 2,
+    "precio_usd": 72000,
+    "detalle": "Departamento nuevo en zona este",
+    "ubicacion": {
+      "referencia_zona": "Pampa de la Isla",
+      "latitud": -17.790726,
+      "longitud": -63.115436,
+      "google_maps_url": "https://www.google.com/maps?q=-17.790726,-63.115436"
+    }
+  },
+  {
+    "codigo": "PROP-095",
+    "operacion": "Anticrético",
+    "tipo": "Casa",
+    "zona": "Oeste",
+    "dormitorios": 3,
+    "precio_usd": 62000,
+    "detalle": "Casa con garaje y lavandería",
+    "ubicacion": {
+      "referencia_zona": "Las Palmas",
+      "latitud": -17.774025,
+      "longitud": -63.209906,
+      "google_maps_url": "https://www.google.com/maps?q=-17.774025,-63.209906"
+    }
+  },
+  {
+    "codigo": "PROP-096",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Sur",
+    "dormitorios": null,
+    "precio_usd": 470000,
+    "detalle": "Terreno extenso para urbanización",
+    "ubicacion": {
+      "referencia_zona": "Av. San Aurelio",
+      "latitud": -17.820032,
+      "longitud": -63.179697,
+      "google_maps_url": "https://www.google.com/maps?q=-17.820032,-63.179697"
+    }
+  },
+  {
+    "codigo": "PROP-097",
+    "operacion": "Alquiler",
+    "tipo": "Casa",
+    "zona": "Norte",
+    "dormitorios": 3,
+    "precio_usd": 690,
+    "detalle": "Casa moderna cerca de avenida",
+    "ubicacion": {
+      "referencia_zona": "Las Brisas",
+      "latitud": -17.734614,
+      "longitud": -63.17422,
+      "google_maps_url": "https://www.google.com/maps?q=-17.734614,-63.17422"
+    }
+  },
+  {
+    "codigo": "PROP-098",
+    "operacion": "Venta",
+    "tipo": "Departamento",
+    "zona": "Centro",
+    "dormitorios": 3,
+    "precio_usd": 245000,
+    "detalle": "Departamento amplio de alta gama",
+    "ubicacion": {
+      "referencia_zona": "Casco Viejo",
+      "latitud": -17.778911,
+      "longitud": -63.172421,
+      "google_maps_url": "https://www.google.com/maps?q=-17.778911,-63.172421"
+    }
+  },
+  {
+    "codigo": "PROP-099",
+    "operacion": "Anticrético",
+    "tipo": "Departamento",
+    "zona": "Norte",
+    "dormitorios": 1,
+    "precio_usd": 28000,
+    "detalle": "Monoambiente en zona norte",
+    "ubicacion": {
+      "referencia_zona": "Las Brisas",
+      "latitud": -17.752573,
+      "longitud": -63.145321,
+      "google_maps_url": "https://www.google.com/maps?q=-17.752573,-63.145321"
+    }
+  },
+  {
+    "codigo": "PROP-100",
+    "operacion": "Venta",
+    "tipo": "Terreno",
+    "zona": "Este",
+    "dormitorios": null,
+    "precio_usd": 350000,
+    "detalle": "Terreno amplio con potencial comercial",
+    "ubicacion": {
+      "referencia_zona": "Av. Virgen de Cotoca",
+      "latitud": -17.790357,
+      "longitud": -63.125326,
+      "google_maps_url": "https://www.google.com/maps?q=-17.790357,-63.125326"
+    }
+  }
+]
