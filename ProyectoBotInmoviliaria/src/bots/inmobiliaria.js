@@ -445,6 +445,12 @@ async function proximosHorariosDisponibles(cantidad = 3) {
   return slots;
 }
 
+// Zona macro (centro/norte/sur/este/oeste) de una propiedad: primero del
+// texto de su zona ("Zona Sur - Av. X"), y si no, por sus coordenadas.
+function zonaMacroDePropiedad(p) {
+  return zonaMacroDeTexto(p.zona || "") || (p.lat != null && p.lng != null ? zonaMacroDe(p.lat, p.lng) : null);
+}
+
 // Resumen real del inventario para que el bot ofrezca alternativas VERDADERAS
 // (zonas y tipos donde si hay propiedades), en vez de sugerir zonas al azar.
 // Respeta la operacion/tipo que el cliente ya eligio.
@@ -471,11 +477,33 @@ function resumenInventario(propiedades, lead = {}) {
   }
 
   const delTipo = lead.tipoPropiedad ? base.filter((p) => coincideTexto(lead.tipoPropiedad, p.tipo)) : base;
-  const zonas = contar(delTipo, "zona").map(([z, n]) => `${z} (${n})`).join(", ") || "ninguna";
+
+  // Las zonas se agrupan por macro (Centro/Norte/Sur/Este/Oeste). La zona de
+  // cada propiedad es muy especifica ("Zona Sur - Av. X"), asi que contar por
+  // el texto crudo daria decenas de calles; el cliente elige primero el macro.
+  const contarMacro = (lista) => {
+    const c = {};
+    for (const p of lista) {
+      const macro = zonaMacroDePropiedad(p);
+      if (macro) c[macro] = (c[macro] || 0) + 1;
+    }
+    return Object.entries(c).sort((a, b) => b[1] - a[1]);
+  };
+  const MACRO_NOMBRE = { centro: "Centro", norte: "Zona Norte", sur: "Zona Sur", este: "Zona Este", oeste: "Zona Oeste" };
+  const zonas = contarMacro(delTipo).map(([z, n]) => `${MACRO_NOMBRE[z] || z} (${n})`).join(", ") || "ninguna";
   const tipos = contar(base, "tipo").map(([t, n]) => `${t} (${n})`).join(", ") || "ninguno";
 
+  // Si el cliente ya eligio una zona macro, se listan las calles/sectores
+  // reales que hay dentro de ella para poder afinar.
+  let callesLinea = "";
+  const macroPedido = zonaMacroDeTexto(lead.zonaInteres || "");
+  if (macroPedido) {
+    const calles = contar(delTipo.filter((p) => zonaMacroDePropiedad(p) === macroPedido), "zona").map(([z]) => z);
+    if (calles.length) callesLinea = `\n- Sectores/calles reales dentro de ${MACRO_NOMBRE[macroPedido]}: ${calles.slice(0, 12).join("; ")}`;
+  }
+
   return `INVENTARIO REAL DISPONIBLE (conteo exacto calculado por el sistema${lead.tipoOperacion ? `, solo ${lead.tipoOperacion}` : ""}):
-- Zonas con ${lead.tipoPropiedad || "propiedades"}: ${zonas}
+- Zonas con ${lead.tipoPropiedad || "propiedades"}: ${zonas}${callesLinea}
 - Tipos de propiedad disponibles: ${tipos}
 Usa SOLO estas zonas y tipos cuando ofrezcas alternativas o el cliente pregunte que hay ("¿que zonas tienes?", "¿y en otra zona?", "¿que tipos hay?"): presentalas como menu numerado (maximo 4-5 opciones, las de mas inventario primero). NUNCA ofrezcas una zona o tipo que no este en esta lista.`;
 }
