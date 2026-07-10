@@ -1,8 +1,0 @@
-{
-  "nombreNegocio": "Sabores Demo",
-  "horarios": "Todos los dias de 12:00 a 22:00",
-  "direccion": "Av. Principal 123, Centro",
-  "zonasDelivery": ["Zona Norte", "Zona Sur", "Centro"],
-  "metodosPago": "Efectivo, tarjeta o QR",
-  "estiloComunicacion": "Cercano, cálido, con buena onda. Respuestas breves y claras."
-}

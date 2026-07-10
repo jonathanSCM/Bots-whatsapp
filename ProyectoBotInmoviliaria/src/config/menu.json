@@ -1,6 +1,0 @@
-[
-  { "idPlato": "M001", "categoria": "Entrada", "nombre": "Tabla de quesos", "precio": "Bs 45", "descripcion": "Quesos artesanales con pan casero y mermelada.", "disponible": "si" },
-  { "idPlato": "M002", "categoria": "Plato fuerte", "nombre": "Lomo a la pimienta", "precio": "Bs 75", "descripcion": "Lomo de res con salsa de pimienta y papas doradas.", "disponible": "si" },
-  { "idPlato": "M003", "categoria": "Plato fuerte", "nombre": "Risotto de hongos", "precio": "Bs 65", "descripcion": "Arroz cremoso con hongos portobello y parmesano.", "disponible": "si" },
-  { "idPlato": "M004", "categoria": "Postre", "nombre": "Volcán de chocolate", "precio": "Bs 30", "descripcion": "Con helado de vainilla.", "disponible": "si" }
-]

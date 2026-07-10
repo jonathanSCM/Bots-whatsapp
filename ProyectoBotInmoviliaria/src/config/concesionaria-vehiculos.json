@@ -1,7 +1,0 @@
-[
-  { "idVehiculo": "V001", "tipo": "Sedán", "nombre": "Aria GX", "precio": "USD 18.500", "descripcion": "Sedán compacto automático, 1.6L, ideal para ciudad. Bajo consumo, excelente garantía.", "disponible": "si" },
-  { "idVehiculo": "V002", "tipo": "SUV", "nombre": "Trek Sport 4x2", "precio": "USD 27.900", "descripcion": "SUV familiar 7 asientos, pantalla táctil 10\", cámara de reversa, gran maletero.", "disponible": "si" },
-  { "idVehiculo": "V003", "tipo": "SUV", "nombre": "Trek Adventure 4x4", "precio": "USD 34.500", "descripcion": "SUV 4x4 doble tracción, suspensión reforzada, perfecta para ciudad y terrenos exigentes.", "disponible": "si" },
-  { "idVehiculo": "V004", "tipo": "Pickup", "nombre": "Forza Pro 4x4", "precio": "USD 31.200", "descripcion": "Pickup doble cabina 4x4, alta capacidad de carga 1T, motor diésel 2.4L turbocargado.", "disponible": "si" },
-  { "idVehiculo": "V005", "tipo": "Eléctrico", "nombre": "Nova EV", "precio": "USD 38.000", "descripcion": "SUV 100% eléctrico, autonomía 420km, carga rápida DC, tecnología de conducción asistida.", "disponible": "si" }
-]

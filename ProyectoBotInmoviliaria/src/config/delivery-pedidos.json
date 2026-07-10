@@ -1,9 +1,0 @@
-[
-  { "numeroPedido": "ND-1001", "estado": "En camino 🚚", "detalle": "Tu pedido salió de la sucursal Centro y está a 3 paradas de ti. Llega en aproximadamente 20 minutos.", "ultimaActualizacion": "hace 5 minutos" },
-  { "numeroPedido": "ND-1002", "estado": "En preparación 📦", "detalle": "Tu pedido está siendo alistado en bodega. Sale en los próximos 15 minutos.", "ultimaActualizacion": "hace 3 minutos" },
-  { "numeroPedido": "ND-1003", "estado": "Entregado ✅", "detalle": "Entregado y recibido por el destinatario a las 14:32. ¡Gracias por tu compra!", "ultimaActualizacion": "ayer a las 14:32" },
-  { "numeroPedido": "ND-1004", "estado": "Demorado ⚠️", "detalle": "Hay una demora por tráfico pesado en la Av. Principal. El repartidor llega en aproximadamente 35 minutos adicionales. ¡Disculpa las molestias!", "ultimaActualizacion": "hace 10 minutos" },
-  { "numeroPedido": "ND-1005", "estado": "Programado 🕐", "detalle": "Tu pedido está confirmado y saldrá en el horario elegido (15:00–17:00). Recibirás una notificación cuando esté en camino.", "ultimaActualizacion": "hace 1 hora" },
-  { "numeroPedido": "ND-1006", "estado": "En camino 🚚", "detalle": "El repartidor ya tiene tu pedido y está en ruta. Usa el rastreo en tiempo real desde la app para ver su ubicación exacta.", "ultimaActualizacion": "hace 2 minutos" },
-  { "numeroPedido": "ND-1007", "estado": "En almacén 🏭", "detalle": "Tu pedido llegó a nuestro centro de distribución y está siendo procesado para despacho. Sale mañana en el primer turno.", "ultimaActualizacion": "hace 2 horas" }
-]
