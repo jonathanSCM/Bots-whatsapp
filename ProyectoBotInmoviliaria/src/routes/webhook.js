@@ -36,6 +36,16 @@ router.post("/", async (req, res) => {
     const mensaje = cambio?.messages?.[0];
     if (!mensaje) return; // eventos de status (entregado/leido), ignorar
 
+    // Varios numeros/bots pueden apuntar su webhook a esta misma URL. Solo se
+    // procesan los mensajes dirigidos a NUESTRO numero: si el phone_number_id
+    // del evento no coincide con el configurado, se ignora (otro bot lo atiende).
+    const phoneIdEntrante = cambio?.metadata?.phone_number_id;
+    const phoneIdPropio = process.env.WHATSAPP_PHONE_NUMBER_ID;
+    if (phoneIdPropio && phoneIdEntrante && phoneIdEntrante !== phoneIdPropio) {
+      console.log(`--- webhook ignorado: mensaje para phone_number_id ${phoneIdEntrante} (el nuestro es ${phoneIdPropio})`);
+      return;
+    }
+
     const numero = mensaje.from;
     // Mensaje de texto normal, o el id de la fila/boton elegido en un mensaje
     // interactivo (lista o botones).
